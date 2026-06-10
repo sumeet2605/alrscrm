@@ -31,6 +31,14 @@ docker compose up --build
 
 The API runs at `http://localhost:8000`.
 
+If a previous first run failed while Postgres was initializing, reset the local
+containers and volume before retrying:
+
+```bash
+docker compose down -v
+docker compose up --build
+```
+
 Local Docker startup seeds this super admin account:
 
 ```text
