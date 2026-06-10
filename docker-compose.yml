@@ -1,3 +1,5 @@
+name: alrscrm
+
 services:
   api:
     build:
@@ -43,3 +45,4 @@ services:
 
 volumes:
   postgres_data:
+    name: alrscrm_postgres_data

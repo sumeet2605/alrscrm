@@ -15,6 +15,8 @@ Sprint 2 establishes ALRSCRM as a family-centric CRM. The `Family` aggregate is 
 
 Tags are modeled independently through `FamilyTag` and `FamilyTagMapping` so they can become reusable segmentation metadata.
 
+See `docs/FAMILY_AGGREGATE_AND_EVENTS.md` for the aggregate diagram and domain event map.
+
 ## Business Rules
 
 - Every family belongs to one organization and one branch.

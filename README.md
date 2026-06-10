@@ -32,11 +32,27 @@ docker compose up --build
 The API runs at `http://localhost:8000`.
 
 If a previous first run failed while Postgres was initializing, reset the local
-containers and volume before retrying:
+containers before retrying:
 
 ```bash
-docker compose down -v
+docker compose down
 docker compose up --build
+```
+
+Do not use `docker compose down -v` unless you intentionally want to delete the
+local PostgreSQL data volume. Local database data is stored in the named Docker
+volume `alrscrm_postgres_data`.
+
+Create a local database backup before destructive Docker maintenance:
+
+```bash
+docker compose exec -T db pg_dump -U alrscrm -d alrscrm > alrscrm-backup.sql
+```
+
+Restore a backup into the running local database:
+
+```bash
+docker compose exec -T db psql -U alrscrm -d alrscrm < alrscrm-backup.sql
 ```
 
 Local Docker startup seeds this super admin account:
