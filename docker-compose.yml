@@ -14,8 +14,8 @@ services:
         condition: service_started
     command: >
       sh -c "alembic upgrade head &&
-             python scripts/seed_identity.py &&
-             python scripts/seed_super_admin.py &&
+             python -m scripts.seed_identity &&
+             python -m scripts.seed_super_admin &&
              uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     volumes:
       - ./backend:/app

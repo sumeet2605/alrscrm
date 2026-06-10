@@ -52,8 +52,8 @@ Useful commands:
 ```bash
 cd backend
 alembic upgrade head
-python scripts/seed_identity.py
-python scripts/seed_super_admin.py
+python -m scripts.seed_identity
+python -m scripts.seed_super_admin
 uvicorn app.main:app --reload
 ```
 
@@ -104,7 +104,7 @@ pagination details in `meta`:
 ## Production Notes
 
 - Set `ENVIRONMENT` to a non-local value and provide a strong `JWT_SECRET_KEY`.
-- Run `alembic upgrade head` and `python scripts/seed_identity.py` as release
+- Run `alembic upgrade head` and `python -m scripts.seed_identity` as release
   steps before starting API workers.
 - Use `docker-compose.prod.yml` as the production-oriented Compose baseline.
 - Refresh tokens are persisted and rotated; use `/api/v1/auth/logout` to revoke

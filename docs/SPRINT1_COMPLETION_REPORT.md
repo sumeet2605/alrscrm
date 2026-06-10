@@ -85,7 +85,7 @@ Manual backend commands:
 ```bash
 cd backend
 alembic upgrade head
-python scripts/seed_identity.py
+python -m scripts.seed_identity
 uvicorn app.main:app --reload
 ```
 
