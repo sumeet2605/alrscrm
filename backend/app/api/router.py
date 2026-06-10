@@ -1,0 +1,14 @@
+from fastapi import APIRouter
+
+from app.auth.routes import router as auth_router
+from app.identity.routes.branches import router as branches_router
+from app.identity.routes.organizations import router as organizations_router
+from app.identity.routes.rbac import router as rbac_router
+from app.identity.routes.users import router as users_router
+
+api_router = APIRouter()
+api_router.include_router(auth_router)
+api_router.include_router(organizations_router)
+api_router.include_router(branches_router)
+api_router.include_router(users_router)
+api_router.include_router(rbac_router)

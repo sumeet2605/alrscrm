@@ -4,6 +4,13 @@ sqlalchemy
 alembic
 psycopg[binary]
 pydantic
+pydantic-settings
+email-validator
 python-jose[cryptography]
 passlib[bcrypt]
+bcrypt<5
 redis
+httpx
+pytest
+pytest-cov
+ruff
