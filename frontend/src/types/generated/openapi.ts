@@ -66,6 +66,31 @@ export interface components {
       "organization_id"?: string | null;
       "phone"?: string | null;
     };
+    "DeliveryJobCreate": {
+      "allow_re_download"?: boolean;
+      "delivery_notes"?: string | null;
+      "editing_job_id": string;
+      "max_downloads"?: number;
+      "original_download_enabled"?: boolean;
+      "re_download_fee"?: number | string;
+      "watermark_enabled"?: boolean;
+    };
+    "DeliveryJobUpdate": {
+      "allow_re_download"?: boolean | null;
+      "delivery_link"?: string | null;
+      "delivery_notes"?: string | null;
+      "delivery_status"?: components["schemas"]["DeliveryStatus"] | null;
+      "expiry_date"?: string | null;
+      "max_downloads"?: number | null;
+      "original_download_enabled"?: boolean | null;
+      "re_download_fee"?: number | string | null;
+      "watermark_enabled"?: boolean | null;
+      "zip_generation_status"?: components["schemas"]["ZipGenerationStatus"] | null;
+    };
+    "DeliveryReopenRequest": {
+      "notes"?: string | null;
+    };
+    "DeliveryStatus": "PENDING" | "ZIP_GENERATING" | "READY" | "SENT" | "DELIVERED" | "EXPIRED" | "REOPEN_REQUESTED" | "REOPENED" | "CLOSED";
     "EditingAssignEditor": {
       "assigned_editor_id": string;
       "due_date"?: string | null;
@@ -351,6 +376,7 @@ export interface components {
       "msg": string;
       "type": string;
     };
+    "ZipGenerationStatus": "PENDING" | "GENERATING" | "COMPLETED" | "FAILED";
   };
 }
 
@@ -601,6 +627,165 @@ export interface paths {
       responses: {
       "200": components["schemas"]["APIResponse"];
       "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/client/{job_id}": {
+    get: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/client/{job_id}/download": {
+    post: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/jobs": {
+    get: {
+      parameters: {
+      query: {
+        "page"?: number;
+        "page_size"?: number;
+        "branch_id"?: string | null;
+        "status"?: components["schemas"]["DeliveryStatus"] | null;
+        "search"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["DeliveryJobCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/jobs/{job_id}": {
+    get: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    put: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: components["schemas"]["DeliveryJobUpdate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/jobs/{job_id}/approve-reopen": {
+    post: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/jobs/{job_id}/downloads": {
+    get: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/jobs/{job_id}/generate-zip": {
+    post: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/jobs/{job_id}/reopen-request": {
+    post: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: components["schemas"]["DeliveryReopenRequest"] | null;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/jobs/{job_id}/send": {
+    post: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/metrics": {
+    get: {
+      parameters: Record<string, never>;
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
       };
     };
   };

@@ -110,29 +110,39 @@ Operations
 
 ## Verification Status
 
-Focused backend verification completed:
+Verified:
 
 ```bash
 python -m pytest backend/tests/test_delivery_api.py
-```
-
-Result:
-
-```text
-4 passed
-```
-
-Full validation should be run before production release:
-
-```bash
 python -m pytest backend/tests
 cd frontend
 npm run lint
 npm run test
 npm run build
+cd ..
+npm run generate:api-types --prefix frontend
 docker compose up -d --build
 docker compose exec api alembic upgrade head
 ```
+
+Results:
+
+```text
+backend/tests/test_delivery_api.py: 4 passed
+backend/tests: 43 passed
+npm run lint: passed
+npm run test: 29 passed
+npm run build: passed
+npm run generate:api-types: passed
+docker compose up -d --build: passed
+docker compose exec api alembic upgrade head: passed
+```
+
+Non-blocking warnings observed:
+
+- Existing frontend bundle-size warning.
+- Existing Ant Design `act(...)` test warning in `DashboardLayout.test.tsx`.
+- Existing backend datetime deprecation warnings in gallery selection tests.
 
 ## Sprint 7 Status
 

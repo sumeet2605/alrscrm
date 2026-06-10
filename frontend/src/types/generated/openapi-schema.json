@@ -463,6 +463,221 @@
         "title": "BranchUpdate",
         "type": "object"
       },
+      "DeliveryJobCreate": {
+        "properties": {
+          "allow_re_download": {
+            "default": false,
+            "title": "Allow Re Download",
+            "type": "boolean"
+          },
+          "delivery_notes": {
+            "anyOf": [
+              {
+                "maxLength": 5000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery Notes"
+          },
+          "editing_job_id": {
+            "format": "uuid",
+            "title": "Editing Job Id",
+            "type": "string"
+          },
+          "max_downloads": {
+            "default": 10,
+            "minimum": 0,
+            "title": "Max Downloads",
+            "type": "integer"
+          },
+          "original_download_enabled": {
+            "default": false,
+            "title": "Original Download Enabled",
+            "type": "boolean"
+          },
+          "re_download_fee": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "default": "0",
+            "title": "Re Download Fee"
+          },
+          "watermark_enabled": {
+            "default": true,
+            "title": "Watermark Enabled",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "editing_job_id"
+        ],
+        "title": "DeliveryJobCreate",
+        "type": "object"
+      },
+      "DeliveryJobUpdate": {
+        "properties": {
+          "allow_re_download": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allow Re Download"
+          },
+          "delivery_link": {
+            "anyOf": [
+              {
+                "maxLength": 2000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery Link"
+          },
+          "delivery_notes": {
+            "anyOf": [
+              {
+                "maxLength": 5000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Delivery Notes"
+          },
+          "delivery_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/DeliveryStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expiry_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expiry Date"
+          },
+          "max_downloads": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Downloads"
+          },
+          "original_download_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Original Download Enabled"
+          },
+          "re_download_fee": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "number"
+              },
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Re Download Fee"
+          },
+          "watermark_enabled": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Watermark Enabled"
+          },
+          "zip_generation_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ZipGenerationStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "title": "DeliveryJobUpdate",
+        "type": "object"
+      },
+      "DeliveryReopenRequest": {
+        "properties": {
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 5000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          }
+        },
+        "title": "DeliveryReopenRequest",
+        "type": "object"
+      },
+      "DeliveryStatus": {
+        "enum": [
+          "PENDING",
+          "ZIP_GENERATING",
+          "READY",
+          "SENT",
+          "DELIVERED",
+          "EXPIRED",
+          "REOPEN_REQUESTED",
+          "REOPENED",
+          "CLOSED"
+        ],
+        "title": "DeliveryStatus",
+        "type": "string"
+      },
       "EditingAssignEditor": {
         "properties": {
           "assigned_editor_id": {
@@ -2722,6 +2937,16 @@
         ],
         "title": "ValidationError",
         "type": "object"
+      },
+      "ZipGenerationStatus": {
+        "enum": [
+          "PENDING",
+          "GENERATING",
+          "COMPLETED",
+          "FAILED"
+        ],
+        "title": "ZipGenerationStatus",
+        "type": "string"
       }
     },
     "securitySchemes": {
@@ -3844,6 +4069,628 @@
         "summary": "Update Branch",
         "tags": [
           "Branches"
+        ]
+      }
+    },
+    "/api/v1/delivery/client/{job_id}": {
+      "get": {
+        "operationId": "get_client_delivery_api_v1_delivery_client__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Client Delivery",
+        "tags": [
+          "Delivery"
+        ]
+      }
+    },
+    "/api/v1/delivery/client/{job_id}/download": {
+      "post": {
+        "operationId": "download_client_delivery_api_v1_delivery_client__job_id__download_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Download Client Delivery",
+        "tags": [
+          "Delivery"
+        ]
+      }
+    },
+    "/api/v1/delivery/jobs": {
+      "get": {
+        "operationId": "list_jobs_api_v1_delivery_jobs_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "branch_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Branch Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/DeliveryStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Jobs",
+        "tags": [
+          "Delivery"
+        ]
+      },
+      "post": {
+        "operationId": "create_job_api_v1_delivery_jobs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeliveryJobCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Job",
+        "tags": [
+          "Delivery"
+        ]
+      }
+    },
+    "/api/v1/delivery/jobs/{job_id}": {
+      "get": {
+        "operationId": "get_job_api_v1_delivery_jobs__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Job",
+        "tags": [
+          "Delivery"
+        ]
+      },
+      "put": {
+        "operationId": "update_job_api_v1_delivery_jobs__job_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/DeliveryJobUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Job",
+        "tags": [
+          "Delivery"
+        ]
+      }
+    },
+    "/api/v1/delivery/jobs/{job_id}/approve-reopen": {
+      "post": {
+        "operationId": "approve_reopen_api_v1_delivery_jobs__job_id__approve_reopen_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Approve Reopen",
+        "tags": [
+          "Delivery"
+        ]
+      }
+    },
+    "/api/v1/delivery/jobs/{job_id}/downloads": {
+      "get": {
+        "operationId": "list_downloads_api_v1_delivery_jobs__job_id__downloads_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Downloads",
+        "tags": [
+          "Delivery"
+        ]
+      }
+    },
+    "/api/v1/delivery/jobs/{job_id}/generate-zip": {
+      "post": {
+        "operationId": "generate_zip_api_v1_delivery_jobs__job_id__generate_zip_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Generate Zip",
+        "tags": [
+          "Delivery"
+        ]
+      }
+    },
+    "/api/v1/delivery/jobs/{job_id}/reopen-request": {
+      "post": {
+        "operationId": "request_reopen_api_v1_delivery_jobs__job_id__reopen_request_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/DeliveryReopenRequest"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ],
+                "title": "Payload"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Request Reopen",
+        "tags": [
+          "Delivery"
+        ]
+      }
+    },
+    "/api/v1/delivery/jobs/{job_id}/send": {
+      "post": {
+        "operationId": "send_delivery_api_v1_delivery_jobs__job_id__send_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Send Delivery",
+        "tags": [
+          "Delivery"
+        ]
+      }
+    },
+    "/api/v1/delivery/metrics": {
+      "get": {
+        "operationId": "get_metrics_api_v1_delivery_metrics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Metrics",
+        "tags": [
+          "Delivery"
         ]
       }
     },
