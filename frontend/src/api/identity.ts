@@ -1,6 +1,14 @@
 import { apiClient } from "./http";
 import type { ApiEnvelope, PaginatedRequest, PaginationMeta } from "../types/api";
-import type { Branch, BranchPayload, Role, User, UserPayload } from "../types/identity";
+import type {
+  Branch,
+  BranchPayload,
+  BranchUpdatePayload,
+  Role,
+  User,
+  UserPayload,
+  UserUpdatePayload
+} from "../types/identity";
 
 export interface ListResult<T> {
   items: T[];
@@ -26,7 +34,7 @@ export async function createBranch(payload: BranchPayload): Promise<Branch> {
   return response.data.data;
 }
 
-export async function updateBranch(id: string, payload: Partial<BranchPayload>): Promise<Branch> {
+export async function updateBranch(id: string, payload: BranchUpdatePayload): Promise<Branch> {
   const response = await apiClient.patch<ApiEnvelope<Branch>>(`/branches/${id}`, payload);
   return response.data.data;
 }
@@ -47,7 +55,7 @@ export async function createUser(payload: UserPayload): Promise<User> {
   return response.data.data;
 }
 
-export async function updateUser(id: string, payload: Partial<UserPayload>): Promise<User> {
+export async function updateUser(id: string, payload: UserUpdatePayload): Promise<User> {
   const response = await apiClient.patch<ApiEnvelope<User>>(`/users/${id}`, payload);
   return response.data.data;
 }

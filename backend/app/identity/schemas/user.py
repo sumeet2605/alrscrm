@@ -30,6 +30,7 @@ class UserCreate(UserBase):
 class UserUpdate(BaseModel):
     organization_id: UUID | None = None
     branch_id: UUID | None = None
+    username: str | None = Field(default=None, min_length=1, max_length=80)
     email: EmailStr | None = None
     password: str | None = Field(default=None, min_length=8, max_length=128)
     first_name: str | None = Field(default=None, min_length=1, max_length=120)

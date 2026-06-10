@@ -137,3 +137,10 @@ npm run lint
 npm run test
 npm run build
 ```
+
+Regenerate frontend API types from the backend OpenAPI schema:
+
+```bash
+cd frontend
+npm run generate:api-types
+```

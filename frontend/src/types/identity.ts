@@ -1,3 +1,5 @@
+import type { components } from "./generated/openapi";
+
 export interface Permission {
   id: string;
   code: string;
@@ -52,26 +54,8 @@ export interface User {
   updated_at: string;
 }
 
-export interface BranchPayload {
-  organization_id: string;
-  name: string;
-  code: string;
-  city: string;
-  address?: string | null;
-  phone?: string | null;
-  email?: string | null;
-  is_active: boolean;
-}
+export type BranchPayload = components["schemas"]["BranchCreate"];
+export type BranchUpdatePayload = components["schemas"]["BranchUpdate"];
 
-export interface UserPayload {
-  organization_id: string;
-  branch_id?: string | null;
-  username?: string | null;
-  email: string;
-  password?: string;
-  first_name: string;
-  last_name: string;
-  phone?: string | null;
-  is_active: boolean;
-  role_ids: string[];
-}
+export type UserPayload = components["schemas"]["UserCreate"];
+export type UserUpdatePayload = components["schemas"]["UserUpdate"];

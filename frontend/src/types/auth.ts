@@ -1,9 +1,8 @@
+import type { components } from "./generated/openapi";
 import type { User } from "./identity";
 
-export interface LoginRequest {
-  email: string;
-  password: string;
-}
+export type LoginRequest = components["schemas"]["LoginRequest"];
+export type RefreshRequest = components["schemas"]["RefreshRequest"];
 
 export interface TokenPair {
   access_token: string;

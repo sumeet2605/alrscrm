@@ -27,6 +27,8 @@
 - `frontend/src/contexts/AuthContext.tsx`
 - `frontend/src/theme/theme.ts`
 - `frontend/src/types/*`
+- `frontend/src/types/generated/openapi.ts`
+- `frontend/src/types/generated/openapi-schema.json`
 - `frontend/src/utils/storage.ts`
 - `frontend/src/test/*`
 
@@ -59,6 +61,18 @@
 - `GET|POST|PATCH|DELETE /api/v1/branches`
 - `GET|POST|PATCH|DELETE /api/v1/users`
 - `GET /api/v1/roles`
+
+## Generated Types
+
+OpenAPI TypeScript types are generated from the backend schema with:
+
+```bash
+cd frontend
+npm run generate:api-types
+```
+
+The frontend aliases generated request DTOs where the backend schema is precise,
+including login, refresh-token requests, branch payloads, and user payloads.
 
 ## Verification
 

@@ -24,6 +24,7 @@ account for first login:
 - `frontend/src/hooks`: reusable React hooks.
 - `frontend/src/contexts`: auth session context.
 - `frontend/src/types`: shared TypeScript contracts.
+- `frontend/src/types/generated`: generated OpenAPI schema and TypeScript types.
 - `frontend/src/utils`: local utilities such as token storage.
 - `frontend/src/theme`: Ant Design theme tokens.
 - `frontend/src/test`: frontend test setup and render helpers.
@@ -78,6 +79,27 @@ Integrated endpoints:
 - `GET|POST|PATCH|DELETE /api/v1/branches`
 - `GET|POST|PATCH|DELETE /api/v1/users`
 - `GET /api/v1/roles`
+
+## OpenAPI Type Generation
+
+Frontend API request DTOs are generated from the backend FastAPI OpenAPI schema.
+
+Generated files:
+
+- `frontend/src/types/generated/openapi-schema.json`
+- `frontend/src/types/generated/openapi.ts`
+
+Regenerate after backend API schema changes:
+
+```bash
+cd frontend
+npm run generate:api-types
+```
+
+The generator imports the backend FastAPI app directly and writes deterministic
+TypeScript component/path types. Current backend responses use a generic
+`APIResponse` envelope, so precise response `data` DTOs remain local frontend
+types until backend OpenAPI response models expose typed payloads.
 
 ## Theme
 
