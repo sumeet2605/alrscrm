@@ -8,7 +8,12 @@ WORKDIR /app
 COPY backend/requirements.txt /app/requirements.txt
 RUN pip install --no-cache-dir -r /app/requirements.txt
 
+RUN addgroup --system alrscrm && adduser --system --ingroup alrscrm alrscrm
+
 COPY backend /app
+RUN chown -R alrscrm:alrscrm /app
+
+USER alrscrm
 
 EXPOSE 8000
 

@@ -1,9 +1,11 @@
 from logging.config import fileConfig
 
 from alembic import context
+from app.auth import models as auth_models  # noqa: F401
 from app.core.config import get_settings
 from app.core.database import Base
 from app.identity import models  # noqa: F401
+from app.shared.models import audit_log  # noqa: F401
 from sqlalchemy import engine_from_config, pool
 
 config = context.config

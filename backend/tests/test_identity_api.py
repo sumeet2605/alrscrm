@@ -1,3 +1,4 @@
+from app.identity.models import Role, User
 from fastapi.testclient import TestClient
 
 
@@ -25,6 +26,10 @@ def test_organization_crud(client: TestClient, auth_headers: dict[str, str]) -> 
     delete_response = client.delete(f"/api/v1/organizations/{created['id']}", headers=auth_headers)
     assert delete_response.status_code == 200
 
+    get_response = client.get(f"/api/v1/organizations/{created['id']}", headers=auth_headers)
+    assert get_response.status_code == 200
+    assert get_response.json()["data"]["is_active"] is False
+
 
 def test_roles_and_permissions_are_seeded(client: TestClient, auth_headers: dict[str, str]) -> None:
     roles_response = client.get("/api/v1/roles", headers=auth_headers)
@@ -42,3 +47,79 @@ def test_protected_endpoint_requires_token(client: TestClient) -> None:
     response = client.get("/api/v1/organizations")
 
     assert response.status_code == 401
+
+
+def test_list_endpoints_include_pagination_meta(
+    client: TestClient, auth_headers: dict[str, str]
+) -> None:
+    response = client.get("/api/v1/organizations?page=1&page_size=10", headers=auth_headers)
+
+    assert response.status_code == 200
+    assert isinstance(response.json()["data"], list)
+    assert response.json()["meta"]["page"] == 1
+    assert response.json()["meta"]["page_size"] == 10
+
+
+def test_owner_cannot_see_other_organization(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    owner_headers: dict[str, str],
+) -> None:
+    create_response = client.post(
+        "/api/v1/organizations",
+        json={"name": "Outside Studio", "code": "OUT", "is_active": True},
+        headers=auth_headers,
+    )
+    assert create_response.status_code == 201
+    outside_org_id = create_response.json()["data"]["id"]
+
+    get_response = client.get(f"/api/v1/organizations/{outside_org_id}", headers=owner_headers)
+
+    assert get_response.status_code == 403
+
+
+def test_owner_cannot_assign_platform_role(
+    client: TestClient,
+    owner_headers: dict[str, str],
+    owner_user: User,
+    db,
+) -> None:
+    super_admin_role = db.query(Role).filter(Role.name == "Super Admin").one()
+    response = client.post(
+        "/api/v1/users",
+        json={
+            "organization_id": str(owner_user.organization_id),
+            "branch_id": str(owner_user.branch_id),
+            "email": "escalation@example.com",
+            "password": "StrongPass123",
+            "first_name": "Role",
+            "last_name": "Escalation",
+            "role_ids": [str(super_admin_role.id)],
+        },
+        headers=owner_headers,
+    )
+
+    assert response.status_code == 403
+
+
+def test_cross_organization_branch_assignment_is_rejected(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    admin_user: User,
+    owner_user: User,
+) -> None:
+    response = client.post(
+        "/api/v1/users",
+        json={
+            "organization_id": str(admin_user.organization_id),
+            "branch_id": str(owner_user.branch_id),
+            "email": "wrongbranch@example.com",
+            "password": "StrongPass123",
+            "first_name": "Wrong",
+            "last_name": "Branch",
+            "role_ids": [],
+        },
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 403

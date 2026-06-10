@@ -10,6 +10,20 @@ jobs:
   backend:
     name: Backend lint and test
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: alrscrm_test
+          POSTGRES_USER: alrscrm
+          POSTGRES_PASSWORD: alrscrm
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U alrscrm -d alrscrm_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
     steps:
       - uses: actions/checkout@v4
 
@@ -22,6 +36,12 @@ jobs:
 
       - name: Lint
         run: ruff check backend
+
+      - name: Run PostgreSQL migrations
+        working-directory: backend
+        env:
+          DATABASE_URL: postgresql+psycopg://alrscrm:alrscrm@localhost:5432/alrscrm_test
+        run: alembic upgrade head
 
       - name: Test
         run: pytest

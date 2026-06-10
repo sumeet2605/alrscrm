@@ -1,7 +1,7 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from app.identity.schemas.role import RoleRead
 
@@ -20,6 +20,11 @@ class UserCreate(UserBase):
     password: str = Field(min_length=8, max_length=128)
     role_ids: list[UUID] = Field(default_factory=list)
 
+    @field_validator("password")
+    @classmethod
+    def validate_password_strength(cls, password: str) -> str:
+        return _validate_password_strength(password)
+
 
 class UserUpdate(BaseModel):
     organization_id: UUID | None = None
@@ -32,6 +37,13 @@ class UserUpdate(BaseModel):
     is_active: bool | None = None
     role_ids: list[UUID] | None = None
 
+    @field_validator("password")
+    @classmethod
+    def validate_password_strength(cls, password: str | None) -> str | None:
+        if password is None:
+            return password
+        return _validate_password_strength(password)
+
 
 class UserRead(UserBase):
     id: UUID
@@ -40,3 +52,12 @@ class UserRead(UserBase):
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+def _validate_password_strength(password: str) -> str:
+    has_upper = any(char.isupper() for char in password)
+    has_lower = any(char.islower() for char in password)
+    has_digit = any(char.isdigit() for char in password)
+    if not (has_upper and has_lower and has_digit):
+        raise ValueError("Password must include uppercase, lowercase, and numeric characters")
+    return password

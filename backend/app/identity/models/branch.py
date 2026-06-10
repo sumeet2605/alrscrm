@@ -16,7 +16,10 @@ if TYPE_CHECKING:
 
 class Branch(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "branches"
-    __table_args__ = (UniqueConstraint("organization_id", "code", name="uq_branch_org_code"),)
+    __table_args__ = (
+        UniqueConstraint("organization_id", "code", name="uq_branch_org_code"),
+        UniqueConstraint("id", "organization_id", name="uq_branch_id_org"),
+    )
 
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
     name: Mapped[str] = mapped_column(String(160), nullable=False)
@@ -28,4 +31,4 @@ class Branch(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     organization: Mapped[Organization] = relationship(back_populates="branches")
-    users: Mapped[list[User]] = relationship(back_populates="branch")
+    users: Mapped[list[User]] = relationship(back_populates="branch", overlaps="organization,users")

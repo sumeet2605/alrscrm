@@ -36,6 +36,7 @@ All endpoints are prefixed by `/api/v1`.
 
 - `POST /auth/login`
 - `POST /auth/refresh`
+- `POST /auth/logout`
 - `GET /auth/me`
 - `GET /organizations`
 - `POST /organizations`
@@ -66,6 +67,10 @@ All endpoints are prefixed by `/api/v1`.
 - `permissions`: id, code, name, description
 - `user_roles`: user_id, role_id
 - `role_permissions`: role_id, permission_id
+- `refresh_token_sessions`: id, user_id, token_hash, replaced_by_token_id,
+  expires_at, revoked_at, ip_address, user_agent, created_at
+- `audit_logs`: id, actor_user_id, action, target_type, target_id,
+  metadata_json, created_at
 
 ## How To Run Locally
 

@@ -1,16 +1,17 @@
 from sqlalchemy.orm import Session
 
 from app.identity.models import Permission, Role
+from app.shared.exceptions.application import ValidationError
 
-ROLE_DEFINITIONS: tuple[tuple[str, str], ...] = (
-    ("Super Admin", "Platform-wide administrative access."),
-    ("Owner", "Full organization access across branches."),
-    ("Branch Manager", "Full access within an assigned branch."),
-    ("Sales Executive", "CRM, opportunity, and follow-up access."),
-    ("Photographer", "Assigned session access."),
-    ("Editor", "Assigned editing job access."),
-    ("Customer Success", "Gallery, selection, and delivery access."),
-    ("Client", "Client portal access."),
+ROLE_DEFINITIONS: tuple[tuple[str, str, bool, int], ...] = (
+    ("Super Admin", "Platform-wide administrative access.", True, 1000),
+    ("Owner", "Full organization access across branches.", False, 900),
+    ("Branch Manager", "Full access within an assigned branch.", False, 700),
+    ("Sales Executive", "CRM, opportunity, and follow-up access.", False, 400),
+    ("Photographer", "Assigned session access.", False, 300),
+    ("Editor", "Assigned editing job access.", False, 300),
+    ("Customer Success", "Gallery, selection, and delivery access.", False, 300),
+    ("Client", "Client portal access.", False, 100),
 )
 
 PERMISSION_DEFINITIONS: tuple[tuple[str, str, str], ...] = (
@@ -51,11 +52,20 @@ def seed_identity(db: Session) -> None:
         permissions_by_code[code] = permission
 
     roles_by_name: dict[str, Role] = {}
-    for name, description in ROLE_DEFINITIONS:
+    for name, description, is_platform, priority in ROLE_DEFINITIONS:
         role = db.query(Role).filter(Role.name == name).one_or_none()
         if role is None:
-            role = Role(name=name, description=description)
+            role = Role(
+                name=name,
+                description=description,
+                is_platform=is_platform,
+                priority=priority,
+            )
             db.add(role)
+        else:
+            role.description = description
+            role.is_platform = is_platform
+            role.priority = priority
         roles_by_name[name] = role
 
     db.flush()
@@ -68,3 +78,10 @@ def seed_identity(db: Session) -> None:
             role.permissions.append(permission)
 
     db.commit()
+
+
+def validate_identity_seed(db: Session) -> None:
+    role_count = db.query(Role).count()
+    permission_count = db.query(Permission).count()
+    if role_count < len(ROLE_DEFINITIONS) or permission_count < len(PERMISSION_DEFINITIONS):
+        raise ValidationError("Identity roles and permissions have not been seeded")

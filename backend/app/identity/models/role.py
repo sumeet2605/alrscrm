@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from sqlalchemy import String
+from sqlalchemy import Boolean, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -18,6 +18,8 @@ class Role(UUIDPrimaryKeyMixin, Base):
 
     name: Mapped[str] = mapped_column(String(80), nullable=False, unique=True, index=True)
     description: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    is_platform: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    priority: Mapped[int] = mapped_column(Integer, nullable=False, default=100)
 
     users: Mapped[list[User]] = relationship(secondary="user_roles", back_populates="roles")
     permissions: Mapped[list[Permission]] = relationship(

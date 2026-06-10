@@ -21,4 +21,4 @@ class Organization(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
 
     branches: Mapped[list[Branch]] = relationship(back_populates="organization")
-    users: Mapped[list[User]] = relationship(back_populates="organization")
+    users: Mapped[list[User]] = relationship(back_populates="organization", overlaps="branch,users")

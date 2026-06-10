@@ -14,10 +14,14 @@ Sprint 1 implements Identity & Access:
 - Roles read API
 - Permissions read API
 - Login, refresh token, and authenticated user lookup
+- Logout with refresh-token revocation
 - JWT access/refresh tokens
 - Password hashing
 - Role based authorization
 - Alembic migration and RBAC seed script
+- Tenant and branch-aware authorization
+- Soft deactivation for identity records
+- Pagination metadata on list endpoints
 
 ## Backend Quick Start
 
@@ -42,6 +46,7 @@ All Sprint 1 endpoints are under `/api/v1`.
 
 - `POST /api/v1/auth/login`
 - `POST /api/v1/auth/refresh`
+- `POST /api/v1/auth/logout`
 - `GET /api/v1/auth/me`
 - `GET|POST /api/v1/organizations`
 - `GET|PATCH|DELETE /api/v1/organizations/{organization_id}`
@@ -61,6 +66,32 @@ Responses use this envelope:
   "data": {}
 }
 ```
+
+List endpoints keep `data` as an array for backwards compatibility and include
+pagination details in `meta`:
+
+```json
+{
+  "success": true,
+  "message": "Organizations retrieved",
+  "data": [],
+  "meta": {
+    "page": 1,
+    "page_size": 50,
+    "total": 0,
+    "pages": 0
+  }
+}
+```
+
+## Production Notes
+
+- Set `ENVIRONMENT` to a non-local value and provide a strong `JWT_SECRET_KEY`.
+- Run `alembic upgrade head` and `python scripts/seed_identity.py` as release
+  steps before starting API workers.
+- Use `docker-compose.prod.yml` as the production-oriented Compose baseline.
+- Refresh tokens are persisted and rotated; use `/api/v1/auth/logout` to revoke
+  a refresh token.
 
 ## Tests and Lint
 
