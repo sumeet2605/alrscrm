@@ -1,5 +1,14 @@
 # Family Aggregate Diagram And Domain Event Map
 
+This document is retained for backwards compatibility. The canonical documents
+are now:
+
+- `docs/Family_Aggregate_Diagram.md`
+- `docs/Domain_Event_Map.md`
+
+The canonical event map distinguishes implemented audit events from future
+domain-event vocabulary.
+
 ## Family Aggregate
 
 `Family` is the aggregate root for Sprint 2. External modules should reference the aggregate by `family_id` instead of duplicating contact, member, address, or service-interest fields.
