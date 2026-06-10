@@ -133,6 +133,18 @@ class BookingRepository:
     def get_package(self, package_id: UUID) -> Package | None:
         return self.db.get(Package, package_id)
 
+    def package_name_exists(
+        self, branch_id: UUID, service_type: str, name: str, exclude_id: UUID | None = None
+    ) -> bool:
+        query = self.db.query(Package.id).filter(
+            Package.branch_id == branch_id,
+            Package.service_type == service_type,
+            func.lower(Package.name) == name.strip().lower(),
+        )
+        if exclude_id is not None:
+            query = query.filter(Package.id != exclude_id)
+        return query.first() is not None
+
     def create_package(self, payload: PackageCreate) -> Package:
         item = Package(**payload.model_dump())
         self.db.add(item)
@@ -156,6 +168,17 @@ class BookingRepository:
 
     def get_addon(self, addon_id: UUID) -> PackageAddon | None:
         return self.db.get(PackageAddon, addon_id)
+
+    def addon_name_exists(
+        self, branch_id: UUID, name: str, exclude_id: UUID | None = None
+    ) -> bool:
+        query = self.db.query(PackageAddon.id).filter(
+            PackageAddon.branch_id == branch_id,
+            func.lower(PackageAddon.name) == name.strip().lower(),
+        )
+        if exclude_id is not None:
+            query = query.filter(PackageAddon.id != exclude_id)
+        return query.first() is not None
 
     def create_addon(self, payload: PackageAddonCreate) -> PackageAddon:
         item = PackageAddon(**payload.model_dump())

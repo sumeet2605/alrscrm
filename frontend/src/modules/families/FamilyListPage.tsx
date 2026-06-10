@@ -6,7 +6,7 @@ import {
   SearchOutlined
 } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, DatePicker, Input, Popconfirm, Select, Space, Table, Tag, Typography, message } from "antd";
+import { App, Button, DatePicker, Input, Popconfirm, Select, Space, Table, Tag, Typography } from "antd";
 import type { TableProps } from "antd";
 import dayjs from "dayjs";
 import { useState } from "react";
@@ -24,6 +24,7 @@ const { RangePicker } = DatePicker;
 export function FamilyListPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { message } = App.useApp();
   const { user } = useAuth();
   const roleNames = user?.roles.map((role) => role.name) ?? [];
   const [page, setPage] = useState(1);

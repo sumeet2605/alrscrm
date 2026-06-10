@@ -9,6 +9,7 @@ from app.bookings.routes import (
     schedules_router,
 )
 from app.families.routes import router as families_router
+from app.galleries.routes import router as galleries_router
 from app.identity.routes.branches import router as branches_router
 from app.identity.routes.organizations import router as organizations_router
 from app.identity.routes.rbac import router as rbac_router
@@ -30,3 +31,4 @@ api_router.include_router(packages_router)
 api_router.include_router(addons_router)
 api_router.include_router(schedules_router)
 api_router.include_router(assignments_router)
+api_router.include_router(galleries_router)

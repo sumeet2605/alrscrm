@@ -89,6 +89,16 @@ class PackageUpdate(BaseModel):
     price: Decimal | None = Field(default=None, ge=0, max_digits=12, decimal_places=2)
     is_active: bool | None = None
 
+    @field_validator("name")
+    @classmethod
+    def clean_name(cls, value: str | None) -> str | None:
+        return _clean_required(value) if value is not None else None
+
+    @field_validator("description")
+    @classmethod
+    def clean_description(cls, value: str | None) -> str | None:
+        return _clean_optional(value)
+
 
 class PackageRead(PackageBase):
     id: UUID
@@ -106,6 +116,16 @@ class PackageAddonBase(BaseModel):
     price: Decimal = Field(ge=0, max_digits=12, decimal_places=2)
     is_active: bool = True
 
+    @field_validator("name")
+    @classmethod
+    def clean_name(cls, value: str) -> str:
+        return _clean_required(value)
+
+    @field_validator("description")
+    @classmethod
+    def clean_description(cls, value: str | None) -> str | None:
+        return _clean_optional(value)
+
 
 class PackageAddonCreate(PackageAddonBase):
     pass
@@ -117,6 +137,16 @@ class PackageAddonUpdate(BaseModel):
     description: str | None = Field(default=None, max_length=5000)
     price: Decimal | None = Field(default=None, ge=0, max_digits=12, decimal_places=2)
     is_active: bool | None = None
+
+    @field_validator("name")
+    @classmethod
+    def clean_name(cls, value: str | None) -> str | None:
+        return _clean_required(value) if value is not None else None
+
+    @field_validator("description")
+    @classmethod
+    def clean_description(cls, value: str | None) -> str | None:
+        return _clean_optional(value)
 
 
 class PackageAddonRead(PackageAddonBase):

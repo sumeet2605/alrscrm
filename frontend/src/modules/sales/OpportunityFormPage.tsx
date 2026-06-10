@@ -1,6 +1,6 @@
 import { ArrowLeftOutlined, SaveOutlined } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Card, DatePicker, Form, Input, InputNumber, Select, Space, Typography, message } from "antd";
+import { App, Button, Card, DatePicker, Form, Input, InputNumber, Select, Space, Typography } from "antd";
 import dayjs from "dayjs";
 import { Navigate, useNavigate } from "react-router-dom";
 
@@ -18,6 +18,7 @@ interface OpportunityFormValues extends Omit<OpportunityPayload, "expected_booki
 export function OpportunityFormPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { message } = App.useApp();
   const { user } = useAuth();
   const roleNames = user?.roles.map((role) => role.name) ?? [];
   const [form] = Form.useForm<OpportunityFormValues>();

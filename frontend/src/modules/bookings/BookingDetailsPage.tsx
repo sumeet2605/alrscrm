@@ -1,6 +1,6 @@
 import { ArrowLeftOutlined, PlusOutlined } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Card, DatePicker, Descriptions, Form, Input, List, Modal, Select, Space, Tag, Typography, message } from "antd";
+import { App, Button, Card, DatePicker, Descriptions, Form, Input, List, Modal, Select, Space, Tag, Typography } from "antd";
 import dayjs from "dayjs";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
@@ -20,6 +20,7 @@ export function BookingDetailsPage() {
   const { bookingId } = useParams();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { message } = App.useApp();
   const { user } = useAuth();
   const roleNames = user?.roles.map((role) => role.name) ?? [];
   const [isScheduleOpen, setIsScheduleOpen] = useState(false);

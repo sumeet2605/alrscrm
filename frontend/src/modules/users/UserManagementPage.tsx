@@ -12,7 +12,7 @@ import {
   Table,
   Tag,
   Typography,
-  message
+  App
 } from "antd";
 import { useMemo, useState } from "react";
 
@@ -32,6 +32,7 @@ type UserFormValues = Partial<UserPayload> & { password?: string };
 
 export function UserManagementPage() {
   const { user } = useAuth();
+  const { message } = App.useApp();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState<string | undefined>();

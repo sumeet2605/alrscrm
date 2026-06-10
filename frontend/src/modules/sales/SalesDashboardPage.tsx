@@ -1,6 +1,6 @@
 import { CalendarOutlined, CheckCircleOutlined, CloseCircleOutlined, DollarOutlined, PercentageOutlined, PlusOutlined } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Card, Col, Form, Input, List, Modal, Row, Select, Space, Statistic, Tabs, Tag, Typography, message } from "antd";
+import { App, Button, Card, Col, Form, Input, List, Modal, Row, Select, Space, Statistic, Tabs, Tag, Typography } from "antd";
 import dayjs from "dayjs";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -13,6 +13,7 @@ import { canWriteSales, labelFromEnum, opportunityStages, stageColor } from "./s
 export function SalesDashboardPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { message } = App.useApp();
   const { user } = useAuth();
   const roleNames = user?.roles.map((role) => role.name) ?? [];
   const [lostStageForm] = Form.useForm<{ lost_reason_id: string; stage_change_notes?: string }>();

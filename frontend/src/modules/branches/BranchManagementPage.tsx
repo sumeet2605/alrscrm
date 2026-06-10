@@ -11,7 +11,7 @@ import {
   Table,
   Tag,
   Typography,
-  message
+  App
 } from "antd";
 import { useMemo, useState } from "react";
 
@@ -31,6 +31,7 @@ const emptyBranch: Partial<BranchPayload> = {
 
 export function BranchManagementPage() {
   const { user } = useAuth();
+  const { message } = App.useApp();
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [editingBranch, setEditingBranch] = useState<Branch | null>(null);

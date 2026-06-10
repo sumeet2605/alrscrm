@@ -293,11 +293,18 @@ def list_packages(db: Session, context: AuthorizationContext, branch_id: UUID | 
 
 
 def create_package(db: Session, payload: PackageCreate, context: AuthorizationContext):
+    repository = BookingRepository(db)
     branch = _ensure_branch_scope(db, context, payload.branch_id)
     if payload.organization_id != branch.organization_id:
         raise ValidationError("Package organization must match branch")
-    item = BookingRepository(db).create_package(payload)
-    db.commit()
+    if repository.package_name_exists(payload.branch_id, payload.service_type.value, payload.name):
+        raise ConflictError("Package name already exists for this branch")
+    item = repository.create_package(payload)
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise ConflictError("Package name already exists for this branch") from exc
     db.refresh(item)
     return item
 
@@ -310,8 +317,21 @@ def update_package(
     if item is None:
         raise NotFoundError("Package not found")
     _ensure_branch_scope(db, context, item.branch_id)
+    target_branch_id = payload.branch_id or item.branch_id
+    target_branch = _ensure_branch_scope(db, context, target_branch_id)
+    target_service_type = payload.service_type.value if payload.service_type else item.service_type
+    target_name = payload.name or item.name
+    if repository.package_name_exists(
+        target_branch_id, target_service_type, target_name, exclude_id=item.id
+    ):
+        raise ConflictError("Package name already exists for this branch")
     repository.update_package(item, payload)
-    db.commit()
+    item.organization_id = target_branch.organization_id
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise ConflictError("Package name already exists for this branch") from exc
     db.refresh(item)
     return item
 
@@ -330,11 +350,18 @@ def list_addons(db: Session, context: AuthorizationContext, branch_id: UUID | No
 
 
 def create_addon(db: Session, payload: PackageAddonCreate, context: AuthorizationContext):
+    repository = BookingRepository(db)
     branch = _ensure_branch_scope(db, context, payload.branch_id)
     if payload.organization_id != branch.organization_id:
         raise ValidationError("Addon organization must match branch")
-    item = BookingRepository(db).create_addon(payload)
-    db.commit()
+    if repository.addon_name_exists(payload.branch_id, payload.name):
+        raise ConflictError("Addon name already exists for this branch")
+    item = repository.create_addon(payload)
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise ConflictError("Addon name already exists for this branch") from exc
     db.refresh(item)
     return item
 
@@ -347,8 +374,18 @@ def update_addon(
     if item is None:
         raise NotFoundError("Addon not found")
     _ensure_branch_scope(db, context, item.branch_id)
+    target_branch_id = payload.branch_id or item.branch_id
+    target_branch = _ensure_branch_scope(db, context, target_branch_id)
+    target_name = payload.name or item.name
+    if repository.addon_name_exists(target_branch_id, target_name, exclude_id=item.id):
+        raise ConflictError("Addon name already exists for this branch")
     repository.update_addon(item, payload)
-    db.commit()
+    item.organization_id = target_branch.organization_id
+    try:
+        db.commit()
+    except IntegrityError as exc:
+        db.rollback()
+        raise ConflictError("Addon name already exists for this branch") from exc
     db.refresh(item)
     return item
 

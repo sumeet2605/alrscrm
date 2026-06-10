@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ConfigProvider } from "antd";
+import { App as AntdApp, ConfigProvider } from "antd";
 import type { ReactElement } from "react";
 import { MemoryRouter } from "react-router-dom";
 import { render } from "@testing-library/react";
@@ -16,14 +16,16 @@ export function renderWithProviders(ui: ReactElement, initialEntries = ["/"]) {
 
   return render(
     <ConfigProvider theme={appTheme}>
-      <QueryClientProvider client={queryClient}>
-        <MemoryRouter
-          initialEntries={initialEntries}
-          future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
-        >
-          {ui}
-        </MemoryRouter>
-      </QueryClientProvider>
+      <AntdApp>
+        <QueryClientProvider client={queryClient}>
+          <MemoryRouter
+            initialEntries={initialEntries}
+            future={{ v7_relativeSplatPath: true, v7_startTransition: true }}
+          >
+            {ui}
+          </MemoryRouter>
+        </QueryClientProvider>
+      </AntdApp>
     </ConfigProvider>
   );
 }

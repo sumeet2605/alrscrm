@@ -1,9 +1,10 @@
 import { EditOutlined, PlusOutlined } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Form, Input, InputNumber, Modal, Select, Space, Table, Tag, Typography, message } from "antd";
+import { App, Button, Form, Input, InputNumber, Modal, Select, Space, Table, Tag, Typography } from "antd";
 import { useState } from "react";
 
 import { createAddon, createPackage, listAddons, listPackages, updateAddon, updatePackage } from "../../api/bookings";
+import { listBranches } from "../../api/identity";
 import { useAuth } from "../../contexts/AuthContext";
 import type { Package, PackageAddon, PackagePayload } from "../../types/bookings";
 import { canManagePackages, labelFromEnum, serviceTypes } from "./bookingOptions";
@@ -12,6 +13,7 @@ type PackageFormValues = PackagePayload & { kind: "package" | "addon" };
 
 export function PackageManagementPage() {
   const queryClient = useQueryClient();
+  const { message } = App.useApp();
   const { user } = useAuth();
   const roleNames = user?.roles.map((role) => role.name) ?? [];
   const [editing, setEditing] = useState<(Package | PackageAddon) & { kind: "package" | "addon" } | null>(null);
@@ -19,9 +21,16 @@ export function PackageManagementPage() {
   const [form] = Form.useForm<PackageFormValues>();
   const packagesQuery = useQuery({ queryKey: ["packages"], queryFn: listPackages });
   const addonsQuery = useQuery({ queryKey: ["addons"], queryFn: listAddons });
+  const branchesQuery = useQuery({
+    queryKey: ["branches", "package-management"],
+    queryFn: () => listBranches({ page: 1, page_size: 100 })
+  });
   const saveMutation = useMutation({
     mutationFn: async (values: PackageFormValues) => {
-      const payload = { ...values, organization_id: user!.organization_id, branch_id: user!.branch_id! };
+      const selectedBranch = branchesQuery.data?.items.find((branch) => branch.id === values.branch_id);
+      const branchId = values.branch_id ?? user?.branch_id;
+      const organizationId = selectedBranch?.organization_id ?? user!.organization_id;
+      const payload = { ...values, organization_id: organizationId, branch_id: branchId! };
       if (editing?.kind === "package") return updatePackage(editing.id, payload);
       if (editing?.kind === "addon") return updateAddon(editing.id, payload);
       if (values.kind === "addon") return createAddon(payload);
@@ -40,7 +49,12 @@ export function PackageManagementPage() {
   });
   const openForm = (kind: "package" | "addon", item?: Package | PackageAddon) => {
     setEditing(item ? { ...item, kind } : null);
-    form.setFieldsValue({ kind, ...(item ?? {}), service_type: "service_type" in (item ?? {}) ? (item as Package).service_type : "NEWBORN" });
+    form.setFieldsValue({
+      kind,
+      branch_id: item?.branch_id ?? user?.branch_id ?? branchesQuery.data?.items[0]?.id,
+      ...(item ?? {}),
+      service_type: "service_type" in (item ?? {}) ? (item as Package).service_type : "NEWBORN"
+    });
     setIsOpen(true);
   };
 
@@ -69,6 +83,7 @@ export function PackageManagementPage() {
       <Modal title={editing ? "Edit Catalog Item" : "New Catalog Item"} open={isOpen} onCancel={() => setIsOpen(false)} onOk={() => form.submit()} confirmLoading={saveMutation.isPending}>
         <Form form={form} layout="vertical" requiredMark={false} initialValues={{ kind: "package", is_active: true }} onFinish={(values) => saveMutation.mutate(values)}>
           <Form.Item label="Type" name="kind"><Select options={[{ value: "package", label: "Package" }, { value: "addon", label: "Addon" }]} /></Form.Item>
+          <Form.Item label="Branch" name="branch_id" rules={[{ required: true, message: "Branch is required" }]}><Select options={(branchesQuery.data?.items ?? []).map((branch) => ({ value: branch.id, label: `${branch.name} · ${branch.city}` }))} /></Form.Item>
           <Form.Item label="Name" name="name" rules={[{ required: true }]}><Input /></Form.Item>
           <Form.Item noStyle shouldUpdate={(previous, current) => previous.kind !== current.kind}>{({ getFieldValue }) => getFieldValue("kind") === "package" ? <Form.Item label="Service" name="service_type" rules={[{ required: true }]}><Select options={serviceTypes.map((value) => ({ value, label: labelFromEnum(value) }))} /></Form.Item> : null}</Form.Item>
           <Form.Item label="Price" name="price" rules={[{ required: true }]}><InputNumber min={0} className="full-width-control" /></Form.Item>

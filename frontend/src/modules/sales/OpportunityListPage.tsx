@@ -1,6 +1,6 @@
 import { DeleteOutlined, EditOutlined, EyeOutlined, PlusOutlined, SearchOutlined } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Input, Popconfirm, Select, Space, Table, Tag, Typography, message } from "antd";
+import { App, Button, Input, Popconfirm, Select, Space, Table, Tag, Typography } from "antd";
 import type { TableProps } from "antd";
 import dayjs from "dayjs";
 import { useState } from "react";
@@ -16,6 +16,7 @@ import { canDeleteSales, canWriteSales, labelFromEnum, opportunityStages, opport
 export function OpportunityListPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { message } = App.useApp();
   const { user } = useAuth();
   const roleNames = user?.roles.map((role) => role.name) ?? [];
   const [page, setPage] = useState(1);

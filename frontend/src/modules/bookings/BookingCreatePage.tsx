@@ -1,6 +1,6 @@
 import { ArrowLeftOutlined, SaveOutlined } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Card, DatePicker, Form, Input, InputNumber, Select, Space, Statistic, Typography, message } from "antd";
+import { App, Button, Card, DatePicker, Form, Input, InputNumber, Select, Space, Statistic, Typography } from "antd";
 import dayjs from "dayjs";
 import { useMemo } from "react";
 import { Navigate, useNavigate } from "react-router-dom";
@@ -19,6 +19,7 @@ interface BookingFormValues extends Omit<BookingPayload, "booking_date"> {
 export function BookingCreatePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { message } = App.useApp();
   const { user } = useAuth();
   const roleNames = user?.roles.map((role) => role.name) ?? [];
   const [form] = Form.useForm<BookingFormValues>();

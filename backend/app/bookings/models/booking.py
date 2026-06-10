@@ -33,7 +33,9 @@ class Package(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             ["branches.id", "branches.organization_id"],
             name="fk_package_branch_organization",
         ),
-        UniqueConstraint("branch_id", "name", name="uq_package_branch_name"),
+        UniqueConstraint(
+            "branch_id", "service_type", "name", name="uq_package_branch_service_name"
+        ),
         CheckConstraint("price >= 0", name="ck_package_price_non_negative"),
     )
 

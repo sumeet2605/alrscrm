@@ -1,5 +1,7 @@
 import {
   ApartmentOutlined,
+  AppstoreAddOutlined,
+  PictureOutlined,
   ContactsOutlined,
   DashboardOutlined,
   LogoutOutlined,
@@ -19,16 +21,45 @@ import { canAccessPath } from "../routes/routePermissions";
 
 const { Header, Sider, Content } = Layout;
 
-const navItems = [
+type NavItem = {
+  key: string;
+  icon?: React.ReactNode;
+  label: string;
+  children?: NavItem[];
+};
+
+const navItems: NavItem[] = [
   { key: "/dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
   { key: "/families", icon: <ContactsOutlined />, label: "Families" },
   { key: "/sales", icon: <RiseOutlined />, label: "Sales" },
-  { key: "/bookings", icon: <ShopOutlined />, label: "Bookings" },
-  { key: "/schedules", icon: <ScheduleOutlined />, label: "Schedules" },
+  {
+    key: "bookings-menu",
+    icon: <ShopOutlined />,
+    label: "Bookings",
+    children: [
+      { key: "/bookings", label: "Bookings" },
+      { key: "/schedules", label: "Schedules", icon: <ScheduleOutlined /> },
+      { key: "/schedules/assignments", label: "Assignments", icon: <TeamOutlined /> },
+      { key: "/packages", label: "Package Management", icon: <AppstoreAddOutlined /> },
+      { key: "/galleries", label: "Galleries", icon: <PictureOutlined /> }
+    ]
+  },
   { key: "/branches", icon: <ApartmentOutlined />, label: "Branches" },
   { key: "/users", icon: <TeamOutlined />, label: "Users" },
   { key: "/roles", icon: <SafetyCertificateOutlined />, label: "Roles" }
 ];
+
+function filterNavItems(items: NavItem[], roleNames: string[]): MenuProps["items"] {
+  return items
+    .map((item) => {
+      if (item.children) {
+        const children = item.children.filter((child) => canAccessPath(roleNames, child.key));
+        return children.length ? { ...item, children } : null;
+      }
+      return canAccessPath(roleNames, item.key) ? item : null;
+    })
+    .filter(Boolean) as MenuProps["items"];
+}
 
 export function DashboardLayout() {
   const { user, logout } = useAuth();
@@ -36,7 +67,14 @@ export function DashboardLayout() {
   const location = useLocation();
   const { token } = theme.useToken();
   const roleNames = user?.roles.map((role) => role.name) ?? [];
-  const accessibleItems = navItems.filter((item) => canAccessPath(roleNames, item.key));
+  const accessibleItems = filterNavItems(navItems, roleNames);
+  const selectedPath = location.pathname.startsWith("/packages")
+    ? "/packages"
+    : location.pathname.startsWith("/galleries")
+      ? "/galleries"
+    : location.pathname.startsWith("/schedules/assignments")
+      ? "/schedules/assignments"
+      : `/${location.pathname.split("/")[1] || "dashboard"}`;
 
   const menuItems: MenuProps["items"] = [
     {
@@ -70,7 +108,8 @@ export function DashboardLayout() {
         <Menu
           theme="dark"
           mode="inline"
-          selectedKeys={[`/${location.pathname.split("/")[1] || "dashboard"}`]}
+          defaultOpenKeys={["bookings-menu"]}
+          selectedKeys={[selectedPath]}
           items={accessibleItems}
           onClick={({ key }) => navigate(key)}
         />

@@ -219,6 +219,57 @@ def test_booking_requires_booked_opportunity(client: TestClient, db: Session) ->
     assert response.status_code == 422
 
 
+def test_duplicate_package_and_addon_names_return_conflict(
+    client: TestClient, db: Session
+) -> None:
+    organization, branch, owner, _, _, _, _ = _fixture(db)
+    package_payload = {
+        "organization_id": str(organization.id),
+        "branch_id": str(branch.id),
+        "name": "Silver",
+        "service_type": "CAKE_SMASH",
+        "price": "20000.00",
+    }
+    first_package_response = client.post(
+        "/api/v1/packages", json=package_payload, headers=_headers(owner)
+    )
+    assert first_package_response.status_code == 201
+
+    duplicate_package_response = client.post(
+        "/api/v1/packages", json=package_payload, headers=_headers(owner)
+    )
+    assert duplicate_package_response.status_code == 409
+    assert duplicate_package_response.json()["message"] == (
+        "Package name already exists for this branch"
+    )
+
+    different_service_package_response = client.post(
+        "/api/v1/packages",
+        json={**package_payload, "service_type": "NEWBORN"},
+        headers=_headers(owner),
+    )
+    assert different_service_package_response.status_code == 201
+
+    addon_payload = {
+        "organization_id": str(organization.id),
+        "branch_id": str(branch.id),
+        "name": "Album",
+        "price": "5000.00",
+    }
+    first_addon_response = client.post(
+        "/api/v1/addons", json=addon_payload, headers=_headers(owner)
+    )
+    assert first_addon_response.status_code == 201
+
+    duplicate_addon_response = client.post(
+        "/api/v1/addons", json=addon_payload, headers=_headers(owner)
+    )
+    assert duplicate_addon_response.status_code == 409
+    assert duplicate_addon_response.json()["message"] == (
+        "Addon name already exists for this branch"
+    )
+
+
 def test_sales_cannot_assign_photographer_and_cancelled_booking_is_read_only(
     client: TestClient, db: Session
 ) -> None:

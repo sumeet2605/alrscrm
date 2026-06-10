@@ -43,6 +43,12 @@ PERMISSION_DEFINITIONS: tuple[tuple[str, str, str], ...] = (
     ("bookings:schedules:write", "Manage schedules", "Create and update shoot schedules."),
     ("bookings:assignments:read", "Read assignments", "View photographer assignments."),
     ("bookings:assignments:write", "Manage assignments", "Assign photographers."),
+    ("galleries:read", "Read galleries", "View gallery management data."),
+    ("galleries:write", "Manage galleries", "Create and update galleries."),
+    ("galleries:photos:read", "Read gallery photos", "View gallery photos."),
+    ("galleries:photos:write", "Manage gallery photos", "Upload and remove gallery photos."),
+    ("galleries:favorites:read", "Read gallery favorites", "View favorite selections."),
+    ("galleries:favorites:write", "Manage gallery favorites", "Create and remove favorites."),
 )
 
 ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
@@ -73,6 +79,12 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "bookings:schedules:write",
         "bookings:assignments:read",
         "bookings:assignments:write",
+        "galleries:read",
+        "galleries:write",
+        "galleries:photos:read",
+        "galleries:photos:write",
+        "galleries:favorites:read",
+        "galleries:favorites:write",
     ),
     "Sales Executive": (
         "identity:users:read",
@@ -89,6 +101,8 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "bookings:packages:read",
         "bookings:addons:read",
         "bookings:schedules:read",
+        "galleries:read",
+        "galleries:photos:read",
     ),
     "Photographer": (
         "identity:users:read",
@@ -100,6 +114,9 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "bookings:read",
         "bookings:schedules:read",
         "bookings:assignments:read",
+        "galleries:read",
+        "galleries:photos:read",
+        "galleries:photos:write",
     ),
     "Editor": (
         "identity:users:read",
@@ -110,6 +127,8 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "sales:lost_reasons:read",
         "bookings:read",
         "bookings:schedules:read",
+        "galleries:read",
+        "galleries:photos:read",
     ),
     "Customer Success": (
         "identity:users:read",
@@ -120,6 +139,10 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "sales:lost_reasons:read",
         "bookings:read",
         "bookings:schedules:read",
+        "galleries:read",
+        "galleries:photos:read",
+        "galleries:favorites:read",
+        "galleries:favorites:write",
     ),
     "Client": (),
 }

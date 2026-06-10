@@ -1,6 +1,6 @@
 import { ArrowLeftOutlined, CheckOutlined, EditOutlined, PlusOutlined, SaveOutlined } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Card, DatePicker, Descriptions, Form, Input, InputNumber, List, Modal, Select, Space, Tag, Timeline, Typography, message } from "antd";
+import { App, Button, Card, DatePicker, Descriptions, Form, Input, InputNumber, List, Modal, Select, Space, Tag, Timeline, Typography } from "antd";
 import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
@@ -20,6 +20,7 @@ export function OpportunityDetailsPage() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
+  const { message } = App.useApp();
   const { user } = useAuth();
   const roleNames = user?.roles.map((role) => role.name) ?? [];
   const isEditing = searchParams.get("edit") === "1";

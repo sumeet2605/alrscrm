@@ -5,6 +5,10 @@ import { AssignmentBoardPage } from "../modules/bookings/AssignmentBoardPage";
 import { BookingCreatePage } from "../modules/bookings/BookingCreatePage";
 import { BookingDetailsPage } from "../modules/bookings/BookingDetailsPage";
 import { BookingListPage } from "../modules/bookings/BookingListPage";
+import { ClientSelectionPage } from "../modules/bookings/ClientSelectionPage";
+import { GalleryDetailsPage } from "../modules/bookings/GalleryDetailsPage";
+import { GalleryManagementPage } from "../modules/bookings/GalleryManagementPage";
+import { GalleryUploadPage } from "../modules/bookings/GalleryUploadPage";
 import { PackageManagementPage } from "../modules/bookings/PackageManagementPage";
 import { ScheduleCalendarPage } from "../modules/bookings/ScheduleCalendarPage";
 import { BranchManagementPage } from "../modules/branches/BranchManagementPage";
@@ -25,6 +29,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/client/galleries/:galleryId" element={<ClientSelectionPage />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
@@ -41,6 +46,9 @@ export function AppRoutes() {
           <Route path="/bookings/new" element={<BookingCreatePage />} />
           <Route path="/bookings/:bookingId" element={<BookingDetailsPage />} />
           <Route path="/packages" element={<PackageManagementPage />} />
+          <Route path="/galleries" element={<GalleryManagementPage />} />
+          <Route path="/galleries/:galleryId" element={<GalleryDetailsPage />} />
+          <Route path="/galleries/:galleryId/upload" element={<GalleryUploadPage />} />
           <Route path="/schedules" element={<ScheduleCalendarPage />} />
           <Route path="/schedules/assignments" element={<AssignmentBoardPage />} />
           <Route path="/branches" element={<BranchManagementPage />} />

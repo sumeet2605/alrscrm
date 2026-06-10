@@ -40,5 +40,7 @@ export function canAssignPhotographers(roleNames: string[]): boolean {
 }
 
 export function canManagePackages(roleNames: string[]): boolean {
-  return roleNames.some((role) => ["Super Admin", "Owner", "Branch Manager"].includes(role));
+  return roleNames.some((role) =>
+    ["Super Admin", "Organization Admin", "Owner", "Branch Manager"].includes(role)
+  );
 }
