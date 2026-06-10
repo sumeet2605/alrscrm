@@ -2,6 +2,7 @@ from logging.config import fileConfig
 
 from alembic import context
 from app.auth import models as auth_models  # noqa: F401
+from app.bookings import models as booking_models  # noqa: F401
 from app.core.config import get_settings
 from app.core.database import Base
 from app.families import models as family_models  # noqa: F401

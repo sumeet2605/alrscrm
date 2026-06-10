@@ -1,6 +1,12 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 
 import { DashboardLayout } from "../layouts/DashboardLayout";
+import { AssignmentBoardPage } from "../modules/bookings/AssignmentBoardPage";
+import { BookingCreatePage } from "../modules/bookings/BookingCreatePage";
+import { BookingDetailsPage } from "../modules/bookings/BookingDetailsPage";
+import { BookingListPage } from "../modules/bookings/BookingListPage";
+import { PackageManagementPage } from "../modules/bookings/PackageManagementPage";
+import { ScheduleCalendarPage } from "../modules/bookings/ScheduleCalendarPage";
 import { BranchManagementPage } from "../modules/branches/BranchManagementPage";
 import { DashboardPage } from "../modules/dashboard/DashboardPage";
 import { FamilyDetailsPage } from "../modules/families/FamilyDetailsPage";
@@ -31,6 +37,12 @@ export function AppRoutes() {
           <Route path="/sales/opportunities" element={<OpportunityListPage />} />
           <Route path="/sales/opportunities/new" element={<OpportunityFormPage />} />
           <Route path="/sales/opportunities/:opportunityId" element={<OpportunityDetailsPage />} />
+          <Route path="/bookings" element={<BookingListPage />} />
+          <Route path="/bookings/new" element={<BookingCreatePage />} />
+          <Route path="/bookings/:bookingId" element={<BookingDetailsPage />} />
+          <Route path="/packages" element={<PackageManagementPage />} />
+          <Route path="/schedules" element={<ScheduleCalendarPage />} />
+          <Route path="/schedules/assignments" element={<AssignmentBoardPage />} />
           <Route path="/branches" element={<BranchManagementPage />} />
           <Route path="/users" element={<UserManagementPage />} />
           <Route path="/roles" element={<RoleManagementPage />} />

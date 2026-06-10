@@ -11,6 +11,35 @@ export interface components {
       "meta"?: Record<string, unknown> | null;
       "success": boolean;
     };
+    "AssignmentRole": "LEAD_PHOTOGRAPHER" | "SECOND_PHOTOGRAPHER" | "ASSISTANT";
+    "BookingCreate": {
+      "advance_received"?: number | string;
+      "booking_date": string;
+      "booking_status"?: components["schemas"]["BookingStatus"];
+      "branch_id": string;
+      "family_id": string;
+      "items": components["schemas"]["BookingItemCreate"][];
+      "notes"?: string | null;
+      "opportunity_id": string;
+      "organization_id": string;
+    };
+    "BookingItemAddonCreate": {
+      "addon_id": string;
+    };
+    "BookingItemCreate": {
+      "addons"?: components["schemas"]["BookingItemAddonCreate"][];
+      "discount"?: number | string;
+      "package_id": string;
+      "service_type": components["schemas"]["ServiceType"];
+    };
+    "BookingStatus": "PENDING_ADVANCE" | "CONFIRMED" | "SCHEDULED" | "COMPLETED" | "CANCELLED";
+    "BookingUpdate": {
+      "advance_received"?: number | string | null;
+      "booking_date"?: string | null;
+      "booking_status"?: components["schemas"]["BookingStatus"] | null;
+      "items"?: components["schemas"]["BookingItemCreate"][] | null;
+      "notes"?: string | null;
+    };
     "BranchCreate": {
       "address"?: string | null;
       "city": string;
@@ -150,6 +179,43 @@ export interface components {
       "is_active"?: boolean | null;
       "name"?: string | null;
     };
+    "PackageAddonCreate": {
+      "branch_id": string;
+      "description"?: string | null;
+      "is_active"?: boolean;
+      "name": string;
+      "organization_id": string;
+      "price": number | string;
+    };
+    "PackageAddonUpdate": {
+      "branch_id"?: string | null;
+      "description"?: string | null;
+      "is_active"?: boolean | null;
+      "name"?: string | null;
+      "price"?: number | string | null;
+    };
+    "PackageCreate": {
+      "branch_id": string;
+      "description"?: string | null;
+      "is_active"?: boolean;
+      "name": string;
+      "organization_id": string;
+      "price": number | string;
+      "service_type": components["schemas"]["ServiceType"];
+    };
+    "PackageUpdate": {
+      "branch_id"?: string | null;
+      "description"?: string | null;
+      "is_active"?: boolean | null;
+      "name"?: string | null;
+      "price"?: number | string | null;
+      "service_type"?: components["schemas"]["ServiceType"] | null;
+    };
+    "PhotographerAssignmentCreate": {
+      "role": components["schemas"]["AssignmentRole"];
+      "shoot_schedule_id": string;
+      "user_id": string;
+    };
     "RefreshRequest": {
       "refresh_token": string;
     };
@@ -160,6 +226,23 @@ export interface components {
       "service_type": components["schemas"]["ServiceType"];
     };
     "ServiceType": "MATERNITY" | "NEWBORN" | "FAMILY" | "MILESTONE" | "CAKE_SMASH";
+    "ShootScheduleCreate": {
+      "booking_id": string;
+      "booking_item_id": string;
+      "location": string;
+      "notes"?: string | null;
+      "scheduled_end": string;
+      "scheduled_start": string;
+      "shoot_status"?: components["schemas"]["ShootStatus"];
+    };
+    "ShootScheduleUpdate": {
+      "location"?: string | null;
+      "notes"?: string | null;
+      "scheduled_end"?: string | null;
+      "scheduled_start"?: string | null;
+      "shoot_status"?: components["schemas"]["ShootStatus"] | null;
+    };
+    "ShootStatus": "NOT_SCHEDULED" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "RESCHEDULED" | "CANCELLED";
     "UserCreate": {
       "branch_id"?: string | null;
       "email": string;
@@ -197,6 +280,78 @@ export interface components {
 }
 
 export interface paths {
+  "/api/v1/addons": {
+    get: {
+      parameters: {
+      query: {
+        "branch_id"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["PackageAddonCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/addons/{addon_id}": {
+    put: {
+      parameters: {
+      path: {
+        "addon_id": string;
+      };
+    };
+      requestBody: components["schemas"]["PackageAddonUpdate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/assignments": {
+    get: {
+      parameters: {
+      query: {
+        "photographer_id"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["PhotographerAssignmentCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/assignments/{assignment_id}": {
+    delete: {
+      parameters: {
+      path: {
+        "assignment_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
   "/api/v1/auth/login": {
     post: {
       parameters: Record<string, never>;
@@ -230,6 +385,83 @@ export interface paths {
     post: {
       parameters: Record<string, never>;
       requestBody: components["schemas"]["RefreshRequest"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/bookings": {
+    get: {
+      parameters: {
+      query: {
+        "page"?: number;
+        "page_size"?: number;
+        "search"?: string | null;
+        "booking_status"?: components["schemas"]["BookingStatus"] | null;
+        "service_type"?: components["schemas"]["ServiceType"] | null;
+        "photographer_id"?: string | null;
+        "booking_from"?: string | null;
+        "booking_to"?: string | null;
+        "branch_id"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["BookingCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/bookings/metrics": {
+    get: {
+      parameters: Record<string, never>;
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      };
+    };
+  };
+  "/api/v1/bookings/{booking_id}": {
+    get: {
+      parameters: {
+      path: {
+        "booking_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    put: {
+      parameters: {
+      path: {
+        "booking_id": string;
+      };
+    };
+      requestBody: components["schemas"]["BookingUpdate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    delete: {
+      parameters: {
+      path: {
+        "booking_id": string;
+      };
+    };
+      requestBody: never;
       responses: {
       "200": components["schemas"]["APIResponse"];
       "422": components["schemas"]["HTTPValidationError"];
@@ -620,6 +852,54 @@ export interface paths {
       };
     };
   };
+  "/api/v1/packages": {
+    get: {
+      parameters: {
+      query: {
+        "branch_id"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["PackageCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/packages/{package_id}": {
+    get: {
+      parameters: {
+      path: {
+        "package_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    put: {
+      parameters: {
+      path: {
+        "package_id": string;
+      };
+    };
+      requestBody: components["schemas"]["PackageUpdate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
   "/api/v1/permissions": {
     get: {
       parameters: Record<string, never>;
@@ -635,6 +915,60 @@ export interface paths {
       requestBody: never;
       responses: {
       "200": components["schemas"]["APIResponse"];
+      };
+    };
+  };
+  "/api/v1/schedules": {
+    get: {
+      parameters: {
+      query: {
+        "page"?: number;
+        "page_size"?: number;
+        "shoot_status"?: components["schemas"]["ShootStatus"] | null;
+        "photographer_id"?: string | null;
+        "scheduled_from"?: string | null;
+        "scheduled_to"?: string | null;
+        "branch_id"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["ShootScheduleCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/schedules/{schedule_id}": {
+    get: {
+      parameters: {
+      path: {
+        "schedule_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    put: {
+      parameters: {
+      path: {
+        "schedule_id": string;
+      };
+    };
+      requestBody: components["schemas"]["ShootScheduleUpdate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
       };
     };
   };

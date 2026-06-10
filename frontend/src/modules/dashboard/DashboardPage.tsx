@@ -8,6 +8,7 @@ import {
 import { useQuery } from "@tanstack/react-query";
 import { Card, Col, Row, Space, Statistic, Table, Tag, Typography } from "antd";
 
+import { getBookingMetrics } from "../../api/bookings";
 import { listBranches, listUsers } from "../../api/identity";
 import { getSalesMetrics } from "../../api/sales";
 import { useAuth } from "../../contexts/AuthContext";
@@ -31,6 +32,10 @@ export function DashboardPage() {
   const salesMetricsQuery = useQuery({
     queryKey: ["dashboard", "sales-metrics"],
     queryFn: getSalesMetrics
+  });
+  const bookingMetricsQuery = useQuery({
+    queryKey: ["dashboard", "booking-metrics"],
+    queryFn: getBookingMetrics
   });
 
   return (
@@ -58,9 +63,9 @@ export function DashboardPage() {
         <Col xs={24} sm={12} xl={6}>
           <Card>
             <Statistic
-              title="Booked Opportunities"
-              value={salesMetricsQuery.data?.booked_opportunities ?? 0}
-              loading={salesMetricsQuery.isLoading}
+              title="Total Bookings"
+              value={bookingMetricsQuery.data?.total_bookings ?? 0}
+              loading={bookingMetricsQuery.isLoading}
               prefix={<CheckCircleOutlined />}
             />
           </Card>
@@ -90,9 +95,50 @@ export function DashboardPage() {
         <Col xs={24} sm={12} xl={6}>
           <Card>
             <Statistic
+              title="Cancelled Shoots"
+              value={bookingMetricsQuery.data?.cancelled_shoots ?? 0}
+              loading={bookingMetricsQuery.isLoading}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} xl={6}>
+          <Card>
+            <Statistic
+              title="Average Booking Value"
+              value={bookingMetricsQuery.data?.average_booking_value ?? 0}
+              loading={bookingMetricsQuery.isLoading}
+              prefix="₹"
+              precision={0}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} xl={6}>
+          <Card>
+            <Statistic
+              title="Photographer Utilization"
+              value={bookingMetricsQuery.data?.photographer_utilization ?? 0}
+              loading={bookingMetricsQuery.isLoading}
+              suffix="%"
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} xl={6}>
+          <Card>
+            <Statistic
               title="Open Opportunities"
               value={salesMetricsQuery.data?.open_opportunities ?? 0}
               loading={salesMetricsQuery.isLoading}
+            />
+          </Card>
+        </Col>
+      </Row>
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={12} xl={6}>
+          <Card>
+            <Statistic
+              title="Upcoming Shoots"
+              value={bookingMetricsQuery.data?.upcoming_shoots ?? 0}
+              loading={bookingMetricsQuery.isLoading}
               prefix={<DollarOutlined />}
             />
           </Card>
@@ -100,9 +146,9 @@ export function DashboardPage() {
         <Col xs={24} sm={12} xl={6}>
           <Card>
             <Statistic
-              title="Lost Opportunities"
-              value={salesMetricsQuery.data?.lost_opportunities ?? 0}
-              loading={salesMetricsQuery.isLoading}
+              title="Completed Shoots"
+              value={bookingMetricsQuery.data?.completed_shoots ?? 0}
+              loading={bookingMetricsQuery.isLoading}
             />
           </Card>
         </Col>
@@ -120,9 +166,11 @@ export function DashboardPage() {
         <Col xs={24} sm={12} xl={6}>
           <Card>
             <Statistic
-              title="Missed Follow Ups"
-              value={salesMetricsQuery.data?.missed_followups ?? 0}
-              loading={salesMetricsQuery.isLoading}
+              title="Revenue Booked"
+              value={bookingMetricsQuery.data?.revenue_booked ?? 0}
+              loading={bookingMetricsQuery.isLoading}
+              prefix="₹"
+              precision={0}
             />
           </Card>
         </Col>

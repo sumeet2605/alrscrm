@@ -3,8 +3,10 @@ import {
   ContactsOutlined,
   DashboardOutlined,
   LogoutOutlined,
+  ScheduleOutlined,
   RiseOutlined,
   SafetyCertificateOutlined,
+  ShopOutlined,
   TeamOutlined,
   UserOutlined
 } from "@ant-design/icons";
@@ -21,6 +23,8 @@ const navItems = [
   { key: "/dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
   { key: "/families", icon: <ContactsOutlined />, label: "Families" },
   { key: "/sales", icon: <RiseOutlined />, label: "Sales" },
+  { key: "/bookings", icon: <ShopOutlined />, label: "Bookings" },
+  { key: "/schedules", icon: <ScheduleOutlined />, label: "Schedules" },
   { key: "/branches", icon: <ApartmentOutlined />, label: "Branches" },
   { key: "/users", icon: <TeamOutlined />, label: "Users" },
   { key: "/roles", icon: <SafetyCertificateOutlined />, label: "Roles" }
