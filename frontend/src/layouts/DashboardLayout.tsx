@@ -6,6 +6,7 @@ import {
   DashboardOutlined,
   LogoutOutlined,
   ScheduleOutlined,
+  SendOutlined,
   RiseOutlined,
   SafetyCertificateOutlined,
   ShopOutlined,
@@ -55,6 +56,15 @@ const navItems: NavItem[] = [
       { key: "/production", label: "Production Dashboard" }
     ]
   },
+  {
+    key: "operations-menu",
+    icon: <SendOutlined />,
+    label: "Operations",
+    children: [
+      { key: "/delivery", label: "Delivery Queue" },
+      { key: "/delivery/dashboard", label: "Delivery Dashboard" }
+    ]
+  },
   { key: "/branches", icon: <ApartmentOutlined />, label: "Branches" },
   { key: "/users", icon: <TeamOutlined />, label: "Users" },
   { key: "/roles", icon: <SafetyCertificateOutlined />, label: "Roles" }
@@ -75,6 +85,8 @@ function filterNavItems(items: NavItem[], roleNames: string[]): MenuProps["items
 function selectedMenuPath(pathname: string): string {
   if (pathname.startsWith("/packages")) return "/packages";
   if (pathname.startsWith("/galleries")) return "/galleries";
+  if (pathname.startsWith("/delivery/dashboard")) return "/delivery/dashboard";
+  if (pathname.startsWith("/delivery")) return "/delivery";
   if (pathname.startsWith("/production/editing")) return "/production/editing";
   if (pathname.startsWith("/production/editor-dashboard")) return "/production/editor-dashboard";
   if (pathname.startsWith("/production")) return "/production";
@@ -123,7 +135,7 @@ export function DashboardLayout() {
         <Menu
           theme="dark"
           mode="inline"
-          defaultOpenKeys={["bookings-menu", "production-menu"]}
+          defaultOpenKeys={["bookings-menu", "production-menu", "operations-menu"]}
           selectedKeys={[selectedPath]}
           items={accessibleItems}
           onClick={({ key }) => navigate(key)}

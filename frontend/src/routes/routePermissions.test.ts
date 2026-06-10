@@ -27,4 +27,13 @@ describe("routePermissions", () => {
     expect(canAccessPath(["Customer Success"], "/production")).toBe(true);
     expect(canAccessPath(["Photographer"], "/production")).toBe(false);
   });
+
+  it("allows delivery access to managers and editors plus public client links", () => {
+    expect(canAccessPath(["Super Admin"], "/delivery")).toBe(true);
+    expect(canAccessPath(["Organization Admin"], "/delivery/dashboard")).toBe(true);
+    expect(canAccessPath(["Branch Manager"], "/delivery/job-1")).toBe(true);
+    expect(canAccessPath(["Editor"], "/delivery/job-1")).toBe(true);
+    expect(canAccessPath(["Photographer"], "/delivery")).toBe(false);
+    expect(canAccessPath([], "/client/delivery/delivery-1")).toBe(true);
+  });
 });

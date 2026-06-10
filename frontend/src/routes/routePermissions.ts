@@ -7,6 +7,7 @@ const fullAccessRoutes = [
   "/galleries",
   "/schedules",
   "/production",
+  "/delivery",
   "/branches",
   "/users",
   "/roles"
@@ -24,11 +25,21 @@ export const roleRoutes: Record<string, string[]> = {
     "/galleries",
     "/schedules",
     "/production",
+    "/delivery",
     "/users"
   ],
   "Sales Executive": ["/dashboard", "/families", "/sales", "/bookings", "/schedules"],
   Photographer: ["/dashboard", "/families", "/sales", "/bookings", "/galleries", "/schedules"],
-  Editor: ["/dashboard", "/families", "/sales", "/bookings", "/galleries", "/schedules", "/production"],
+  Editor: [
+    "/dashboard",
+    "/families",
+    "/sales",
+    "/bookings",
+    "/galleries",
+    "/schedules",
+    "/production",
+    "/delivery"
+  ],
   "Customer Success": [
     "/dashboard",
     "/families",
@@ -42,7 +53,12 @@ export const roleRoutes: Record<string, string[]> = {
 };
 
 export function canAccessPath(roleNames: string[], path: string): boolean {
-  if (path === "/" || path === "/login" || path.startsWith("/client/galleries")) {
+  if (
+    path === "/" ||
+    path === "/login" ||
+    path.startsWith("/client/galleries") ||
+    path.startsWith("/client/delivery")
+  ) {
     return true;
   }
   return roleNames.some((role) => roleRoutes[role]?.some((route) => path.startsWith(route)));

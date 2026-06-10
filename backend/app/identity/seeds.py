@@ -58,6 +58,13 @@ PERMISSION_DEFINITIONS: tuple[tuple[str, str, str], ...] = (
     ("editing:review", "Review editing jobs", "Submit editing work for review and review jobs."),
     ("editing:approve", "Approve editing jobs", "Approve editing jobs and mark them ready."),
     ("editing:dashboard", "View editing dashboards", "View production dashboards and metrics."),
+    ("delivery:view", "View delivery jobs", "View delivery management jobs."),
+    ("delivery:create", "Create delivery jobs", "Create delivery management jobs."),
+    ("delivery:update", "Update delivery jobs", "Update delivery lifecycle and settings."),
+    ("delivery:send", "Send deliveries", "Send delivery links to clients."),
+    ("delivery:reopen", "Reopen deliveries", "Approve client delivery reopen requests."),
+    ("delivery:download_audit", "View delivery downloads", "View delivery download audit logs."),
+    ("delivery:dashboard", "View delivery dashboards", "View delivery dashboards and metrics."),
 )
 
 ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
@@ -103,6 +110,13 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "editing:review",
         "editing:approve",
         "editing:dashboard",
+        "delivery:view",
+        "delivery:create",
+        "delivery:update",
+        "delivery:send",
+        "delivery:reopen",
+        "delivery:download_audit",
+        "delivery:dashboard",
     ),
     "Sales Executive": (
         "identity:users:read",
@@ -151,6 +165,7 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "editing:update",
         "editing:review",
         "editing:dashboard",
+        "delivery:view",
     ),
     "Customer Success": (
         "identity:users:read",

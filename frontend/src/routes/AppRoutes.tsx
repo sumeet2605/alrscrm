@@ -13,6 +13,10 @@ import { PackageManagementPage } from "../modules/bookings/PackageManagementPage
 import { ScheduleCalendarPage } from "../modules/bookings/ScheduleCalendarPage";
 import { BranchManagementPage } from "../modules/branches/BranchManagementPage";
 import { DashboardPage } from "../modules/dashboard/DashboardPage";
+import { ClientDeliveryPage } from "../modules/delivery/ClientDeliveryPage";
+import { DeliveryDashboardPage } from "../modules/delivery/DeliveryDashboardPage";
+import { DeliveryDetailPage } from "../modules/delivery/DeliveryDetailPage";
+import { DeliveryQueuePage } from "../modules/delivery/DeliveryQueuePage";
 import { FamilyDetailsPage } from "../modules/families/FamilyDetailsPage";
 import { FamilyFormPage } from "../modules/families/FamilyFormPage";
 import { FamilyListPage } from "../modules/families/FamilyListPage";
@@ -34,6 +38,7 @@ export function AppRoutes() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/client/galleries/:galleryId" element={<ClientSelectionPage />} />
+      <Route path="/client/delivery/:deliveryId" element={<ClientDeliveryPage />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
@@ -57,6 +62,9 @@ export function AppRoutes() {
           <Route path="/production/editing" element={<EditingQueuePage />} />
           <Route path="/production/editing/:jobId" element={<EditingJobDetailPage />} />
           <Route path="/production/editor-dashboard" element={<EditorDashboardPage />} />
+          <Route path="/delivery" element={<DeliveryQueuePage />} />
+          <Route path="/delivery/dashboard" element={<DeliveryDashboardPage />} />
+          <Route path="/delivery/:deliveryId" element={<DeliveryDetailPage />} />
           <Route path="/schedules" element={<ScheduleCalendarPage />} />
           <Route path="/schedules/assignments" element={<AssignmentBoardPage />} />
           <Route path="/branches" element={<BranchManagementPage />} />

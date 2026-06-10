@@ -8,6 +8,7 @@ from app.bookings.routes import (
     packages_router,
     schedules_router,
 )
+from app.delivery.routes import router as delivery_router
 from app.editing.routes import router as editing_router
 from app.families.routes import router as families_router
 from app.galleries.routes import router as galleries_router
@@ -34,3 +35,4 @@ api_router.include_router(schedules_router)
 api_router.include_router(assignments_router)
 api_router.include_router(galleries_router)
 api_router.include_router(editing_router)
+api_router.include_router(delivery_router)
