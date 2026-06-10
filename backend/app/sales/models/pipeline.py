@@ -4,7 +4,16 @@ from datetime import date, datetime
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import Date, DateTime, ForeignKey, ForeignKeyConstraint, Numeric, String, Text
+from sqlalchemy import (
+    CheckConstraint,
+    Date,
+    DateTime,
+    ForeignKey,
+    ForeignKeyConstraint,
+    Numeric,
+    String,
+    Text,
+)
 from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.orm import relationship as sa_relationship
 
@@ -29,6 +38,14 @@ class Opportunity(UUIDPrimaryKeyMixin, TimestampMixin, Base):
             ["branch_id", "organization_id"],
             ["branches.id", "branches.organization_id"],
             name="fk_opportunity_branch_organization",
+        ),
+        CheckConstraint(
+            "probability >= 0 AND probability <= 100",
+            name="ck_opportunity_probability_range",
+        ),
+        CheckConstraint(
+            "current_stage != 'LOST' OR lost_reason_id IS NOT NULL",
+            name="ck_opportunity_lost_requires_reason",
         ),
     )
 

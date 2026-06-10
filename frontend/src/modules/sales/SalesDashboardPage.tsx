@@ -1,7 +1,8 @@
 import { CalendarOutlined, CheckCircleOutlined, CloseCircleOutlined, DollarOutlined, PercentageOutlined, PlusOutlined } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Card, Col, List, Row, Space, Statistic, Tabs, Tag, Typography, message } from "antd";
+import { Button, Card, Col, Form, Input, List, Modal, Row, Select, Space, Statistic, Tabs, Tag, Typography, message } from "antd";
 import dayjs from "dayjs";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { getPipeline, getSalesMetrics, listFollowUps, listLostReasons, updateOpportunity } from "../../api/sales";
@@ -14,6 +15,8 @@ export function SalesDashboardPage() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const roleNames = user?.roles.map((role) => role.name) ?? [];
+  const [lostStageForm] = Form.useForm<{ lost_reason_id: string; stage_change_notes?: string }>();
+  const [lostStageOpportunity, setLostStageOpportunity] = useState<Opportunity | null>(null);
   const pipelineQuery = useQuery({ queryKey: ["sales", "pipeline"], queryFn: getPipeline });
   const metricsQuery = useQuery({ queryKey: ["sales", "metrics"], queryFn: getSalesMetrics });
   const today = dayjs().format("YYYY-MM-DD");
@@ -37,10 +40,26 @@ export function SalesDashboardPage() {
   const lostReasonsQuery = useQuery({ queryKey: ["lost-reasons"], queryFn: listLostReasons });
 
   const stageMutation = useMutation({
-    mutationFn: ({ id, stage }: { id: string; stage: OpportunityStage }) =>
-      updateOpportunity(id, { current_stage: stage }),
+    mutationFn: ({
+      id,
+      stage,
+      lostReasonId,
+      notes
+    }: {
+      id: string;
+      stage: OpportunityStage;
+      lostReasonId?: string;
+      notes?: string;
+    }) =>
+      updateOpportunity(id, {
+        current_stage: stage,
+        lost_reason_id: lostReasonId,
+        stage_change_notes: notes
+      }),
     onSuccess: async () => {
       message.success("Opportunity stage updated");
+      setLostStageOpportunity(null);
+      lostStageForm.resetFields();
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: ["sales"] }),
         queryClient.invalidateQueries({ queryKey: ["opportunities"] })
@@ -50,6 +69,23 @@ export function SalesDashboardPage() {
 
   const pipeline = pipelineQuery.data;
   const lostTotal = pipeline?.LOST.length ?? 0;
+  const handleStageDrop = (opportunityId: string, nextStage: OpportunityStage) => {
+    if (!pipeline || !canWriteSales(roleNames)) {
+      return;
+    }
+    const opportunity = opportunityStages
+      .flatMap((stage) => pipeline[stage] ?? [])
+      .find((item) => item.id === opportunityId);
+    if (!opportunity || opportunity.current_stage === nextStage) {
+      return;
+    }
+    if (nextStage === "LOST") {
+      setLostStageOpportunity(opportunity);
+      lostStageForm.resetFields();
+      return;
+    }
+    stageMutation.mutate({ id: opportunityId, stage: nextStage });
+  };
 
   return (
     <Space direction="vertical" size={16} className="page-stack">
@@ -88,8 +124,8 @@ export function SalesDashboardPage() {
                     onDragOver={(event) => event.preventDefault()}
                     onDrop={(event) => {
                       const id = event.dataTransfer.getData("opportunity-id");
-                      if (id && canWriteSales(roleNames)) {
-                        stageMutation.mutate({ id, stage });
+                      if (id) {
+                        handleStageDrop(id, stage);
                       }
                     }}
                   >
@@ -145,6 +181,39 @@ export function SalesDashboardPage() {
           }
         ]}
       />
+      <Modal
+        title="Mark Opportunity Lost"
+        open={Boolean(lostStageOpportunity)}
+        onCancel={() => setLostStageOpportunity(null)}
+        onOk={() => lostStageForm.submit()}
+        confirmLoading={stageMutation.isPending}
+      >
+        <Form
+          form={lostStageForm}
+          layout="vertical"
+          requiredMark={false}
+          onFinish={(values) =>
+            lostStageOpportunity &&
+            stageMutation.mutate({
+              id: lostStageOpportunity.id,
+              stage: "LOST",
+              lostReasonId: values.lost_reason_id,
+              notes: values.stage_change_notes
+            })
+          }
+        >
+          <Form.Item
+            label="Lost Reason"
+            name="lost_reason_id"
+            rules={[{ required: true, message: "Lost reason is required" }]}
+          >
+            <Select options={(lostReasonsQuery.data ?? []).map((reason) => ({ value: reason.id, label: reason.name }))} />
+          </Form.Item>
+          <Form.Item label="Notes" name="stage_change_notes">
+            <Input.TextArea rows={3} />
+          </Form.Item>
+        </Form>
+      </Modal>
     </Space>
   );
 }

@@ -1,8 +1,10 @@
-import { screen } from "@testing-library/react";
+import { fireEvent, screen, waitFor, within } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { SalesDashboardPage } from "./SalesDashboardPage";
 import { renderWithProviders } from "../../test/render";
+import { updateOpportunity } from "../../api/sales";
 
 vi.mock("../../contexts/AuthContext", () => ({
   useAuth: () => ({
@@ -68,8 +70,17 @@ vi.mock("../../api/sales", () => ({
     items: [],
     meta: { page: 1, page_size: 5, total: 0, pages: 0 }
   }),
-  listLostReasons: vi.fn().mockResolvedValue([]),
-  updateOpportunity: vi.fn()
+  listLostReasons: vi.fn().mockResolvedValue([
+    {
+      id: "reason-1",
+      name: "Stopped Responding",
+      description: null,
+      is_active: true,
+      created_at: "2026-06-10T00:00:00Z",
+      updated_at: "2026-06-10T00:00:00Z"
+    }
+  ]),
+  updateOpportunity: vi.fn().mockResolvedValue({})
 }));
 
 describe("SalesDashboardPage", () => {
@@ -84,5 +95,41 @@ describe("SalesDashboardPage", () => {
     expect(screen.getByText("Follow Up Compliance")).toBeInTheDocument();
     expect(await screen.findByText("Aarav Sharma")).toBeInTheDocument();
     expect(screen.getByText(/ALS-000001/)).toBeInTheDocument();
+  });
+
+  it("requires a lost reason before moving an opportunity to lost", async () => {
+    const user = userEvent.setup();
+    const { container } = renderWithProviders(<SalesDashboardPage />, ["/sales"]);
+
+    const card = await screen.findByText("Aarav Sharma");
+    const lostColumn = container.querySelectorAll(".pipeline-column")[6];
+    const dataTransfer = {
+      data: new Map<string, string>(),
+      setData(format: string, value: string) {
+        this.data.set(format, value);
+      },
+      getData(format: string) {
+        return this.data.get(format) ?? "";
+      }
+    };
+
+    fireEvent.dragStart(card.closest(".pipeline-card")!, { dataTransfer });
+    fireEvent.drop(lostColumn, { dataTransfer });
+
+    const dialog = await screen.findByRole("dialog", { name: "Mark Opportunity Lost" });
+    expect(within(dialog).getByText("Lost Reason")).toBeInTheDocument();
+
+    await user.click(within(dialog).getByRole("combobox"));
+    await user.click(await screen.findByText("Stopped Responding"));
+    await user.type(within(dialog).getByLabelText("Notes"), "No response after package");
+    await user.click(within(dialog).getByRole("button", { name: "OK" }));
+
+    await waitFor(() => {
+      expect(updateOpportunity).toHaveBeenCalledWith("opportunity-1", {
+        current_stage: "LOST",
+        lost_reason_id: "reason-1",
+        stage_change_notes: "No response after package"
+      });
+    });
   });
 });

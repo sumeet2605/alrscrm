@@ -238,9 +238,13 @@ def delete_opportunity(db: Session, opportunity_id: UUID, context: Authorization
 
 
 def get_pipeline(db: Session, context: AuthorizationContext) -> dict[str, list[Opportunity]]:
-    result = list_opportunities(db, context, page=1, page_size=100)
+    organization_id, branch_id = _scope_filters(context)
+    items = SalesRepository(db).list_pipeline_opportunities(
+        organization_id=organization_id,
+        branch_id=branch_id,
+    )
     grouped = {stage.value: [] for stage in OpportunityStage}
-    for item in result.items:
+    for item in items:
         grouped[item.current_stage].append(item)
     return grouped
 
@@ -281,9 +285,21 @@ def list_followups(
     due_to=None,
 ) -> PageResult:
     repository = SalesRepository(db)
-    if repository.mark_overdue_followups_missed():
-        db.commit()
     organization_id, scoped_branch_id = _scope_filters(context, branch_id)
+    missed_followup_ids = repository.mark_overdue_followups_missed(
+        organization_id, scoped_branch_id
+    )
+    for followup_id in missed_followup_ids:
+        record_audit_event(
+            db,
+            "followup.missed",
+            context.user_id,
+            "FollowUp",
+            followup_id,
+            metadata={"domain_event": "FollowUpMissed", "automatic": True},
+        )
+    if missed_followup_ids:
+        db.commit()
     return repository.list_followups(
         page=page,
         page_size=page_size,
@@ -366,9 +382,19 @@ def list_lost_reasons(db: Session) -> list[LostReason]:
 
 def get_metrics(db: Session, context: AuthorizationContext):
     repository = SalesRepository(db)
-    if repository.mark_overdue_followups_missed():
-        db.commit()
     organization_id, branch_id = _scope_filters(context)
+    missed_followup_ids = repository.mark_overdue_followups_missed(organization_id, branch_id)
+    for followup_id in missed_followup_ids:
+        record_audit_event(
+            db,
+            "followup.missed",
+            context.user_id,
+            "FollowUp",
+            followup_id,
+            metadata={"domain_event": "FollowUpMissed", "automatic": True},
+        )
+    if missed_followup_ids:
+        db.commit()
     return repository.aggregate_counts(organization_id, branch_id)
 
 

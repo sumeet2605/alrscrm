@@ -2,7 +2,7 @@ from datetime import UTC, date, datetime
 from uuid import UUID
 
 from sqlalchemy import func, or_
-from sqlalchemy.orm import Session, joinedload
+from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.families.models import Family
 from app.sales.enums import FollowUpStatus, OpportunityStage
@@ -29,6 +29,18 @@ class SalesRepository:
             joinedload(Opportunity.followups).joinedload(FollowUp.assigned_to_user),
             joinedload(Opportunity.opportunity_notes).joinedload(OpportunityNote.created_by_user),
             joinedload(Opportunity.stage_history).joinedload(
+                OpportunityStageHistory.changed_by_user
+            ),
+        )
+
+    def pipeline_options(self):
+        return (
+            joinedload(Opportunity.family),
+            joinedload(Opportunity.assigned_to_user),
+            joinedload(Opportunity.lost_reason),
+            selectinload(Opportunity.followups).joinedload(FollowUp.assigned_to_user),
+            selectinload(Opportunity.opportunity_notes).joinedload(OpportunityNote.created_by_user),
+            selectinload(Opportunity.stage_history).joinedload(
                 OpportunityStageHistory.changed_by_user
             ),
         )
@@ -87,6 +99,23 @@ class SalesRepository:
                 )
             )
         return paginate_query(query.order_by(Opportunity.created_at.desc()), page, page_size)
+
+    def list_pipeline_opportunities(
+        self,
+        *,
+        organization_id: UUID | None = None,
+        branch_id: UUID | None = None,
+    ) -> list[Opportunity]:
+        query = (
+            self.db.query(Opportunity)
+            .options(*self.pipeline_options())
+            .filter(Opportunity.deleted_at.is_(None))
+        )
+        if organization_id is not None:
+            query = query.filter(Opportunity.organization_id == organization_id)
+        if branch_id is not None:
+            query = query.filter(Opportunity.branch_id == branch_id)
+        return query.order_by(Opportunity.current_stage.asc(), Opportunity.created_at.desc()).all()
 
     def create_opportunity(self, payload: OpportunityCreate) -> Opportunity:
         opportunity = Opportunity(**payload.model_dump())
@@ -211,19 +240,43 @@ class SalesRepository:
             .all()
         )
 
-    def mark_overdue_followups_missed(self) -> int:
+    def mark_overdue_followups_missed(
+        self, organization_id: UUID | None, branch_id: UUID | None
+    ) -> list[UUID]:
+        if organization_id is None and branch_id is None:
+            return []
         today = date.today()
-        return (
+        query = (
             self.db.query(FollowUp)
+            .join(Opportunity, FollowUp.opportunity_id == Opportunity.id)
             .filter(FollowUp.status == FollowUpStatus.PENDING.value, FollowUp.due_date < today)
-            .update({"status": FollowUpStatus.MISSED.value})
+            .filter(Opportunity.deleted_at.is_(None))
         )
+        if organization_id is not None:
+            query = query.filter(Opportunity.organization_id == organization_id)
+        if branch_id is not None:
+            query = query.filter(Opportunity.branch_id == branch_id)
+        followup_ids = [item.id for item in query.with_entities(FollowUp.id).all()]
+        if followup_ids:
+            (
+                self.db.query(FollowUp)
+                .filter(FollowUp.id.in_(followup_ids))
+                .update(
+                    {"status": FollowUpStatus.MISSED.value},
+                    synchronize_session=False,
+                )
+            )
+        return followup_ids
 
     def aggregate_counts(
         self, organization_id: UUID | None, branch_id: UUID | None
     ) -> dict[str, int | float]:
         opportunity_query = self.db.query(Opportunity).filter(Opportunity.deleted_at.is_(None))
-        followup_query = self.db.query(FollowUp).join(Opportunity)
+        followup_query = (
+            self.db.query(FollowUp)
+            .join(Opportunity)
+            .filter(Opportunity.deleted_at.is_(None))
+        )
         if organization_id is not None:
             opportunity_query = opportunity_query.filter(
                 Opportunity.organization_id == organization_id

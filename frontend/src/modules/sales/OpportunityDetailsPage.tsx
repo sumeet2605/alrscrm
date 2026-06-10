@@ -1,34 +1,59 @@
-import { ArrowLeftOutlined, CheckOutlined, PlusOutlined } from "@ant-design/icons";
+import { ArrowLeftOutlined, CheckOutlined, EditOutlined, PlusOutlined, SaveOutlined } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Button, Card, Descriptions, Form, Input, List, Modal, Select, Space, Tag, Timeline, Typography, message } from "antd";
+import { Button, Card, DatePicker, Descriptions, Form, Input, InputNumber, List, Modal, Select, Space, Tag, Timeline, Typography, message } from "antd";
 import dayjs from "dayjs";
-import { useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
 import { listUsers } from "../../api/identity";
-import { createFollowUp, createOpportunityNote, getOpportunity, updateFollowUp } from "../../api/sales";
+import { createFollowUp, createOpportunityNote, getOpportunity, listLostReasons, updateFollowUp, updateOpportunity } from "../../api/sales";
 import { useAuth } from "../../contexts/AuthContext";
-import type { FollowUpPayload } from "../../types/sales";
-import { canWriteSales, followUpTypes, labelFromEnum, stageColor } from "./salesOptions";
+import type { FollowUpPayload, OpportunityUpdatePayload } from "../../types/sales";
+import { canWriteSales, followUpTypes, labelFromEnum, opportunityStages, opportunityTypes, stageColor } from "./salesOptions";
+
+interface OpportunityEditValues extends Omit<OpportunityUpdatePayload, "expected_booking_date"> {
+  expected_booking_date?: dayjs.Dayjs | null;
+}
 
 export function OpportunityDetailsPage() {
   const { opportunityId } = useParams();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const roleNames = user?.roles.map((role) => role.name) ?? [];
+  const isEditing = searchParams.get("edit") === "1";
   const [isFollowUpOpen, setIsFollowUpOpen] = useState(false);
   const [isNoteOpen, setIsNoteOpen] = useState(false);
   const [followUpForm] = Form.useForm<FollowUpPayload>();
   const [noteForm] = Form.useForm<{ note: string }>();
+  const [editForm] = Form.useForm<OpportunityEditValues>();
   const opportunityQuery = useQuery({
     queryKey: ["opportunities", opportunityId],
     queryFn: () => getOpportunity(opportunityId!),
     enabled: Boolean(opportunityId)
   });
   const usersQuery = useQuery({ queryKey: ["users", "followup-form"], queryFn: () => listUsers({ page: 1, page_size: 100 }) });
+  const lostReasonsQuery = useQuery({ queryKey: ["lost-reasons"], queryFn: listLostReasons });
   const opportunity = opportunityQuery.data;
   const editable = canWriteSales(roleNames) && opportunity?.current_stage !== "BOOKED";
+
+  useEffect(() => {
+    if (opportunity && isEditing) {
+      editForm.setFieldsValue({
+        branch_id: opportunity.branch_id,
+        family_id: opportunity.family_id,
+        assigned_to_user_id: opportunity.assigned_to_user_id,
+        opportunity_type: opportunity.opportunity_type,
+        current_stage: opportunity.current_stage,
+        estimated_value: opportunity.estimated_value,
+        probability: opportunity.probability,
+        expected_booking_date: opportunity.expected_booking_date ? dayjs(opportunity.expected_booking_date) : null,
+        lost_reason_id: opportunity.lost_reason_id,
+        notes: opportunity.notes
+      });
+    }
+  }, [editForm, isEditing, opportunity]);
 
   const followUpMutation = useMutation({
     mutationFn: createFollowUp,
@@ -55,6 +80,22 @@ export function OpportunityDetailsPage() {
       await queryClient.invalidateQueries({ queryKey: ["opportunities", opportunityId] });
     }
   });
+  const editMutation = useMutation({
+    mutationFn: (values: OpportunityEditValues) =>
+      updateOpportunity(opportunityId!, {
+        ...values,
+        expected_booking_date: values.expected_booking_date?.format("YYYY-MM-DD") ?? null
+      }),
+    onSuccess: async () => {
+      message.success("Opportunity updated");
+      setSearchParams({});
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["opportunities", opportunityId] }),
+        queryClient.invalidateQueries({ queryKey: ["opportunities"] }),
+        queryClient.invalidateQueries({ queryKey: ["sales"] })
+      ]);
+    }
+  });
 
   return (
     <Space direction="vertical" size={16} className="page-stack">
@@ -63,8 +104,62 @@ export function OpportunityDetailsPage() {
           <Typography.Title level={2}>{opportunity?.family?.primary_contact_name ?? "Opportunity"}</Typography.Title>
           <Typography.Text type="secondary">{opportunity?.family?.family_code ?? "Loading opportunity"}</Typography.Text>
         </div>
-        <Button icon={<ArrowLeftOutlined />} onClick={() => navigate("/sales/opportunities")}>Back</Button>
+        <Space>
+          {editable && !isEditing && <Button icon={<EditOutlined />} onClick={() => setSearchParams({ edit: "1" })}>Edit</Button>}
+          <Button icon={<ArrowLeftOutlined />} onClick={() => navigate("/sales/opportunities")}>Back</Button>
+        </Space>
       </div>
+      {editable && isEditing && (
+        <Card title="Edit Opportunity">
+          <Form form={editForm} layout="vertical" requiredMark={false} onFinish={(values) => editMutation.mutate(values)}>
+            <Form.Item name="branch_id" hidden><Input /></Form.Item>
+            <Form.Item name="family_id" hidden><Input /></Form.Item>
+            <div className="form-grid">
+              <Form.Item label="Assigned User" name="assigned_to_user_id" rules={[{ required: true, message: "Assigned user is required" }]}>
+                <Select options={(usersQuery.data?.items ?? []).map((item) => ({ value: item.id, label: `${item.first_name} ${item.last_name}` }))} />
+              </Form.Item>
+              <Form.Item label="Type" name="opportunity_type" rules={[{ required: true, message: "Type is required" }]}>
+                <Select options={opportunityTypes.map((value) => ({ value, label: labelFromEnum(value) }))} />
+              </Form.Item>
+              <Form.Item label="Stage" name="current_stage" rules={[{ required: true, message: "Stage is required" }]}>
+                <Select options={opportunityStages.map((value) => ({ value, label: labelFromEnum(value) }))} />
+              </Form.Item>
+              <Form.Item label="Estimated Value" name="estimated_value" rules={[{ required: true, message: "Estimated value is required" }]}>
+                <InputNumber min={0} className="full-width-control" />
+              </Form.Item>
+              <Form.Item label="Probability" name="probability" rules={[{ type: "number", min: 0, max: 100, message: "Probability must be between 0 and 100" }]}>
+                <InputNumber min={0} max={100} className="full-width-control" />
+              </Form.Item>
+              <Form.Item label="Expected Booking" name="expected_booking_date">
+                <DatePicker className="full-width-control" />
+              </Form.Item>
+              <Form.Item
+                label="Lost Reason"
+                name="lost_reason_id"
+                dependencies={["current_stage"]}
+                rules={[
+                  ({ getFieldValue }) => ({
+                    validator(_, value) {
+                      if (getFieldValue("current_stage") !== "LOST" || value) {
+                        return Promise.resolve();
+                      }
+                      return Promise.reject(new Error("Lost reason is required when stage is Lost"));
+                    }
+                  })
+                ]}
+              >
+                <Select allowClear options={(lostReasonsQuery.data ?? []).map((reason) => ({ value: reason.id, label: reason.name }))} />
+              </Form.Item>
+            </div>
+            <Form.Item label="Notes" name="notes"><Input.TextArea rows={4} /></Form.Item>
+            <Form.Item label="Stage Change Notes" name="stage_change_notes"><Input.TextArea rows={3} /></Form.Item>
+            <div className="form-actions">
+              <Button onClick={() => setSearchParams({})}>Cancel</Button>
+              <Button type="primary" icon={<SaveOutlined />} htmlType="submit" loading={editMutation.isPending}>Save Changes</Button>
+            </div>
+          </Form>
+        </Card>
+      )}
       <Card loading={opportunityQuery.isLoading} title="Opportunity Information">
         {opportunity && (
           <Descriptions bordered size="small" column={{ xs: 1, md: 2, xl: 3 }}>
