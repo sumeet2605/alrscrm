@@ -9,6 +9,7 @@ from app.identity.schemas.role import RoleRead
 class UserBase(BaseModel):
     organization_id: UUID
     branch_id: UUID | None = None
+    username: str | None = Field(default=None, min_length=1, max_length=80)
     email: EmailStr
     first_name: str = Field(min_length=1, max_length=120)
     last_name: str = Field(min_length=1, max_length=120)

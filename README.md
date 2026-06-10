@@ -31,12 +31,21 @@ docker compose up --build
 
 The API runs at `http://localhost:8000`.
 
+Local Docker startup seeds this super admin account:
+
+```text
+username: admin
+email: admin@admin.com
+password: Admin@123
+```
+
 Useful commands:
 
 ```bash
 cd backend
 alembic upgrade head
 python scripts/seed_identity.py
+python scripts/seed_super_admin.py
 uvicorn app.main:app --reload
 ```
 

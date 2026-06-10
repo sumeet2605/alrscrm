@@ -13,6 +13,7 @@ services:
     command: >
       sh -c "alembic upgrade head &&
              python scripts/seed_identity.py &&
+             python scripts/seed_super_admin.py &&
              uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     volumes:
       - ./backend:/app

@@ -28,6 +28,7 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
 
     organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
     branch_id: Mapped[UUID | None] = mapped_column(nullable=True)
+    username: Mapped[str | None] = mapped_column(String(80), nullable=True, index=True)
     email: Mapped[str] = mapped_column(String(255), nullable=False, index=True)
     password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
     first_name: Mapped[str] = mapped_column(String(120), nullable=False)

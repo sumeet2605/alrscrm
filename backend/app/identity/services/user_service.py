@@ -22,6 +22,13 @@ def _normalize_email(email: str) -> str:
     return email.strip().lower()
 
 
+def _normalize_username(username: str | None) -> str | None:
+    if username is None:
+        return None
+    normalized = username.strip().lower()
+    return normalized or None
+
+
 def list_users(
     db: Session, context: AuthorizationContext | None = None, page: int = 1, page_size: int = 50
 ) -> PageResult:
@@ -88,6 +95,7 @@ def create_user(
             raise ForbiddenError("User branch is outside the caller scope")
     data = payload.model_dump(exclude={"password", "role_ids"})
     data["email"] = _normalize_email(data["email"])
+    data["username"] = _normalize_username(data.get("username"))
     user = User(**data, password_hash=hash_password(payload.password))
     user.roles = roles
     db.add(user)
@@ -119,6 +127,8 @@ def update_user(
         _revoke_user_sessions(db, user.id)
     if "email" in data and data["email"] is not None:
         data["email"] = _normalize_email(data["email"])
+    if "username" in data:
+        data["username"] = _normalize_username(data["username"])
     if context is not None and not context.is_platform_admin:
         if organization_id != context.organization_id:
             raise ForbiddenError("User organization is outside the caller scope")

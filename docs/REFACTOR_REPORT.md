@@ -111,6 +111,8 @@ Results:
   deleting them.
 - List endpoint `data` remains an array; `meta` was added for pagination.
 - `/api/v1/auth/logout` is additive.
+- Local Docker startup now seeds a super admin user:
+  `admin` / `admin@admin.com` / `Admin@123`.
 
 ## Remaining Operational Work
 
