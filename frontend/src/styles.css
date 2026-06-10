@@ -131,6 +131,13 @@ body {
   align-items: center;
 }
 
+.family-toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.4fr) repeat(3, minmax(150px, 0.7fr)) minmax(240px, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
 .table-subtext {
   display: block;
   color: #6b7280;
@@ -141,6 +148,29 @@ body {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 12px;
+}
+
+.inline-form-row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1fr) minmax(160px, 220px) minmax(160px, 220px) auto;
+  gap: 12px;
+  align-items: start;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.details-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.full-width-control {
+  width: 100%;
 }
 
 .status-row {
@@ -178,7 +208,10 @@ body {
   }
 
   .table-toolbar,
-  .form-grid {
+  .family-toolbar,
+  .form-grid,
+  .inline-form-row,
+  .details-grid {
     grid-template-columns: 1fr;
   }
 }

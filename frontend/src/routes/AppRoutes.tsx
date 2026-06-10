@@ -3,6 +3,9 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { DashboardLayout } from "../layouts/DashboardLayout";
 import { BranchManagementPage } from "../modules/branches/BranchManagementPage";
 import { DashboardPage } from "../modules/dashboard/DashboardPage";
+import { FamilyDetailsPage } from "../modules/families/FamilyDetailsPage";
+import { FamilyFormPage } from "../modules/families/FamilyFormPage";
+import { FamilyListPage } from "../modules/families/FamilyListPage";
 import { RoleManagementPage } from "../modules/roles/RoleManagementPage";
 import { UserManagementPage } from "../modules/users/UserManagementPage";
 import { LoginPage } from "../pages/LoginPage";
@@ -16,6 +19,10 @@ export function AppRoutes() {
         <Route element={<DashboardLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/families" element={<FamilyListPage />} />
+          <Route path="/families/new" element={<FamilyFormPage />} />
+          <Route path="/families/:familyId" element={<FamilyDetailsPage />} />
+          <Route path="/families/:familyId/edit" element={<FamilyFormPage />} />
           <Route path="/branches" element={<BranchManagementPage />} />
           <Route path="/users" element={<UserManagementPage />} />
           <Route path="/roles" element={<RoleManagementPage />} />

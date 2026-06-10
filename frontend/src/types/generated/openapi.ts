@@ -31,9 +31,61 @@ export interface components {
       "organization_id"?: string | null;
       "phone"?: string | null;
     };
+    "FamilyAddressCreate": {
+      "address_line_1": string;
+      "address_line_2"?: string | null;
+      "city": string;
+      "country": string;
+      "postal_code": string;
+      "state": string;
+    };
+    "FamilyCreate": {
+      "address"?: components["schemas"]["FamilyAddressCreate"] | null;
+      "branch_id": string;
+      "city"?: string | null;
+      "expected_delivery_date"?: string | null;
+      "members"?: components["schemas"]["FamilyMemberCreate"][];
+      "notes"?: string | null;
+      "organization_id": string;
+      "partner_email"?: string | null;
+      "partner_name"?: string | null;
+      "partner_phone"?: string | null;
+      "primary_contact_email"?: string | null;
+      "primary_contact_name": string;
+      "primary_contact_phone": string;
+      "service_interests"?: components["schemas"]["ServiceInterestCreate"][];
+      "source"?: components["schemas"]["LeadSource"];
+      "status"?: components["schemas"]["FamilyStatus"];
+    };
+    "FamilyMemberCreate": {
+      "date_of_birth"?: string | null;
+      "gender"?: components["schemas"]["Gender"] | null;
+      "name": string;
+      "relationship": components["schemas"]["Relationship"];
+    };
+    "FamilyStatus": string;
+    "FamilyUpdate": {
+      "address"?: components["schemas"]["FamilyAddressCreate"] | null;
+      "branch_id"?: string | null;
+      "city"?: string | null;
+      "expected_delivery_date"?: string | null;
+      "members"?: components["schemas"]["FamilyMemberCreate"][] | null;
+      "notes"?: string | null;
+      "partner_email"?: string | null;
+      "partner_name"?: string | null;
+      "partner_phone"?: string | null;
+      "primary_contact_email"?: string | null;
+      "primary_contact_name"?: string | null;
+      "primary_contact_phone"?: string | null;
+      "service_interests"?: components["schemas"]["ServiceInterestCreate"][] | null;
+      "source"?: components["schemas"]["LeadSource"] | null;
+      "status"?: components["schemas"]["FamilyStatus"] | null;
+    };
+    "Gender": string;
     "HTTPValidationError": {
       "detail"?: components["schemas"]["ValidationError"][];
     };
+    "LeadSource": string;
     "LoginRequest": {
       "email": string;
       "password": string;
@@ -51,6 +103,13 @@ export interface components {
     "RefreshRequest": {
       "refresh_token": string;
     };
+    "Relationship": string;
+    "ServiceInterestCreate": {
+      "notes"?: string | null;
+      "priority"?: number;
+      "service_type": components["schemas"]["ServiceType"];
+    };
+    "ServiceType": string;
     "UserCreate": {
       "branch_id"?: string | null;
       "email": string;
@@ -179,6 +238,92 @@ export interface paths {
       parameters: {
       path: {
         "branch_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/families": {
+    get: {
+      parameters: {
+      query: {
+        "page"?: number;
+        "page_size"?: number;
+        "search"?: string | null;
+        "status"?: components["schemas"]["FamilyStatus"] | null;
+        "source"?: components["schemas"]["LeadSource"] | null;
+        "branch_id"?: string | null;
+        "edd_from"?: string | null;
+        "edd_to"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["FamilyCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/families/search": {
+    get: {
+      parameters: {
+      query: {
+        "page"?: number;
+        "page_size"?: number;
+        "name"?: string | null;
+        "phone"?: string | null;
+        "email"?: string | null;
+        "family_code"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/families/{family_id}": {
+    get: {
+      parameters: {
+      path: {
+        "family_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    put: {
+      parameters: {
+      path: {
+        "family_id": string;
+      };
+    };
+      requestBody: components["schemas"]["FamilyUpdate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    delete: {
+      parameters: {
+      path: {
+        "family_id": string;
       };
     };
       requestBody: never;

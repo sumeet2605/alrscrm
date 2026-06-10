@@ -23,6 +23,9 @@ PERMISSION_DEFINITIONS: tuple[tuple[str, str, str], ...] = (
     ("identity:users:write", "Manage users", "Create and update users."),
     ("identity:roles:read", "Read roles", "View roles."),
     ("identity:permissions:read", "Read permissions", "View permissions."),
+    ("families:read", "Read families", "View family CRM records."),
+    ("families:write", "Manage families", "Create and update family CRM records."),
+    ("families:delete", "Delete families", "Soft delete family CRM records."),
 )
 
 ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
@@ -33,11 +36,19 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "identity:users:read",
         "identity:roles:read",
         "identity:permissions:read",
+        "families:read",
+        "families:write",
+        "families:delete",
     ),
-    "Sales Executive": ("identity:users:read", "identity:roles:read"),
-    "Photographer": ("identity:users:read", "identity:roles:read"),
-    "Editor": ("identity:users:read", "identity:roles:read"),
-    "Customer Success": ("identity:users:read", "identity:roles:read"),
+    "Sales Executive": (
+        "identity:users:read",
+        "identity:roles:read",
+        "families:read",
+        "families:write",
+    ),
+    "Photographer": ("identity:users:read", "identity:roles:read", "families:read"),
+    "Editor": ("identity:users:read", "identity:roles:read", "families:read"),
+    "Customer Success": ("identity:users:read", "identity:roles:read", "families:read"),
     "Client": (),
 }
 

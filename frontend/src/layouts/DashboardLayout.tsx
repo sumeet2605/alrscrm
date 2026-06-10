@@ -1,5 +1,6 @@
 import {
   ApartmentOutlined,
+  ContactsOutlined,
   DashboardOutlined,
   LogoutOutlined,
   SafetyCertificateOutlined,
@@ -17,6 +18,7 @@ const { Header, Sider, Content } = Layout;
 
 const navItems = [
   { key: "/dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
+  { key: "/families", icon: <ContactsOutlined />, label: "Families" },
   { key: "/branches", icon: <ApartmentOutlined />, label: "Branches" },
   { key: "/users", icon: <TeamOutlined />, label: "Users" },
   { key: "/roles", icon: <SafetyCertificateOutlined />, label: "Roles" }
@@ -70,9 +72,9 @@ export function DashboardLayout() {
       <Layout>
         <Header className="app-header">
           <div>
-            <Typography.Text strong>Identity & Access</Typography.Text>
+            <Typography.Text strong>Family CRM</Typography.Text>
             <Typography.Text type="secondary" className="header-subtitle">
-              Sprint 1 control plane
+              Studio operations workspace
             </Typography.Text>
           </div>
           <Dropdown menu={{ items: menuItems }} trigger={["click"]}>

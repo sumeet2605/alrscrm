@@ -1,11 +1,11 @@
 export const roleRoutes: Record<string, string[]> = {
-  Owner: ["/dashboard", "/branches", "/users", "/roles"],
-  "Branch Manager": ["/dashboard", "/users"],
-  "Sales Executive": ["/dashboard"],
-  Photographer: ["/dashboard"],
-  Editor: ["/dashboard"],
-  "Customer Success": ["/dashboard"],
-  "Super Admin": ["/dashboard", "/branches", "/users", "/roles"]
+  Owner: ["/dashboard", "/families", "/branches", "/users", "/roles"],
+  "Branch Manager": ["/dashboard", "/families", "/users"],
+  "Sales Executive": ["/dashboard", "/families"],
+  Photographer: ["/dashboard", "/families"],
+  Editor: ["/dashboard", "/families"],
+  "Customer Success": ["/dashboard", "/families"],
+  "Super Admin": ["/dashboard", "/families", "/branches", "/users", "/roles"]
 };
 
 export function canAccessPath(roleNames: string[], path: string): boolean {
