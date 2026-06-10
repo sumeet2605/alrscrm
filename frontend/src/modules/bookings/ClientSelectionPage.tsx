@@ -121,6 +121,7 @@ export function ClientSelectionPage() {
                   fallback="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw=="
                 />
                 <Button
+                  aria-label={selected ? "Photo selected" : "Select photo"}
                   shape="circle"
                   className="favorite-button"
                   icon={selected ? <HeartFilled /> : <HeartOutlined />}

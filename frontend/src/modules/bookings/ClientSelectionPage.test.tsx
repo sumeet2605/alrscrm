@@ -58,14 +58,14 @@ describe("ClientSelectionPage", () => {
     expect(await screen.findByText("Client Gallery")).toBeInTheDocument();
     await user.type(screen.getByPlaceholderText("Your name"), "Client Parent");
     await user.type(screen.getByPlaceholderText("Email"), "client@example.com");
-    await user.click(screen.getByRole("button"));
+    await user.click(screen.getByRole("button", { name: "Select photo" }));
 
     await waitFor(() =>
       expect(mocks.addPublicGalleryFavorite).toHaveBeenCalledWith("gallery-1", {
         gallery_photo_id: "photo-1",
         selected_by_name: "Client Parent",
         selected_by_email: "client@example.com"
-      })
+      }, undefined)
     );
   });
 });

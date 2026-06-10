@@ -1,4 +1,4 @@
-import { LinkOutlined, UploadOutlined } from "@ant-design/icons";
+import { CopyOutlined, LinkOutlined, ShareAltOutlined, UploadOutlined } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   App,
@@ -16,7 +16,7 @@ import {
   DatePicker,
 } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { getGallery, updateGallery, reopenSelection, createUpgradeRequest } from "../../api/galleries";
 import dayjs from "dayjs";
@@ -60,7 +60,49 @@ export function GalleryDetailsPage() {
   });
   const gallery = galleryQuery.data;
   const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
+  const [shareModalVisible, setShareModalVisible] = useState(false);
   const [upgradeForm] = Form.useForm();
+  const [shareForm] = Form.useForm<{
+    password?: string;
+    expires_at?: dayjs.Dayjs | null;
+  }>();
+  const publicGalleryUrl = useMemo(() => {
+    if (!galleryId) return "";
+    return `${window.location.origin}/client/galleries/${galleryId}`;
+  }, [galleryId]);
+
+  useEffect(() => {
+    if (gallery && shareModalVisible) {
+      shareForm.setFieldsValue({
+        password: "",
+        expires_at: gallery.expires_at ? dayjs(gallery.expires_at) : null
+      });
+    }
+  }, [gallery, shareForm, shareModalVisible]);
+
+  const copyPublicLink = async () => {
+    try {
+      await navigator.clipboard.writeText(publicGalleryUrl);
+      message.success("Gallery link copied");
+    } catch {
+      message.error("Unable to copy link");
+    }
+  };
+
+  const saveShareSettings = async () => {
+    const values = await shareForm.validateFields();
+    await settingsMutation.mutateAsync({
+      password: values.password?.trim() ? values.password.trim() : undefined,
+      expires_at: values.expires_at ? values.expires_at.toISOString() : null
+    });
+    setShareModalVisible(false);
+  };
+
+  const clearGalleryPassword = async () => {
+    await settingsMutation.mutateAsync({ password: null });
+    shareForm.setFieldValue("password", "");
+    message.success("Gallery password cleared");
+  };
 
   return (
     <Space direction="vertical" size={16} className="page-stack">
@@ -72,6 +114,13 @@ export function GalleryDetailsPage() {
           </Typography.Text>
         </div>
         <Space>
+          <Button
+            aria-label="Share gallery"
+            icon={<ShareAltOutlined />}
+            onClick={() => setShareModalVisible(true)}
+          >
+            Share
+          </Button>
           <Button icon={<LinkOutlined />} onClick={() => navigate(`/client/galleries/${galleryId}`)}>
             Public View
           </Button>
@@ -214,6 +263,60 @@ export function GalleryDetailsPage() {
               </Form>
             </Modal>
           </div>
+          <Modal
+            title="Share Gallery"
+            open={shareModalVisible}
+            onCancel={() => setShareModalVisible(false)}
+            onOk={saveShareSettings}
+            okText="Save Sharing Settings"
+            confirmLoading={settingsMutation.isPending}
+          >
+            <Space direction="vertical" size={16} className="full-width-control">
+              <Typography.Text type="secondary">
+                Share this client gallery link after opening selection. Password is optional and write-only.
+              </Typography.Text>
+              <Input
+                readOnly
+                value={publicGalleryUrl}
+                addonAfter={
+                  <Button
+                    type="text"
+                    size="small"
+                    icon={<CopyOutlined />}
+                    onClick={copyPublicLink}
+                    aria-label="Copy gallery link"
+                  />
+                }
+              />
+              <Form form={shareForm} layout="vertical" requiredMark={false}>
+                <Form.Item
+                  name="password"
+                  label="Gallery Password"
+                  extra="Leave blank to keep the current password. Use Clear Password to remove it."
+                >
+                  <Input.Password autoComplete="new-password" placeholder="Set a client access password" />
+                </Form.Item>
+                <Form.Item name="expires_at" label="Link Expiry">
+                  <DatePicker showTime className="full-width-control" />
+                </Form.Item>
+              </Form>
+              <Space wrap>
+                <Button
+                  aria-label="Copy Link"
+                  onClick={copyPublicLink}
+                  icon={<CopyOutlined />}
+                >
+                  Copy Link
+                </Button>
+                <Button onClick={() => statusMutation.mutate("SELECTION_OPEN")}>
+                  Open Selection
+                </Button>
+                <Button danger onClick={clearGalleryPassword} loading={settingsMutation.isPending}>
+                  Clear Password
+                </Button>
+              </Space>
+            </Space>
+          </Modal>
         </>
       ) : null}
     </Space>

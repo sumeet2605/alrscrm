@@ -226,6 +226,13 @@ def test_editing_job_auto_created_and_workflow_completes(
     assert ready_response.status_code == 200
     assert ready_response.json()["data"]["editing_status"] == "READY_FOR_DELIVERY"
 
+    ready_update_response = client.put(
+        f"/api/v1/editing/jobs/{job['id']}",
+        json={"notes": "Attempted correction after delivery readiness"},
+        headers=_headers(owner),
+    )
+    assert ready_update_response.status_code == 400
+
     metrics_response = client.get("/api/v1/editing/metrics", headers=_headers(owner))
     assert metrics_response.status_code == 200
     assert metrics_response.json()["data"]["ready_for_delivery"] == 1
@@ -262,3 +269,26 @@ def test_gallery_upgrade_request_is_branch_scoped(client: TestClient, db: Sessio
         headers=_headers(other_manager),
     )
     assert approve_response.status_code == 404
+
+
+def test_editing_job_access_is_tenant_scoped(client: TestClient, db: Session) -> None:
+    _, _, owner, photographer, _, booking, item = _fixture(db)
+    _submitted_gallery(client, owner, photographer, booking, item)
+    list_response = client.get("/api/v1/editing/jobs", headers=_headers(owner))
+    assert list_response.status_code == 200
+    job_id = list_response.json()["data"][0]["id"]
+
+    other_organization = Organization(name="Other Editing Studio", code="EDO", is_active=True)
+    other_branch = Branch(
+        organization=other_organization,
+        name="Other Editing Branch",
+        code="EDO-BR",
+        city="Delhi",
+        is_active=True,
+    )
+    db.add(other_organization)
+    db.commit()
+    other_owner = _create_user(db, other_organization, other_branch, "Owner", ".other-tenant")
+
+    scoped_response = client.get(f"/api/v1/editing/jobs/{job_id}", headers=_headers(other_owner))
+    assert scoped_response.status_code == 403

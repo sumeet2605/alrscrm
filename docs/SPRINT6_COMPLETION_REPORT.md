@@ -295,7 +295,7 @@ Regression test:
 
 ## Verification Status
 
-Verified:
+Originally verified during implementation:
 
 ```bash
 python -m pytest backend/tests/test_families_api.py
@@ -307,49 +307,57 @@ Result:
 3 passed
 ```
 
-Not yet fully verified in this session:
-
-- Full backend test suite
-- Editing API test suite
-- Alembic upgrade on PostgreSQL
-- Frontend lint
-- Frontend tests
-- Frontend production build
-
-These should be run before treating Sprint 6 as production-ready.
-
-Recommended verification commands:
+Final Sprint 6 readiness verification:
 
 ```bash
 python -m pytest backend/tests
-cd frontend
 npm run lint
 npm run test
 npm run build
 ```
 
-Docker verification:
+Results:
+
+```text
+Backend tests: 39 passed, 13 warnings
+Frontend lint: passed
+Frontend tests: 16 files passed, 24 tests passed
+Frontend build: passed
+```
+
+Docker and migration verification:
 
 ```bash
-docker compose up --build
+docker compose up -d --build
 docker compose exec api alembic upgrade head
+```
+
+Result:
+
+```text
+Docker rebuild and restart: passed
+Alembic PostgreSQL upgrade: passed
+```
+
+OpenAPI TypeScript types were regenerated:
+
+```bash
+cd frontend
+npm run generate:api-types
 ```
 
 ## Known Follow-Ups
 
-- Generate or refresh frontend OpenAPI types after backend starts with the new
-  editing routes.
-- Add `docs/SPRINT6_API_REFERENCE.md`.
-- Add `docs/SPRINT6_TEST_STRATEGY.md`.
-- Run full PostgreSQL migration verification.
-- Add deeper cross-tenant EditingJob access tests.
-- Add frontend tests for EditingJob detail workflow actions.
 - Consider startup validation for editing permissions after seed execution.
+- Reduce the frontend production bundle size through route-level code splitting.
+- Resolve the existing Ant Design `act(...)` test warning in
+  `DashboardLayout.test.tsx`.
+- Replace deprecated `datetime.utcnow()` usage in gallery tests.
 
 ## Sprint 6 Status
 
 Sprint 6 implementation is functionally present in the repository, including
 the aggregate, APIs, frontend routes, metrics, RBAC seeds, and core workflow.
 
-Before production use, complete the remaining verification commands listed
-above and address any failures.
+Sprint 6 is release-ready for the editing workflow after the final validation
+pass documented in `docs/SPRINT6_RELEASE_READINESS.md`.

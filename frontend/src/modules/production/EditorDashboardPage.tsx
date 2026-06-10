@@ -5,7 +5,7 @@ import {
   UserSwitchOutlined
 } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
-import { Card, Col, Row, Space, Statistic, Typography } from "antd";
+import { Alert, Card, Col, Row, Space, Statistic, Typography } from "antd";
 
 import { getEditorDashboard } from "../../api/editing";
 
@@ -26,6 +26,14 @@ export function EditorDashboardPage() {
           </Typography.Text>
         </div>
       </div>
+      {dashboardQuery.isError ? (
+        <Alert
+          type="error"
+          showIcon
+          message="Unable to load editor dashboard"
+          description="Refresh the page or try again after checking your connection."
+        />
+      ) : null}
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} xl={6}>
           <Card>

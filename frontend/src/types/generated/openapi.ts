@@ -12,6 +12,12 @@ export interface components {
       "success": boolean;
     };
     "AssignmentRole": "LEAD_PHOTOGRAPHER" | "SECOND_PHOTOGRAPHER" | "ASSISTANT";
+    "Body_upload_gallery_photo_api_v1_galleries__gallery_id__photos_upload_post": {
+      "file": string;
+      "image_height"?: number;
+      "image_width"?: number;
+      "sort_order"?: number;
+    };
     "BookingCreate": {
       "advance_received"?: number | string;
       "booking_date": string;
@@ -60,6 +66,29 @@ export interface components {
       "organization_id"?: string | null;
       "phone"?: string | null;
     };
+    "EditingAssignEditor": {
+      "assigned_editor_id": string;
+      "due_date"?: string | null;
+    };
+    "EditingJobCreate": {
+      "assigned_editor_id"?: string | null;
+      "due_date"?: string | null;
+      "gallery_id": string;
+      "notes"?: string | null;
+      "priority"?: components["schemas"]["EditingPriority"];
+    };
+    "EditingJobUpdate": {
+      "completed_photo_count"?: number | null;
+      "due_date"?: string | null;
+      "editing_status"?: components["schemas"]["EditingStatus"] | null;
+      "notes"?: string | null;
+      "priority"?: components["schemas"]["EditingPriority"] | null;
+    };
+    "EditingPriority": "LOW" | "NORMAL" | "HIGH" | "URGENT";
+    "EditingReviewCreate": {
+      "review_notes"?: string | null;
+    };
+    "EditingStatus": "PENDING" | "ASSIGNED" | "IN_PROGRESS" | "READY_FOR_REVIEW" | "APPROVED" | "REJECTED" | "READY_FOR_DELIVERY";
     "FamilyAddressCreate": {
       "address_line_1": string;
       "address_line_2"?: string | null;
@@ -110,6 +139,11 @@ export interface components {
       "source"?: components["schemas"]["LeadSource"] | null;
       "status"?: components["schemas"]["FamilyStatus"] | null;
     };
+    "FavoriteSelectionCreate": {
+      "gallery_photo_id": string;
+      "selected_by_email"?: string | null;
+      "selected_by_name": string;
+    };
     "FollowUpCreate": {
       "assigned_to_user_id": string;
       "completed_at"?: string | null;
@@ -128,6 +162,47 @@ export interface components {
       "followup_type"?: components["schemas"]["FollowUpType"] | null;
       "notes"?: string | null;
       "status"?: components["schemas"]["FollowUpStatus"] | null;
+    };
+    "GalleryAuthenticateRequest": {
+      "password": string;
+    };
+    "GalleryCreate": {
+      "allow_download"?: boolean;
+      "allow_watermark"?: boolean;
+      "booking_id": string;
+      "booking_item_id": string;
+      "expires_at"?: string | null;
+      "gallery_name": string;
+      "gallery_status"?: components["schemas"]["GalleryStatus"];
+      "password"?: string | null;
+      "selection_deadline"?: string | null;
+      "selection_limit"?: number;
+    };
+    "GalleryPhotoCreate": {
+      "file_name": string;
+      "file_size": number;
+      "image_height": number;
+      "image_width": number;
+      "is_active"?: boolean;
+      "sort_order"?: number;
+      "storage_path": string;
+      "thumbnail_path"?: string | null;
+    };
+    "GalleryStatus": "DRAFT" | "UPLOADED" | "SELECTION_OPEN" | "SELECTION_SUBMITTED" | "SELECTION_REOPENED" | "SELECTION_CLOSED";
+    "GalleryUpdate": {
+      "allow_download"?: boolean | null;
+      "allow_watermark"?: boolean | null;
+      "expires_at"?: string | null;
+      "gallery_name"?: string | null;
+      "gallery_status"?: components["schemas"]["GalleryStatus"] | null;
+      "password"?: string | null;
+      "selection_deadline"?: string | null;
+      "selection_limit"?: number | null;
+    };
+    "GalleryUpgradeRequestCreate": {
+      "notes"?: string | null;
+      "price_per_photo": number;
+      "requested_limit": number;
     };
     "Gender": "MALE" | "FEMALE" | "OTHER";
     "HTTPValidationError": {
@@ -529,6 +604,161 @@ export interface paths {
       };
     };
   };
+  "/api/v1/editing/jobs": {
+    get: {
+      parameters: {
+      query: {
+        "page"?: number;
+        "page_size"?: number;
+        "status"?: components["schemas"]["EditingStatus"] | null;
+        "priority"?: components["schemas"]["EditingPriority"] | null;
+        "assigned_editor_id"?: string | null;
+        "branch_id"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["EditingJobCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/editing/jobs/{job_id}": {
+    get: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    put: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: components["schemas"]["EditingJobUpdate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/editing/jobs/{job_id}/approve": {
+    post: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: components["schemas"]["EditingReviewCreate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/editing/jobs/{job_id}/assign-editor": {
+    post: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: components["schemas"]["EditingAssignEditor"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/editing/jobs/{job_id}/ready-for-delivery": {
+    post: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/editing/jobs/{job_id}/reject": {
+    post: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: components["schemas"]["EditingReviewCreate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/editing/jobs/{job_id}/start": {
+    post: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/editing/jobs/{job_id}/submit-review": {
+    post: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/editing/metrics": {
+    get: {
+      parameters: Record<string, never>;
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      };
+    };
+  };
+  "/api/v1/editing/my-work": {
+    get: {
+      parameters: Record<string, never>;
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      };
+    };
+  };
   "/api/v1/families": {
     get: {
       parameters: {
@@ -651,6 +881,338 @@ export interface paths {
       };
     };
       requestBody: components["schemas"]["FollowUpUpdate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries": {
+    get: {
+      parameters: {
+      query: {
+        "page"?: number;
+        "page_size"?: number;
+        "branch_id"?: string | null;
+        "gallery_status"?: components["schemas"]["GalleryStatus"] | null;
+        "search"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["GalleryCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/metrics": {
+    get: {
+      parameters: Record<string, never>;
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      };
+    };
+  };
+  "/api/v1/galleries/public/{gallery_id}/authenticate": {
+    post: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+      };
+    };
+      requestBody: components["schemas"]["GalleryAuthenticateRequest"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/upgrade-requests/{request_id}/approve": {
+    put: {
+      parameters: {
+      path: {
+        "request_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/upgrade-requests/{request_id}/mark-paid": {
+    put: {
+      parameters: {
+      path: {
+        "request_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/upgrade-requests/{request_id}/reject": {
+    put: {
+      parameters: {
+      path: {
+        "request_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/{gallery_id}": {
+    get: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    put: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+      };
+    };
+      requestBody: components["schemas"]["GalleryUpdate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/{gallery_id}/favorites": {
+    get: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    post: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+      };
+    };
+      requestBody: components["schemas"]["FavoriteSelectionCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/{gallery_id}/favorites/{favorite_id}": {
+    delete: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+        "favorite_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/{gallery_id}/photos": {
+    get: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    post: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+      };
+    };
+      requestBody: components["schemas"]["GalleryPhotoCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/{gallery_id}/photos/upload": {
+    post: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/{gallery_id}/photos/{photo_id}": {
+    delete: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+        "photo_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/{gallery_id}/public": {
+    get: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+      };
+      header: {
+        "authorization"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/{gallery_id}/public/favorites": {
+    post: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+      };
+    };
+      requestBody: components["schemas"]["FavoriteSelectionCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/{gallery_id}/public/favorites/{favorite_id}": {
+    delete: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+        "favorite_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/{gallery_id}/public/submit-selection": {
+    post: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+      };
+      header: {
+        "authorization"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/{gallery_id}/reopen-selection": {
+    post: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/{gallery_id}/submit-selection": {
+    post: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/{gallery_id}/upgrade-request": {
+    post: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+      };
+    };
+      requestBody: components["schemas"]["GalleryUpgradeRequestCreate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/{gallery_id}/upgrade-requests": {
+    get: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+      };
+    };
+      requestBody: never;
       responses: {
       "200": components["schemas"]["APIResponse"];
       "422": components["schemas"]["HTTPValidationError"];

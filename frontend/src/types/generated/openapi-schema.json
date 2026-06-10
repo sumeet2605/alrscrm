@@ -44,6 +44,37 @@
         "title": "AssignmentRole",
         "type": "string"
       },
+      "Body_upload_gallery_photo_api_v1_galleries__gallery_id__photos_upload_post": {
+        "properties": {
+          "file": {
+            "contentMediaType": "application/octet-stream",
+            "title": "File",
+            "type": "string"
+          },
+          "image_height": {
+            "default": 1,
+            "exclusiveMinimum": 0,
+            "title": "Image Height",
+            "type": "integer"
+          },
+          "image_width": {
+            "default": 1,
+            "exclusiveMinimum": 0,
+            "title": "Image Width",
+            "type": "integer"
+          },
+          "sort_order": {
+            "default": 0,
+            "title": "Sort Order",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "file"
+        ],
+        "title": "Body_upload_gallery_photo_api_v1_galleries__gallery_id__photos_upload_post",
+        "type": "object"
+      },
       "BookingCreate": {
         "properties": {
           "advance_received": {
@@ -431,6 +462,189 @@
         },
         "title": "BranchUpdate",
         "type": "object"
+      },
+      "EditingAssignEditor": {
+        "properties": {
+          "assigned_editor_id": {
+            "format": "uuid",
+            "title": "Assigned Editor Id",
+            "type": "string"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          }
+        },
+        "required": [
+          "assigned_editor_id"
+        ],
+        "title": "EditingAssignEditor",
+        "type": "object"
+      },
+      "EditingJobCreate": {
+        "properties": {
+          "assigned_editor_id": {
+            "anyOf": [
+              {
+                "format": "uuid",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assigned Editor Id"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "gallery_id": {
+            "format": "uuid",
+            "title": "Gallery Id",
+            "type": "string"
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 5000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "priority": {
+            "$ref": "#/components/schemas/EditingPriority",
+            "default": "NORMAL"
+          }
+        },
+        "required": [
+          "gallery_id"
+        ],
+        "title": "EditingJobCreate",
+        "type": "object"
+      },
+      "EditingJobUpdate": {
+        "properties": {
+          "completed_photo_count": {
+            "anyOf": [
+              {
+                "minimum": 0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed Photo Count"
+          },
+          "due_date": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Due Date"
+          },
+          "editing_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EditingStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "notes": {
+            "anyOf": [
+              {
+                "maxLength": 5000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "priority": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EditingPriority"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "title": "EditingJobUpdate",
+        "type": "object"
+      },
+      "EditingPriority": {
+        "enum": [
+          "LOW",
+          "NORMAL",
+          "HIGH",
+          "URGENT"
+        ],
+        "title": "EditingPriority",
+        "type": "string"
+      },
+      "EditingReviewCreate": {
+        "properties": {
+          "review_notes": {
+            "anyOf": [
+              {
+                "maxLength": 5000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review Notes"
+          }
+        },
+        "title": "EditingReviewCreate",
+        "type": "object"
+      },
+      "EditingStatus": {
+        "enum": [
+          "PENDING",
+          "ASSIGNED",
+          "IN_PROGRESS",
+          "READY_FOR_REVIEW",
+          "APPROVED",
+          "REJECTED",
+          "READY_FOR_DELIVERY"
+        ],
+        "title": "EditingStatus",
+        "type": "string"
       },
       "FamilyAddressCreate": {
         "properties": {
@@ -875,6 +1089,39 @@
         "title": "FamilyUpdate",
         "type": "object"
       },
+      "FavoriteSelectionCreate": {
+        "properties": {
+          "gallery_photo_id": {
+            "format": "uuid",
+            "title": "Gallery Photo Id",
+            "type": "string"
+          },
+          "selected_by_email": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selected By Email"
+          },
+          "selected_by_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Selected By Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "gallery_photo_id",
+          "selected_by_name"
+        ],
+        "title": "FavoriteSelectionCreate",
+        "type": "object"
+      },
       "FollowUpCreate": {
         "properties": {
           "assigned_to_user_id": {
@@ -1025,6 +1272,303 @@
           }
         },
         "title": "FollowUpUpdate",
+        "type": "object"
+      },
+      "GalleryAuthenticateRequest": {
+        "properties": {
+          "password": {
+            "minLength": 1,
+            "title": "Password",
+            "type": "string"
+          }
+        },
+        "required": [
+          "password"
+        ],
+        "title": "GalleryAuthenticateRequest",
+        "type": "object"
+      },
+      "GalleryCreate": {
+        "properties": {
+          "allow_download": {
+            "default": false,
+            "title": "Allow Download",
+            "type": "boolean"
+          },
+          "allow_watermark": {
+            "default": true,
+            "title": "Allow Watermark",
+            "type": "boolean"
+          },
+          "booking_id": {
+            "format": "uuid",
+            "title": "Booking Id",
+            "type": "string"
+          },
+          "booking_item_id": {
+            "format": "uuid",
+            "title": "Booking Item Id",
+            "type": "string"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "gallery_name": {
+            "maxLength": 160,
+            "minLength": 1,
+            "title": "Gallery Name",
+            "type": "string"
+          },
+          "gallery_status": {
+            "$ref": "#/components/schemas/GalleryStatus",
+            "default": "DRAFT"
+          },
+          "password": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 6,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Password"
+          },
+          "selection_deadline": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selection Deadline"
+          },
+          "selection_limit": {
+            "default": 0,
+            "title": "Selection Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "booking_id",
+          "booking_item_id",
+          "gallery_name"
+        ],
+        "title": "GalleryCreate",
+        "type": "object"
+      },
+      "GalleryPhotoCreate": {
+        "properties": {
+          "file_name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "File Name",
+            "type": "string"
+          },
+          "file_size": {
+            "minimum": 0,
+            "title": "File Size",
+            "type": "integer"
+          },
+          "image_height": {
+            "exclusiveMinimum": 0,
+            "title": "Image Height",
+            "type": "integer"
+          },
+          "image_width": {
+            "exclusiveMinimum": 0,
+            "title": "Image Width",
+            "type": "integer"
+          },
+          "is_active": {
+            "default": true,
+            "title": "Is Active",
+            "type": "boolean"
+          },
+          "sort_order": {
+            "default": 0,
+            "title": "Sort Order",
+            "type": "integer"
+          },
+          "storage_path": {
+            "minLength": 1,
+            "title": "Storage Path",
+            "type": "string"
+          },
+          "thumbnail_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Thumbnail Path"
+          }
+        },
+        "required": [
+          "file_name",
+          "storage_path",
+          "file_size",
+          "image_width",
+          "image_height"
+        ],
+        "title": "GalleryPhotoCreate",
+        "type": "object"
+      },
+      "GalleryStatus": {
+        "enum": [
+          "DRAFT",
+          "UPLOADED",
+          "SELECTION_OPEN",
+          "SELECTION_SUBMITTED",
+          "SELECTION_REOPENED",
+          "SELECTION_CLOSED"
+        ],
+        "title": "GalleryStatus",
+        "type": "string"
+      },
+      "GalleryUpdate": {
+        "properties": {
+          "allow_download": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allow Download"
+          },
+          "allow_watermark": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Allow Watermark"
+          },
+          "expires_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expires At"
+          },
+          "gallery_name": {
+            "anyOf": [
+              {
+                "maxLength": 160,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Gallery Name"
+          },
+          "gallery_status": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/GalleryStatus"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "password": {
+            "anyOf": [
+              {
+                "maxLength": 128,
+                "minLength": 6,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Password"
+          },
+          "selection_deadline": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selection Deadline"
+          },
+          "selection_limit": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Selection Limit"
+          }
+        },
+        "title": "GalleryUpdate",
+        "type": "object"
+      },
+      "GalleryUpgradeRequestCreate": {
+        "properties": {
+          "notes": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Notes"
+          },
+          "price_per_photo": {
+            "title": "Price Per Photo",
+            "type": "integer"
+          },
+          "requested_limit": {
+            "title": "Requested Limit",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "requested_limit",
+          "price_per_photo"
+        ],
+        "title": "GalleryUpgradeRequestCreate",
         "type": "object"
       },
       "Gender": {
@@ -3303,6 +3847,651 @@
         ]
       }
     },
+    "/api/v1/editing/jobs": {
+      "get": {
+        "operationId": "list_jobs_api_v1_editing_jobs_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/EditingStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "priority",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/EditingPriority"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Priority"
+            }
+          },
+          {
+            "in": "query",
+            "name": "assigned_editor_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Assigned Editor Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "branch_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Branch Id"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Jobs",
+        "tags": [
+          "Editing"
+        ]
+      },
+      "post": {
+        "operationId": "create_job_api_v1_editing_jobs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditingJobCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Job",
+        "tags": [
+          "Editing"
+        ]
+      }
+    },
+    "/api/v1/editing/jobs/{job_id}": {
+      "get": {
+        "operationId": "get_job_api_v1_editing_jobs__job_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Job",
+        "tags": [
+          "Editing"
+        ]
+      },
+      "put": {
+        "operationId": "update_job_api_v1_editing_jobs__job_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditingJobUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Job",
+        "tags": [
+          "Editing"
+        ]
+      }
+    },
+    "/api/v1/editing/jobs/{job_id}/approve": {
+      "post": {
+        "operationId": "approve_job_api_v1_editing_jobs__job_id__approve_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditingReviewCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Approve Job",
+        "tags": [
+          "Editing"
+        ]
+      }
+    },
+    "/api/v1/editing/jobs/{job_id}/assign-editor": {
+      "post": {
+        "operationId": "assign_editor_api_v1_editing_jobs__job_id__assign_editor_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditingAssignEditor"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Assign Editor",
+        "tags": [
+          "Editing"
+        ]
+      }
+    },
+    "/api/v1/editing/jobs/{job_id}/ready-for-delivery": {
+      "post": {
+        "operationId": "mark_ready_for_delivery_api_v1_editing_jobs__job_id__ready_for_delivery_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Mark Ready For Delivery",
+        "tags": [
+          "Editing"
+        ]
+      }
+    },
+    "/api/v1/editing/jobs/{job_id}/reject": {
+      "post": {
+        "operationId": "reject_job_api_v1_editing_jobs__job_id__reject_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EditingReviewCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Reject Job",
+        "tags": [
+          "Editing"
+        ]
+      }
+    },
+    "/api/v1/editing/jobs/{job_id}/start": {
+      "post": {
+        "operationId": "start_job_api_v1_editing_jobs__job_id__start_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Start Job",
+        "tags": [
+          "Editing"
+        ]
+      }
+    },
+    "/api/v1/editing/jobs/{job_id}/submit-review": {
+      "post": {
+        "operationId": "submit_review_api_v1_editing_jobs__job_id__submit_review_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "job_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Job Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Submit Review",
+        "tags": [
+          "Editing"
+        ]
+      }
+    },
+    "/api/v1/editing/metrics": {
+      "get": {
+        "operationId": "get_metrics_api_v1_editing_metrics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Metrics",
+        "tags": [
+          "Editing"
+        ]
+      }
+    },
+    "/api/v1/editing/my-work": {
+      "get": {
+        "operationId": "get_my_work_api_v1_editing_my_work_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get My Work",
+        "tags": [
+          "Editing"
+        ]
+      }
+    },
     "/api/v1/families": {
       "get": {
         "operationId": "list_families_api_v1_families_get",
@@ -4026,6 +5215,1295 @@
         "summary": "Update Followup",
         "tags": [
           "Follow Ups"
+        ]
+      }
+    },
+    "/api/v1/galleries": {
+      "get": {
+        "operationId": "list_galleries_api_v1_galleries_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "default": 1,
+              "minimum": 1,
+              "title": "Page",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "page_size",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Page Size",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "branch_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "uuid",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Branch Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "gallery_status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/GalleryStatus"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Gallery Status"
+            }
+          },
+          {
+            "in": "query",
+            "name": "search",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Search"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Galleries",
+        "tags": [
+          "Galleries"
+        ]
+      },
+      "post": {
+        "operationId": "create_gallery_api_v1_galleries_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GalleryCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Gallery",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/metrics": {
+      "get": {
+        "operationId": "get_gallery_metrics_api_v1_galleries_metrics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Gallery Metrics",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/public/{gallery_id}/authenticate": {
+      "post": {
+        "operationId": "authenticate_public_gallery_api_v1_galleries_public__gallery_id__authenticate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gallery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gallery Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GalleryAuthenticateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Authenticate Public Gallery",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/upgrade-requests/{request_id}/approve": {
+      "put": {
+        "operationId": "approve_upgrade_request_api_v1_galleries_upgrade_requests__request_id__approve_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Approve Upgrade Request",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/upgrade-requests/{request_id}/mark-paid": {
+      "put": {
+        "operationId": "mark_upgrade_paid_api_v1_galleries_upgrade_requests__request_id__mark_paid_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Mark Upgrade Paid",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/upgrade-requests/{request_id}/reject": {
+      "put": {
+        "operationId": "reject_upgrade_request_api_v1_galleries_upgrade_requests__request_id__reject_put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "request_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Request Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Reject Upgrade Request",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/{gallery_id}": {
+      "get": {
+        "operationId": "get_gallery_api_v1_galleries__gallery_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gallery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gallery Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Gallery",
+        "tags": [
+          "Galleries"
+        ]
+      },
+      "put": {
+        "operationId": "update_gallery_api_v1_galleries__gallery_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gallery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gallery Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GalleryUpdate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Update Gallery",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/{gallery_id}/favorites": {
+      "get": {
+        "operationId": "list_gallery_favorites_api_v1_galleries__gallery_id__favorites_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gallery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gallery Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Gallery Favorites",
+        "tags": [
+          "Galleries"
+        ]
+      },
+      "post": {
+        "operationId": "add_gallery_favorite_api_v1_galleries__gallery_id__favorites_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gallery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gallery Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FavoriteSelectionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Add Gallery Favorite",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/{gallery_id}/favorites/{favorite_id}": {
+      "delete": {
+        "operationId": "delete_gallery_favorite_api_v1_galleries__gallery_id__favorites__favorite_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gallery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gallery Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "favorite_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Favorite Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Delete Gallery Favorite",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/{gallery_id}/photos": {
+      "get": {
+        "operationId": "list_gallery_photos_api_v1_galleries__gallery_id__photos_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gallery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gallery Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Gallery Photos",
+        "tags": [
+          "Galleries"
+        ]
+      },
+      "post": {
+        "operationId": "add_gallery_photo_api_v1_galleries__gallery_id__photos_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gallery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gallery Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GalleryPhotoCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Add Gallery Photo",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/{gallery_id}/photos/upload": {
+      "post": {
+        "operationId": "upload_gallery_photo_api_v1_galleries__gallery_id__photos_upload_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gallery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gallery Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/Body_upload_gallery_photo_api_v1_galleries__gallery_id__photos_upload_post"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Upload Gallery Photo",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/{gallery_id}/photos/{photo_id}": {
+      "delete": {
+        "operationId": "delete_gallery_photo_api_v1_galleries__gallery_id__photos__photo_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gallery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gallery Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "photo_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Photo Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Delete Gallery Photo",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/{gallery_id}/public": {
+      "get": {
+        "operationId": "get_public_gallery_api_v1_galleries__gallery_id__public_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gallery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gallery Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Public Gallery",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/{gallery_id}/public/favorites": {
+      "post": {
+        "operationId": "add_public_gallery_favorite_api_v1_galleries__gallery_id__public_favorites_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gallery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gallery Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FavoriteSelectionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Public Gallery Favorite",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/{gallery_id}/public/favorites/{favorite_id}": {
+      "delete": {
+        "operationId": "delete_public_gallery_favorite_api_v1_galleries__gallery_id__public_favorites__favorite_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gallery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gallery Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "favorite_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Favorite Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Public Gallery Favorite",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/{gallery_id}/public/submit-selection": {
+      "post": {
+        "operationId": "submit_public_selection_api_v1_galleries__gallery_id__public_submit_selection_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gallery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gallery Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit Public Selection",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/{gallery_id}/reopen-selection": {
+      "post": {
+        "operationId": "reopen_selection_api_v1_galleries__gallery_id__reopen_selection_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gallery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gallery Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Reopen Selection",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/{gallery_id}/submit-selection": {
+      "post": {
+        "operationId": "submit_selection_api_v1_galleries__gallery_id__submit_selection_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gallery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gallery Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Submit Selection",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/{gallery_id}/upgrade-request": {
+      "post": {
+        "operationId": "create_upgrade_request_api_v1_galleries__gallery_id__upgrade_request_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gallery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gallery Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GalleryUpgradeRequestCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Create Upgrade Request",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/{gallery_id}/upgrade-requests": {
+      "get": {
+        "operationId": "list_upgrade_requests_api_v1_galleries__gallery_id__upgrade_requests_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gallery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gallery Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "List Upgrade Requests",
+        "tags": [
+          "Galleries"
         ]
       }
     },

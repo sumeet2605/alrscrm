@@ -1,6 +1,6 @@
 import { EyeOutlined, FilterOutlined } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
-import { Button, Select, Space, Table, Tag, Typography } from "antd";
+import { Alert, Button, Select, Space, Table, Tag, Typography } from "antd";
 import type { ColumnsType } from "antd/es/table";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -106,6 +106,15 @@ export function EditingQueuePage() {
           onChange={setPriority}
         />
       </Space>
+
+      {jobsQuery.isError ? (
+        <Alert
+          type="error"
+          showIcon
+          message="Unable to load editing queue"
+          description="Refresh the page or try again after checking your connection."
+        />
+      ) : null}
 
       <Table<EditingJob>
         rowKey="id"

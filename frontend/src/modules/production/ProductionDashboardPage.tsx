@@ -5,7 +5,7 @@ import {
   InboxOutlined
 } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
-import { Card, Col, Row, Space, Statistic, Table, Tag, Typography } from "antd";
+import { Alert, Card, Col, Row, Space, Statistic, Table, Tag, Typography } from "antd";
 
 import { getEditingMetrics } from "../../api/editing";
 import type { EditingPriority } from "../../types/editing";
@@ -28,6 +28,15 @@ export function ProductionDashboardPage() {
           </Typography.Text>
         </div>
       </div>
+
+      {metricsQuery.isError ? (
+        <Alert
+          type="error"
+          showIcon
+          message="Unable to load production metrics"
+          description="Refresh the page or try again after checking your connection."
+        />
+      ) : null}
 
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} xl={6}>

@@ -18,7 +18,13 @@ from app.galleries.models import Gallery
 from app.galleries.repositories import GalleryRepository
 from app.identity.models import User
 from app.identity.policies import AuthorizationContext
-from app.shared.exceptions.application import ConflictError, ForbiddenError, NotFoundError, ValidationError
+from app.shared.exceptions.application import (
+    BadRequestError,
+    ConflictError,
+    ForbiddenError,
+    NotFoundError,
+    ValidationError,
+)
 from app.shared.pagination import PageResult
 from app.shared.services.audit_service import record_audit_event
 
@@ -257,7 +263,7 @@ def update_job(
 ) -> EditingJob:
     job = get_job(db, job_id, context)
     if job.editing_status == EditingStatus.READY_FOR_DELIVERY.value:
-        raise ConflictError("Ready for delivery jobs are read-only")
+        raise BadRequestError("Ready for delivery jobs are read-only")
     updates = payload.model_dump(exclude_unset=True)
     next_status = updates.get("editing_status")
     completed_count = updates.get("completed_photo_count", job.completed_photo_count)

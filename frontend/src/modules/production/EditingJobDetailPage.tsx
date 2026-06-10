@@ -2,6 +2,7 @@ import { ArrowLeftOutlined, CheckOutlined, PlayCircleOutlined, SendOutlined } fr
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   App,
+  Alert,
   Button,
   Descriptions,
   Form,
@@ -10,6 +11,7 @@ import {
   Modal,
   Select,
   Space,
+  Spin,
   Table,
   Tag,
   Typography
@@ -148,6 +150,19 @@ export function EditingJobDetailPage() {
           <Button onClick={() => actionMutation.mutate("ready")}>Ready For Delivery</Button>
         </Space>
       </div>
+
+      {jobQuery.isLoading ? (
+        <Spin />
+      ) : null}
+
+      {jobQuery.isError ? (
+        <Alert
+          type="error"
+          showIcon
+          message="Unable to load editing job"
+          description="Return to the queue or refresh the page after checking your connection."
+        />
+      ) : null}
 
       {job ? (
         <>
