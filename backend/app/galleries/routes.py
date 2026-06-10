@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_permissions
@@ -29,18 +29,27 @@ def _gallery(item) -> dict:
     return GalleryRead.model_validate(gallery_service.gallery_to_read(item)).model_dump(mode="json")
 
 
-def _gallery_detail(item) -> dict:
+def _gallery_detail(item, storage_provider: StorageProvider) -> dict:
     return GalleryDetailRead.model_validate(gallery_service.gallery_to_detail(item)).model_dump(
         mode="json"
-    )
+    ) | {
+        "photos": [_photo(photo, storage_provider) for photo in item.photos if photo.is_active],
+        "favorites": [_favorite(favorite, storage_provider) for favorite in item.favorites],
+    }
 
 
-def _photo(item) -> dict:
-    return GalleryPhotoRead.model_validate(item).model_dump(mode="json")
+def _photo(item, storage_provider: StorageProvider) -> dict:
+    data = GalleryPhotoRead.model_validate(item).model_dump(mode="json")
+    data["storage_path"] = storage_provider.generate_signed_url(item.storage_path)
+    data["thumbnail_path"] = storage_provider.generate_thumbnail_url(item.thumbnail_path)
+    return data
 
 
-def _favorite(item) -> dict:
-    return FavoriteSelectionRead.model_validate(item).model_dump(mode="json")
+def _favorite(item, storage_provider: StorageProvider) -> dict:
+    data = FavoriteSelectionRead.model_validate(item).model_dump(mode="json")
+    if item.gallery_photo is not None:
+        data["gallery_photo"] = _photo(item.gallery_photo, storage_provider)
+    return data
 
 
 @router.get("/metrics", response_model=APIResponse)
@@ -83,9 +92,10 @@ def create_gallery(
     payload: GalleryCreate,
     db: Session = Depends(get_db),
     context=Depends(require_permissions("galleries:write")),
+    storage_provider: StorageProvider = Depends(get_storage_provider),
 ):
     item = gallery_service.create_gallery(db, payload, context)
-    return api_response("Gallery created", _gallery_detail(item))
+    return api_response("Gallery created", _gallery_detail(item, storage_provider))
 
 
 @router.get("/{gallery_id}", response_model=APIResponse)
@@ -93,9 +103,10 @@ def get_gallery(
     gallery_id: UUID,
     db: Session = Depends(get_db),
     context=Depends(require_permissions("galleries:read")),
+    storage_provider: StorageProvider = Depends(get_storage_provider),
 ):
     item = gallery_service.get_gallery(db, gallery_id, context)
-    return api_response("Gallery retrieved", _gallery_detail(item))
+    return api_response("Gallery retrieved", _gallery_detail(item, storage_provider))
 
 
 @router.put("/{gallery_id}", response_model=APIResponse)
@@ -104,9 +115,10 @@ def update_gallery(
     payload: GalleryUpdate,
     db: Session = Depends(get_db),
     context=Depends(require_permissions("galleries:write")),
+    storage_provider: StorageProvider = Depends(get_storage_provider),
 ):
     item = gallery_service.update_gallery(db, gallery_id, payload, context)
-    return api_response("Gallery updated", _gallery_detail(item))
+    return api_response("Gallery updated", _gallery_detail(item, storage_provider))
 
 
 @router.get("/{gallery_id}/photos", response_model=APIResponse)
@@ -114,10 +126,14 @@ def list_gallery_photos(
     gallery_id: UUID,
     db: Session = Depends(get_db),
     context=Depends(require_permissions("galleries:photos:read")),
+    storage_provider: StorageProvider = Depends(get_storage_provider),
 ):
     return api_response(
         "Gallery photos retrieved",
-        [_photo(item) for item in gallery_service.list_photos(db, gallery_id, context)],
+        [
+            _photo(item, storage_provider)
+            for item in gallery_service.list_photos(db, gallery_id, context)
+        ],
     )
 
 
@@ -132,7 +148,38 @@ def add_gallery_photo(
     storage_provider: StorageProvider = Depends(get_storage_provider),
 ):
     item = gallery_service.add_photo(db, gallery_id, payload, context, storage_provider)
-    return api_response("Gallery photo uploaded", _photo(item))
+    return api_response("Gallery photo uploaded", _photo(item, storage_provider))
+
+
+@router.post(
+    "/{gallery_id}/photos/upload",
+    status_code=status.HTTP_201_CREATED,
+    response_model=APIResponse,
+)
+async def upload_gallery_photo(
+    gallery_id: UUID,
+    file: UploadFile = File(...),
+    image_width: int = Form(default=1, gt=0),
+    image_height: int = Form(default=1, gt=0),
+    sort_order: int = Form(default=0),
+    db: Session = Depends(get_db),
+    context=Depends(require_permissions("galleries:photos:write")),
+    storage_provider: StorageProvider = Depends(get_storage_provider),
+):
+    content = await file.read()
+    item = gallery_service.upload_photo_file(
+        db,
+        gallery_id,
+        file_name=file.filename or "gallery-photo",
+        content=content,
+        content_type=file.content_type,
+        image_width=image_width,
+        image_height=image_height,
+        sort_order=sort_order,
+        context=context,
+        storage_provider=storage_provider,
+    )
+    return api_response("Gallery photo uploaded", _photo(item, storage_provider))
 
 
 @router.delete("/{gallery_id}/photos/{photo_id}", response_model=APIResponse)
@@ -152,10 +199,14 @@ def list_gallery_favorites(
     gallery_id: UUID,
     db: Session = Depends(get_db),
     context=Depends(require_permissions("galleries:favorites:read")),
+    storage_provider: StorageProvider = Depends(get_storage_provider),
 ):
     return api_response(
         "Gallery favorites retrieved",
-        [_favorite(item) for item in gallery_service.list_favorites(db, gallery_id, context)],
+        [
+            _favorite(item, storage_provider)
+            for item in gallery_service.list_favorites(db, gallery_id, context)
+        ],
     )
 
 
@@ -167,9 +218,10 @@ def add_gallery_favorite(
     payload: FavoriteSelectionCreate,
     db: Session = Depends(get_db),
     context=Depends(require_permissions("galleries:favorites:write")),
+    storage_provider: StorageProvider = Depends(get_storage_provider),
 ):
     item = gallery_service.add_favorite(db, gallery_id, payload, context)
-    return api_response("Gallery favorite selected", _favorite(item))
+    return api_response("Gallery favorite selected", _favorite(item, storage_provider))
 
 
 @router.delete("/{gallery_id}/favorites/{favorite_id}", response_model=APIResponse)
@@ -184,9 +236,13 @@ def delete_gallery_favorite(
 
 
 @router.get("/{gallery_id}/public", response_model=APIResponse)
-def get_public_gallery(gallery_id: UUID, db: Session = Depends(get_db)):
+def get_public_gallery(
+    gallery_id: UUID,
+    db: Session = Depends(get_db),
+    storage_provider: StorageProvider = Depends(get_storage_provider),
+):
     item = gallery_service.get_public_gallery(db, gallery_id)
-    return api_response("Public gallery retrieved", _gallery_detail(item))
+    return api_response("Public gallery retrieved", _gallery_detail(item, storage_provider))
 
 
 @router.post(
@@ -198,9 +254,10 @@ def add_public_gallery_favorite(
     gallery_id: UUID,
     payload: FavoriteSelectionCreate,
     db: Session = Depends(get_db),
+    storage_provider: StorageProvider = Depends(get_storage_provider),
 ):
     item = gallery_service.add_favorite(db, gallery_id, payload, None)
-    return api_response("Gallery favorite selected", _favorite(item))
+    return api_response("Gallery favorite selected", _favorite(item, storage_provider))
 
 
 @router.delete("/{gallery_id}/public/favorites/{favorite_id}", response_model=APIResponse)

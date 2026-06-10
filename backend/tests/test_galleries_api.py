@@ -179,3 +179,34 @@ def test_gallery_api_selection_workflow(client: TestClient, db: Session) -> None
         "selection_closed_galleries": 0,
         "favorite_count": 1,
     }
+
+
+def test_gallery_multipart_upload_returns_renderable_photo_url(
+    client: TestClient, db: Session
+) -> None:
+    _, _, owner, photographer, booking, item = _fixture(db)
+    create_response = client.post(
+        "/api/v1/galleries",
+        json={
+            "booking_id": str(booking.id),
+            "booking_item_id": str(item.id),
+            "gallery_name": "Upload Gallery",
+        },
+        headers=_headers(owner),
+    )
+    gallery = create_response.json()["data"]
+
+    upload_response = client.post(
+        f"/api/v1/galleries/{gallery['id']}/photos/upload",
+        files={"file": ("photo.jpg", b"fake-image-bytes", "image/jpeg")},
+        data={"image_width": "1200", "image_height": "800"},
+        headers=_headers(photographer),
+    )
+    assert upload_response.status_code == 201
+    photo = upload_response.json()["data"]
+    assert photo["thumbnail_path"].startswith("data:image/jpeg;base64,")
+
+    public_response = client.get(f"/api/v1/galleries/{gallery['id']}/public")
+    assert public_response.status_code == 200
+    public_photo = public_response.json()["data"]["photos"][0]
+    assert public_photo["thumbnail_path"].startswith("data:image/jpeg;base64,")

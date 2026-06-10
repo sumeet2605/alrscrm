@@ -5,16 +5,7 @@ import type { RcFile } from "antd/es/upload";
 import { useState } from "react";
 import { useParams } from "react-router-dom";
 
-import { addGalleryPhoto, deleteGalleryPhoto, getGallery } from "../../api/galleries";
-
-function readFileAsDataUrl(file: Blob): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result));
-    reader.onerror = () => reject(reader.error);
-    reader.readAsDataURL(file);
-  });
-}
+import { deleteGalleryPhoto, getGallery, uploadGalleryPhoto } from "../../api/galleries";
 
 function getImageDimensions(src: string): Promise<{ width: number; height: number }> {
   return new Promise((resolve) => {
@@ -38,18 +29,14 @@ export function GalleryUploadPage() {
   const uploadMutation = useMutation({
     mutationFn: async (file: RcFile) => {
       setProgress(35);
-      const thumbnailPath = await readFileAsDataUrl(file);
-      const dimensions = await getImageDimensions(thumbnailPath);
-      const payload = {
-        file_name: file.name,
-        storage_path: `gallery/${galleryId}/${file.uid}-${file.name}`,
-        thumbnail_path: thumbnailPath,
-        file_size: file.size,
+      const objectUrl = URL.createObjectURL(file);
+      const dimensions = await getImageDimensions(objectUrl);
+      URL.revokeObjectURL(objectUrl);
+      setProgress(72);
+      return uploadGalleryPhoto(galleryId!, file, {
         image_width: dimensions.width,
         image_height: dimensions.height
-      };
-      setProgress(72);
-      return addGalleryPhoto(galleryId!, payload);
+      });
     },
     onSuccess: async () => {
       setProgress(100);

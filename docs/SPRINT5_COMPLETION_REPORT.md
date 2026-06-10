@@ -10,6 +10,7 @@ Sprint 5 implements Gallery Management and Client Photo Selection.
 - Public client selection view
 - Gallery metrics
 - Storage provider abstraction
+- DigitalOcean Spaces storage provider
 - Audit-backed gallery event vocabulary
 
 Not implemented:
@@ -64,6 +65,7 @@ Not implemented:
 - `PUT /api/v1/galleries/{id}`
 - `GET /api/v1/galleries/{id}/photos`
 - `POST /api/v1/galleries/{id}/photos`
+- `POST /api/v1/galleries/{id}/photos/upload`
 - `DELETE /api/v1/galleries/{id}/photos/{photo_id}`
 - `GET /api/v1/galleries/{id}/favorites`
 - `POST /api/v1/galleries/{id}/favorites`
@@ -93,6 +95,9 @@ Not implemented:
 - Photos cannot be added or deleted when selection is closed.
 - Favorites can only be selected while selection is open.
 - Metrics are tenant and branch scoped.
+- Multipart uploads are stored through `StorageProvider`.
+- DigitalOcean Spaces returns CDN URLs when `DO_SPACES_CDN_URL` is configured,
+  otherwise presigned URLs are returned.
 
 ## Tests Added
 

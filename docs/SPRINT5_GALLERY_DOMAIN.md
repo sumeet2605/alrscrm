@@ -81,6 +81,31 @@ Sprint 5 introduces `StorageProvider` with:
 The current implementation uses a local metadata provider and stores file paths
 from the API payload. Cloud providers are intentionally not hardcoded.
 
+Production storage can use DigitalOcean Spaces through the S3-compatible
+`DigitalOceanSpacesStorageProvider`.
+
+Required environment:
+
+- `STORAGE_PROVIDER=digitalocean`
+- `DO_SPACES_REGION`
+- `DO_SPACES_BUCKET`
+- `DO_SPACES_ACCESS_KEY`
+- `DO_SPACES_SECRET_KEY`
+
+Optional environment:
+
+- `DO_SPACES_ENDPOINT_URL`
+- `DO_SPACES_CDN_URL`
+- `DO_SPACES_PATH_PREFIX`
+- `STORAGE_SIGNED_URL_EXPIRE_SECONDS`
+
+When `DO_SPACES_CDN_URL` is set, gallery reads return CDN URLs. Otherwise,
+gallery reads return presigned Spaces URLs.
+
+The frontend upload flow uses `POST /api/v1/galleries/{id}/photos/upload` with
+multipart form data. The older JSON metadata endpoint remains available for
+backwards-compatible integrations.
+
 ## Metrics
 
 `GET /api/v1/galleries/metrics` returns:

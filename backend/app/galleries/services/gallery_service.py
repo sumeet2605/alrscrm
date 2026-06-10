@@ -238,6 +238,55 @@ def add_photo(
     return photo
 
 
+def upload_photo_file(
+    db: Session,
+    gallery_id: UUID,
+    *,
+    file_name: str,
+    content: bytes,
+    content_type: str | None,
+    image_width: int,
+    image_height: int,
+    sort_order: int,
+    context: AuthorizationContext,
+    storage_provider: StorageProvider,
+) -> GalleryPhoto:
+    repository = GalleryRepository(db)
+    gallery = get_gallery(db, gallery_id, context)
+    if gallery.gallery_status == GalleryStatus.SELECTION_CLOSED.value:
+        raise ConflictError("Cannot add photos after selection is closed")
+    stored_file = storage_provider.upload_file(
+        f"{gallery.organization_id}/{gallery.branch_id}/{gallery.id}/{file_name}",
+        content,
+        content_type,
+    )
+    photo = repository.make_photo(
+        gallery.id,
+        file_name=file_name,
+        storage_path=stored_file.storage_path,
+        thumbnail_path=stored_file.thumbnail_path,
+        file_size=stored_file.file_size,
+        image_width=image_width,
+        image_height=image_height,
+        sort_order=sort_order or repository.next_photo_sort_order(gallery.id),
+        is_active=True,
+    )
+    repository.add_photo(photo)
+    if gallery.gallery_status == GalleryStatus.DRAFT.value:
+        gallery.gallery_status = GalleryStatus.UPLOADED.value
+    record_audit_event(
+        db,
+        "gallery.photo_uploaded",
+        context.user_id,
+        "GalleryPhoto",
+        photo.id,
+        metadata={"domain_event": "GalleryPhotoUploaded", "gallery_id": str(gallery.id)},
+    )
+    db.commit()
+    db.refresh(photo)
+    return photo
+
+
 def delete_photo(
     db: Session,
     gallery_id: UUID,

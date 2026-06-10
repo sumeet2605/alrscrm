@@ -53,6 +53,22 @@ export async function addGalleryPhoto(
   return response.data.data;
 }
 
+export async function uploadGalleryPhoto(
+  id: string,
+  file: File,
+  dimensions: { image_width: number; image_height: number }
+): Promise<GalleryPhoto> {
+  const formData = new FormData();
+  formData.append("file", file);
+  formData.append("image_width", String(dimensions.image_width));
+  formData.append("image_height", String(dimensions.image_height));
+  const response = await apiClient.post<ApiEnvelope<GalleryPhoto>>(
+    `/galleries/${id}/photos/upload`,
+    formData
+  );
+  return response.data.data;
+}
+
 export async function deleteGalleryPhoto(id: string, photoId: string): Promise<void> {
   await apiClient.delete<ApiEnvelope<Record<string, never>>>(`/galleries/${id}/photos/${photoId}`);
 }
