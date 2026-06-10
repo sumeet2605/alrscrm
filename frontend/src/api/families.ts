@@ -1,6 +1,12 @@
 import { apiClient } from "./http";
 import type { ApiEnvelope, PaginationMeta } from "../types/api";
-import type { Family, FamilyListParams, FamilyPayload, FamilyUpdatePayload } from "../types/families";
+import type {
+  Family,
+  FamilyListParams,
+  FamilyPayload,
+  FamilySearchParams,
+  FamilyUpdatePayload
+} from "../types/families";
 
 export interface FamilyListResult {
   items: Family[];
@@ -12,14 +18,7 @@ export async function listFamilies(params: FamilyListParams): Promise<FamilyList
   return { items: response.data.data, meta: response.data.meta! };
 }
 
-export async function searchFamilies(params: {
-  page?: number;
-  page_size?: number;
-  name?: string;
-  phone?: string;
-  email?: string;
-  family_code?: string;
-}): Promise<FamilyListResult> {
+export async function searchFamilies(params: FamilySearchParams): Promise<FamilyListResult> {
   const response = await apiClient.get<ApiEnvelope<Family[]>>("/families/search", { params });
   return { items: response.data.data, meta: response.data.meta! };
 }

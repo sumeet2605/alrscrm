@@ -1,11 +1,13 @@
 import { apiClient } from "./http";
-import type { ApiEnvelope, PaginatedRequest, PaginationMeta } from "../types/api";
+import type { ApiEnvelope, PaginationMeta } from "../types/api";
 import type {
   Branch,
+  BranchListParams,
   BranchPayload,
   BranchUpdatePayload,
   Role,
   User,
+  UserListParams,
   UserPayload,
   UserUpdatePayload
 } from "../types/identity";
@@ -15,14 +17,14 @@ export interface ListResult<T> {
   meta: PaginationMeta;
 }
 
-function buildParams(params: PaginatedRequest): Record<string, string | number> {
+function buildParams(params: BranchListParams | UserListParams): Record<string, string | number> {
   return {
     page: params.page ?? 1,
     page_size: params.page_size ?? 10
   };
 }
 
-export async function listBranches(params: PaginatedRequest): Promise<ListResult<Branch>> {
+export async function listBranches(params: BranchListParams): Promise<ListResult<Branch>> {
   const response = await apiClient.get<ApiEnvelope<Branch[]>>("/branches", {
     params: buildParams(params)
   });
@@ -43,7 +45,7 @@ export async function deactivateBranch(id: string): Promise<void> {
   await apiClient.delete<ApiEnvelope<Record<string, never>>>(`/branches/${id}`);
 }
 
-export async function listUsers(params: PaginatedRequest): Promise<ListResult<User>> {
+export async function listUsers(params: UserListParams): Promise<ListResult<User>> {
   const response = await apiClient.get<ApiEnvelope<User[]>>("/users", {
     params: buildParams(params)
   });

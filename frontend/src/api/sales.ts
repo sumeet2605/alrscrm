@@ -2,6 +2,7 @@ import { apiClient } from "./http";
 import type { ApiEnvelope, PaginationMeta } from "../types/api";
 import type {
   FollowUp,
+  FollowUpListParams,
   FollowUpPayload,
   FollowUpUpdatePayload,
   LostReason,
@@ -59,13 +60,7 @@ export async function deleteOpportunity(id: string): Promise<void> {
   await apiClient.delete<ApiEnvelope<Record<string, never>>>(`/opportunities/${id}`);
 }
 
-export async function listFollowUps(params: {
-  page?: number;
-  page_size?: number;
-  status?: string;
-  due_from?: string;
-  due_to?: string;
-}): Promise<ListResult<FollowUp>> {
+export async function listFollowUps(params: FollowUpListParams): Promise<ListResult<FollowUp>> {
   const response = await apiClient.get<ApiEnvelope<FollowUp[]>>("/followups", { params });
   return { items: response.data.data, meta: response.data.meta! };
 }

@@ -26,11 +26,16 @@ export function OpportunityFormPage() {
   const lostReasonsQuery = useQuery({ queryKey: ["lost-reasons"], queryFn: listLostReasons });
 
   const saveMutation = useMutation({
-    mutationFn: (values: OpportunityFormValues) =>
-      createOpportunity({
+    mutationFn: (values: OpportunityFormValues) => {
+      const selectedFamily = familiesQuery.data?.items.find((family) => family.id === values.family_id);
+
+      return createOpportunity({
         ...values,
+        organization_id: selectedFamily?.organization_id ?? values.organization_id,
+        branch_id: selectedFamily?.branch_id ?? values.branch_id,
         expected_booking_date: values.expected_booking_date?.format("YYYY-MM-DD") ?? null
-      }),
+      });
+    },
     onSuccess: async (opportunity) => {
       message.success("Opportunity created");
       await queryClient.invalidateQueries({ queryKey: ["opportunities"] });
@@ -73,6 +78,15 @@ export function OpportunityFormPage() {
               <Select
                 showSearch
                 optionFilterProp="label"
+                onChange={(familyId) => {
+                  const selectedFamily = familiesQuery.data?.items.find((family) => family.id === familyId);
+                  if (selectedFamily) {
+                    form.setFieldsValue({
+                      organization_id: selectedFamily.organization_id,
+                      branch_id: selectedFamily.branch_id
+                    });
+                  }
+                }}
                 options={(familiesQuery.data?.items ?? []).map((family) => ({
                   value: family.id,
                   label: `${family.family_code} · ${family.primary_contact_name} · ${family.primary_contact_phone}`

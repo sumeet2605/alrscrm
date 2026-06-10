@@ -6,18 +6,13 @@ export type FollowUpPayload = components["schemas"]["FollowUpCreate"];
 export type FollowUpUpdatePayload = components["schemas"]["FollowUpUpdate"];
 export type OpportunityListParams =
   NonNullable<paths["/api/v1/opportunities"]["get"]["parameters"]["query"]>;
+export type FollowUpListParams =
+  NonNullable<paths["/api/v1/followups"]["get"]["parameters"]["query"]>;
 
-export type OpportunityStage =
-  | "NEW"
-  | "PACKAGE_SENT"
-  | "INTERESTED"
-  | "NEED_FOLLOW_UP"
-  | "THINKING"
-  | "BOOKED"
-  | "LOST";
-export type OpportunityType = "MATERNITY" | "NEWBORN" | "FAMILY" | "MILESTONE" | "CAKE_SMASH";
-export type FollowUpType = "CALL" | "WHATSAPP" | "INSTAGRAM_DM" | "EMAIL" | "OTHER";
-export type FollowUpStatus = "PENDING" | "COMPLETED" | "MISSED";
+export type OpportunityStage = components["schemas"]["OpportunityStage"];
+export type OpportunityType = components["schemas"]["OpportunityType"];
+export type FollowUpType = components["schemas"]["FollowUpType"];
+export type FollowUpStatus = components["schemas"]["FollowUpStatus"];
 
 export interface FamilySummary {
   id: string;

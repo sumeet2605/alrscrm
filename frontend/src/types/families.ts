@@ -4,19 +4,14 @@ export type FamilyPayload = components["schemas"]["FamilyCreate"];
 export type FamilyUpdatePayload = components["schemas"]["FamilyUpdate"];
 export type FamilyListParams =
   NonNullable<paths["/api/v1/families"]["get"]["parameters"]["query"]>;
+export type FamilySearchParams =
+  NonNullable<paths["/api/v1/families/search"]["get"]["parameters"]["query"]>;
 
-export type FamilyStatus = "INQUIRY" | "INTERESTED" | "BOOKED" | "ACTIVE" | "INACTIVE";
-export type LeadSource =
-  | "INSTAGRAM"
-  | "WHATSAPP"
-  | "GOOGLE"
-  | "REFERRAL"
-  | "WEBSITE"
-  | "WALKIN"
-  | "OTHER";
-export type Gender = "MALE" | "FEMALE" | "OTHER";
-export type Relationship = "MOTHER" | "FATHER" | "BABY" | "GRANDPARENT" | "SIBLING" | "OTHER";
-export type ServiceType = "MATERNITY" | "NEWBORN" | "FAMILY" | "MILESTONE" | "CAKE_SMASH";
+export type FamilyStatus = components["schemas"]["FamilyStatus"];
+export type LeadSource = components["schemas"]["LeadSource"];
+export type Gender = components["schemas"]["Gender"];
+export type Relationship = components["schemas"]["Relationship"];
+export type ServiceType = components["schemas"]["ServiceType"];
 
 export interface FamilyMember {
   id: string;

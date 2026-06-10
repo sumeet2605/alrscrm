@@ -63,7 +63,7 @@ export interface components {
       "name": string;
       "relationship": components["schemas"]["Relationship"];
     };
-    "FamilyStatus": string;
+    "FamilyStatus": "INQUIRY" | "INTERESTED" | "BOOKED" | "ACTIVE" | "INACTIVE";
     "FamilyUpdate": {
       "address"?: components["schemas"]["FamilyAddressCreate"] | null;
       "branch_id"?: string | null;
@@ -90,8 +90,8 @@ export interface components {
       "opportunity_id": string;
       "status"?: components["schemas"]["FollowUpStatus"];
     };
-    "FollowUpStatus": string;
-    "FollowUpType": string;
+    "FollowUpStatus": "PENDING" | "COMPLETED" | "MISSED";
+    "FollowUpType": "CALL" | "WHATSAPP" | "INSTAGRAM_DM" | "EMAIL" | "OTHER";
     "FollowUpUpdate": {
       "assigned_to_user_id"?: string | null;
       "completed_at"?: string | null;
@@ -100,11 +100,11 @@ export interface components {
       "notes"?: string | null;
       "status"?: components["schemas"]["FollowUpStatus"] | null;
     };
-    "Gender": string;
+    "Gender": "MALE" | "FEMALE" | "OTHER";
     "HTTPValidationError": {
       "detail"?: components["schemas"]["ValidationError"][];
     };
-    "LeadSource": string;
+    "LeadSource": "INSTAGRAM" | "WHATSAPP" | "GOOGLE" | "REFERRAL" | "WEBSITE" | "WALKIN" | "OTHER";
     "LoginRequest": {
       "email": string;
       "password": string;
@@ -125,8 +125,8 @@ export interface components {
     "OpportunityNoteCreate": {
       "note": string;
     };
-    "OpportunityStage": string;
-    "OpportunityType": string;
+    "OpportunityStage": "NEW" | "PACKAGE_SENT" | "INTERESTED" | "NEED_FOLLOW_UP" | "THINKING" | "BOOKED" | "LOST";
+    "OpportunityType": "MATERNITY" | "NEWBORN" | "FAMILY" | "MILESTONE" | "CAKE_SMASH";
     "OpportunityUpdate": {
       "assigned_to_user_id"?: string | null;
       "branch_id"?: string | null;
@@ -153,13 +153,13 @@ export interface components {
     "RefreshRequest": {
       "refresh_token": string;
     };
-    "Relationship": string;
+    "Relationship": "MOTHER" | "FATHER" | "BABY" | "GRANDPARENT" | "SIBLING" | "OTHER";
     "ServiceInterestCreate": {
       "notes"?: string | null;
       "priority"?: number;
       "service_type": components["schemas"]["ServiceType"];
     };
-    "ServiceType": string;
+    "ServiceType": "MATERNITY" | "NEWBORN" | "FAMILY" | "MILESTONE" | "CAKE_SMASH";
     "UserCreate": {
       "branch_id"?: string | null;
       "email": string;

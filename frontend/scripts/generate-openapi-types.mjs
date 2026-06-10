@@ -111,6 +111,9 @@ function renderSchema(schema) {
   if (schema.$ref) {
     return renderRef(schema.$ref);
   }
+  if (schema.enum) {
+    return schema.enum.map((value) => JSON.stringify(value)).join(" | ");
+  }
   if (schema.anyOf) {
     return schema.anyOf.map(renderSchema).join(" | ");
   }

@@ -1,4 +1,4 @@
-import type { components } from "./generated/openapi";
+import type { components, paths } from "./generated/openapi";
 
 export interface Permission {
   id: string;
@@ -56,6 +56,10 @@ export interface User {
 
 export type BranchPayload = components["schemas"]["BranchCreate"];
 export type BranchUpdatePayload = components["schemas"]["BranchUpdate"];
+export type BranchListParams =
+  NonNullable<paths["/api/v1/branches"]["get"]["parameters"]["query"]>;
 
 export type UserPayload = components["schemas"]["UserCreate"];
 export type UserUpdatePayload = components["schemas"]["UserUpdate"];
+export type UserListParams =
+  NonNullable<paths["/api/v1/users"]["get"]["parameters"]["query"]>;
