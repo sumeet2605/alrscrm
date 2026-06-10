@@ -164,20 +164,37 @@ class GalleryRepository:
         self.db.add(req)
         return req
 
-    def list_upgrade_requests_for_gallery(self, gallery_id: UUID) -> list["GalleryUpgradeRequest"]:
+    def list_upgrade_requests_for_gallery(
+        self,
+        gallery_id: UUID,
+        organization_id: UUID | None,
+        branch_id: UUID | None,
+    ) -> list["GalleryUpgradeRequest"]:
         from app.galleries.models.gallery import GalleryUpgradeRequest
 
-        return (
-            self.db.query(GalleryUpgradeRequest)
-            .filter(GalleryUpgradeRequest.gallery_id == gallery_id)
-            .order_by(GalleryUpgradeRequest.created_at.desc())
-            .all()
+        query = self.db.query(GalleryUpgradeRequest).filter(
+            GalleryUpgradeRequest.gallery_id == gallery_id
         )
+        if organization_id is not None:
+            query = query.filter(GalleryUpgradeRequest.organization_id == organization_id)
+        if branch_id is not None:
+            query = query.filter(GalleryUpgradeRequest.branch_id == branch_id)
+        return query.order_by(GalleryUpgradeRequest.created_at.desc()).all()
 
-    def get_upgrade_request(self, request_id: UUID):
+    def get_upgrade_request(
+        self,
+        request_id: UUID,
+        organization_id: UUID | None,
+        branch_id: UUID | None,
+    ):
         from app.galleries.models.gallery import GalleryUpgradeRequest
 
-        return self.db.get(GalleryUpgradeRequest, request_id)
+        query = self.db.query(GalleryUpgradeRequest).filter(GalleryUpgradeRequest.id == request_id)
+        if organization_id is not None:
+            query = query.filter(GalleryUpgradeRequest.organization_id == organization_id)
+        if branch_id is not None:
+            query = query.filter(GalleryUpgradeRequest.branch_id == branch_id)
+        return query.one_or_none()
 
     def update_upgrade_request(self, req: "GalleryUpgradeRequest", **changes):
         for k, v in changes.items():

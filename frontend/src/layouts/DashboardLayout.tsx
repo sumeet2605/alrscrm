@@ -10,6 +10,7 @@ import {
   SafetyCertificateOutlined,
   ShopOutlined,
   TeamOutlined,
+  ToolOutlined,
   UserOutlined
 } from "@ant-design/icons";
 import { Avatar, Button, Dropdown, Layout, Menu, Space, Typography, theme } from "antd";
@@ -44,6 +45,16 @@ const navItems: NavItem[] = [
       { key: "/galleries", label: "Galleries", icon: <PictureOutlined /> }
     ]
   },
+  {
+    key: "production-menu",
+    icon: <ToolOutlined />,
+    label: "Production",
+    children: [
+      { key: "/production/editing", label: "Editing Queue" },
+      { key: "/production/editor-dashboard", label: "Editor Dashboard" },
+      { key: "/production", label: "Production Dashboard" }
+    ]
+  },
   { key: "/branches", icon: <ApartmentOutlined />, label: "Branches" },
   { key: "/users", icon: <TeamOutlined />, label: "Users" },
   { key: "/roles", icon: <SafetyCertificateOutlined />, label: "Roles" }
@@ -61,6 +72,16 @@ function filterNavItems(items: NavItem[], roleNames: string[]): MenuProps["items
     .filter(Boolean) as MenuProps["items"];
 }
 
+function selectedMenuPath(pathname: string): string {
+  if (pathname.startsWith("/packages")) return "/packages";
+  if (pathname.startsWith("/galleries")) return "/galleries";
+  if (pathname.startsWith("/production/editing")) return "/production/editing";
+  if (pathname.startsWith("/production/editor-dashboard")) return "/production/editor-dashboard";
+  if (pathname.startsWith("/production")) return "/production";
+  if (pathname.startsWith("/schedules/assignments")) return "/schedules/assignments";
+  return `/${pathname.split("/")[1] || "dashboard"}`;
+}
+
 export function DashboardLayout() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -68,13 +89,7 @@ export function DashboardLayout() {
   const { token } = theme.useToken();
   const roleNames = user?.roles.map((role) => role.name) ?? [];
   const accessibleItems = filterNavItems(navItems, roleNames);
-  const selectedPath = location.pathname.startsWith("/packages")
-    ? "/packages"
-    : location.pathname.startsWith("/galleries")
-      ? "/galleries"
-    : location.pathname.startsWith("/schedules/assignments")
-      ? "/schedules/assignments"
-      : `/${location.pathname.split("/")[1] || "dashboard"}`;
+  const selectedPath = selectedMenuPath(location.pathname);
 
   const menuItems: MenuProps["items"] = [
     {
@@ -108,7 +123,7 @@ export function DashboardLayout() {
         <Menu
           theme="dark"
           mode="inline"
-          defaultOpenKeys={["bookings-menu"]}
+          defaultOpenKeys={["bookings-menu", "production-menu"]}
           selectedKeys={[selectedPath]}
           items={accessibleItems}
           onClick={({ key }) => navigate(key)}

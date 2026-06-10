@@ -5,6 +5,7 @@ from app.auth import models as auth_models  # noqa: F401
 from app.bookings import models as booking_models  # noqa: F401
 from app.core.config import get_settings
 from app.core.database import Base
+from app.editing import models as editing_models  # noqa: F401
 from app.families import models as family_models  # noqa: F401
 from app.galleries import models as gallery_models  # noqa: F401
 from app.identity import models  # noqa: F401

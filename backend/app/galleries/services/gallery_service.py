@@ -459,6 +459,14 @@ def submit_selection(db: Session, gallery_id: UUID, context: AuthorizationContex
     gallery.selection_locked = True
     gallery.selection_submitted_at = datetime.now(UTC)
     gallery.gallery_status = GalleryStatus.SELECTION_SUBMITTED.value
+    from app.editing.services.editing_service import create_job_from_gallery
+
+    create_job_from_gallery(
+        db,
+        gallery,
+        actor_user_id=context.user_id,
+        commit=False,
+    )
     record_audit_event(
         db,
         "gallery.selection_submitted",
@@ -497,6 +505,14 @@ def submit_public_selection(db: Session, gallery_id: UUID, token: str | None = N
     gallery.selection_locked = True
     gallery.selection_submitted_at = datetime.now(UTC)
     gallery.gallery_status = GalleryStatus.SELECTION_SUBMITTED.value
+    from app.editing.services.editing_service import create_job_from_gallery
+
+    create_job_from_gallery(
+        db,
+        gallery,
+        actor_user_id=gallery.created_by_user_id,
+        commit=False,
+    )
     # use gallery owner as actor for public submissions
     actor_id = gallery.created_by_user_id
     record_audit_event(
@@ -528,6 +544,8 @@ def create_upgrade_request(
     additional = requested_limit - current_limit
     total_amount = additional * payload.price_per_photo
     req = GalleryUpgradeRequest(
+        organization_id=gallery.organization_id,
+        branch_id=gallery.branch_id,
         gallery_id=gallery.id,
         current_limit=current_limit,
         requested_limit=requested_limit,
@@ -551,21 +569,29 @@ def create_upgrade_request(
     return req
 
 
-def list_upgrade_requests(db: Session, gallery_id: UUID, context: AuthorizationContext) -> list[GalleryUpgradeRequest]:
-    _ = get_gallery(db, gallery_id, context)
-    return GalleryRepository(db).list_upgrade_requests_for_gallery(gallery_id)
+def list_upgrade_requests(
+    db: Session, gallery_id: UUID, context: AuthorizationContext
+) -> list[GalleryUpgradeRequest]:
+    gallery = get_gallery(db, gallery_id, context)
+    organization_id, branch_id = _scope_filters(context, gallery.branch_id)
+    return GalleryRepository(db).list_upgrade_requests_for_gallery(
+        gallery_id, organization_id, branch_id
+    )
 
 
-def _get_upgrade_request_or_404(db: Session, request_id: UUID) -> GalleryUpgradeRequest:
+def _get_upgrade_request_or_404(
+    db: Session, request_id: UUID, context: AuthorizationContext
+) -> GalleryUpgradeRequest:
     repository = GalleryRepository(db)
-    req = repository.get_upgrade_request(request_id)
+    organization_id, branch_id = _scope_filters(context)
+    req = repository.get_upgrade_request(request_id, organization_id, branch_id)
     if req is None:
         raise NotFoundError("Upgrade request not found")
     return req
 
 
 def approve_upgrade_request(db: Session, request_id: UUID, context: AuthorizationContext) -> GalleryUpgradeRequest:
-    req = _get_upgrade_request_or_404(db, request_id)
+    req = _get_upgrade_request_or_404(db, request_id, context)
     if req.status != "PENDING":
         raise ConflictError("Only pending requests can be approved")
     # update gallery selection_limit
@@ -586,7 +612,7 @@ def approve_upgrade_request(db: Session, request_id: UUID, context: Authorizatio
 
 
 def reject_upgrade_request(db: Session, request_id: UUID, context: AuthorizationContext) -> GalleryUpgradeRequest:
-    req = _get_upgrade_request_or_404(db, request_id)
+    req = _get_upgrade_request_or_404(db, request_id, context)
     if req.status != "PENDING":
         raise ConflictError("Only pending requests can be rejected")
     req.status = "REJECTED"
@@ -604,7 +630,7 @@ def reject_upgrade_request(db: Session, request_id: UUID, context: Authorization
 
 
 def mark_upgrade_paid(db: Session, request_id: UUID, context: AuthorizationContext) -> GalleryUpgradeRequest:
-    req = _get_upgrade_request_or_404(db, request_id)
+    req = _get_upgrade_request_or_404(db, request_id, context)
     if req.status != "APPROVED":
         raise ConflictError("Only approved requests can be marked paid")
     req.status = "PAID"

@@ -16,6 +16,10 @@ import { DashboardPage } from "../modules/dashboard/DashboardPage";
 import { FamilyDetailsPage } from "../modules/families/FamilyDetailsPage";
 import { FamilyFormPage } from "../modules/families/FamilyFormPage";
 import { FamilyListPage } from "../modules/families/FamilyListPage";
+import { EditingJobDetailPage } from "../modules/production/EditingJobDetailPage";
+import { EditingQueuePage } from "../modules/production/EditingQueuePage";
+import { EditorDashboardPage } from "../modules/production/EditorDashboardPage";
+import { ProductionDashboardPage } from "../modules/production/ProductionDashboardPage";
 import { RoleManagementPage } from "../modules/roles/RoleManagementPage";
 import { OpportunityDetailsPage } from "../modules/sales/OpportunityDetailsPage";
 import { OpportunityFormPage } from "../modules/sales/OpportunityFormPage";
@@ -49,6 +53,10 @@ export function AppRoutes() {
           <Route path="/galleries" element={<GalleryManagementPage />} />
           <Route path="/galleries/:galleryId" element={<GalleryDetailsPage />} />
           <Route path="/galleries/:galleryId/upload" element={<GalleryUploadPage />} />
+          <Route path="/production" element={<ProductionDashboardPage />} />
+          <Route path="/production/editing" element={<EditingQueuePage />} />
+          <Route path="/production/editing/:jobId" element={<EditingJobDetailPage />} />
+          <Route path="/production/editor-dashboard" element={<EditorDashboardPage />} />
           <Route path="/schedules" element={<ScheduleCalendarPage />} />
           <Route path="/schedules/assignments" element={<AssignmentBoardPage />} />
           <Route path="/branches" element={<BranchManagementPage />} />

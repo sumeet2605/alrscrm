@@ -5,6 +5,7 @@ from app.shared.exceptions.application import ValidationError
 
 ROLE_DEFINITIONS: tuple[tuple[str, str, bool, int], ...] = (
     ("Super Admin", "Platform-wide administrative access.", True, 1000),
+    ("Organization Admin", "Full organization access across branches.", False, 900),
     ("Owner", "Full organization access across branches.", False, 900),
     ("Branch Manager", "Full access within an assigned branch.", False, 700),
     ("Sales Executive", "CRM, opportunity, and follow-up access.", False, 400),
@@ -49,10 +50,19 @@ PERMISSION_DEFINITIONS: tuple[tuple[str, str, str], ...] = (
     ("galleries:photos:write", "Manage gallery photos", "Upload and remove gallery photos."),
     ("galleries:favorites:read", "Read gallery favorites", "View favorite selections."),
     ("galleries:favorites:write", "Manage gallery favorites", "Create and remove favorites."),
+    ("galleries:reopen", "Reopen gallery selections", "Reopen submitted gallery selections."),
+    ("editing:view", "View editing jobs", "View production editing jobs."),
+    ("editing:create", "Create editing jobs", "Create production editing jobs."),
+    ("editing:update", "Update editing jobs", "Update production editing jobs."),
+    ("editing:assign", "Assign editing jobs", "Assign editors to production jobs."),
+    ("editing:review", "Review editing jobs", "Submit editing work for review and review jobs."),
+    ("editing:approve", "Approve editing jobs", "Approve editing jobs and mark them ready."),
+    ("editing:dashboard", "View editing dashboards", "View production dashboards and metrics."),
 )
 
 ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
     "Super Admin": tuple(code for code, _, _ in PERMISSION_DEFINITIONS),
+    "Organization Admin": tuple(code for code, _, _ in PERMISSION_DEFINITIONS),
     "Owner": tuple(code for code, _, _ in PERMISSION_DEFINITIONS),
     "Branch Manager": (
         "identity:branches:read",
@@ -85,6 +95,14 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "galleries:photos:write",
         "galleries:favorites:read",
         "galleries:favorites:write",
+        "galleries:reopen",
+        "editing:view",
+        "editing:create",
+        "editing:update",
+        "editing:assign",
+        "editing:review",
+        "editing:approve",
+        "editing:dashboard",
     ),
     "Sales Executive": (
         "identity:users:read",
@@ -129,6 +147,10 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "bookings:schedules:read",
         "galleries:read",
         "galleries:photos:read",
+        "editing:view",
+        "editing:update",
+        "editing:review",
+        "editing:dashboard",
     ),
     "Customer Success": (
         "identity:users:read",

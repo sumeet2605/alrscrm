@@ -177,6 +177,8 @@ class GalleryUpgradeRequestCreate(BaseModel):
 
 class GalleryUpgradeRequestRead(BaseModel):
     id: UUID
+    organization_id: UUID
+    branch_id: UUID
     gallery_id: UUID
     current_limit: int
     requested_limit: int

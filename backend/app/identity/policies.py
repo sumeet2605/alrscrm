@@ -32,7 +32,7 @@ class AuthorizationContext:
 
     @property
     def is_owner(self) -> bool:
-        return "Owner" in self.role_names
+        return "Owner" in self.role_names or "Organization Admin" in self.role_names
 
     @property
     def is_branch_scoped(self) -> bool:

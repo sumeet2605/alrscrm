@@ -59,4 +59,21 @@ describe("DashboardLayout", () => {
 
     expect(screen.queryByText("Package Management")).not.toBeInTheDocument();
   });
+
+  it("navigates to the production dashboard", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(
+      <Routes>
+        <Route element={<DashboardLayout />}>
+          <Route path="/dashboard" element={<div>Dashboard Route</div>} />
+          <Route path="/production" element={<div>Production Dashboard Route</div>} />
+        </Route>
+      </Routes>,
+      ["/dashboard"]
+    );
+
+    await user.click(screen.getByText("Production Dashboard"));
+
+    expect(screen.getByText("Production Dashboard Route")).toBeInTheDocument();
+  });
 });

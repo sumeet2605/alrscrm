@@ -106,9 +106,13 @@ class FamilyRepository:
                 ServiceInterest(**item) for item in data["service_interests"] or []
             ]
         if "address" in data:
-            family.address = (
-                FamilyAddress(**data["address"]) if data["address"] is not None else None
-            )
+            if data["address"] is None:
+                family.address = None
+            elif family.address is None:
+                family.address = FamilyAddress(**data["address"])
+            else:
+                for field, value in data["address"].items():
+                    setattr(family.address, field, value)
 
     def update_scalar_fields(self, family: Family, payload: FamilyUpdate) -> None:
         nested_fields = {"members", "address", "service_interests"}

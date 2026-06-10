@@ -40,7 +40,23 @@ def test_roles_and_permissions_are_seeded(client: TestClient, auth_headers: dict
     role_names = {role["name"] for role in roles_response.json()["data"]}
     permission_codes = {permission["code"] for permission in permissions_response.json()["data"]}
     assert "Super Admin" in role_names
+    assert "Organization Admin" in role_names
     assert "identity:users:write" in permission_codes
+    assert "galleries:reopen" in permission_codes
+    assert "editing:view" in permission_codes
+    assert "editing:approve" in permission_codes
+
+    role_permissions = {
+        role["name"]: {permission["code"] for permission in role["permissions"]}
+        for role in roles_response.json()["data"]
+    }
+    assert "galleries:reopen" in role_permissions["Super Admin"]
+    assert "galleries:reopen" in role_permissions["Organization Admin"]
+    assert "galleries:reopen" in role_permissions["Branch Manager"]
+    assert "editing:approve" in role_permissions["Organization Admin"]
+    assert "editing:approve" in role_permissions["Branch Manager"]
+    assert "editing:update" in role_permissions["Editor"]
+    assert "editing:approve" not in role_permissions["Editor"]
 
 
 def test_protected_endpoint_requires_token(client: TestClient) -> None:

@@ -123,7 +123,16 @@ class FavoriteSelection(UUIDPrimaryKeyMixin, Base):
 
 class GalleryUpgradeRequest(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     __tablename__ = "gallery_upgrade_requests"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["branch_id", "organization_id"],
+            ["branches.id", "branches.organization_id"],
+            name="fk_gallery_upgrade_request_branch_organization",
+        ),
+    )
 
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
+    branch_id: Mapped[UUID] = mapped_column(nullable=False, index=True)
     gallery_id: Mapped[UUID] = mapped_column(ForeignKey("galleries.id"), nullable=False, index=True)
     current_limit: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     requested_limit: Mapped[int] = mapped_column(Integer, nullable=False)

@@ -18,4 +18,13 @@ describe("routePermissions", () => {
     expect(canAccessPath(["Client"], "/galleries")).toBe(false);
     expect(canAccessPath([], "/client/galleries/gallery-1")).toBe(true);
   });
+
+  it("allows production access to managers, customer success, and editors", () => {
+    expect(canAccessPath(["Super Admin"], "/production")).toBe(true);
+    expect(canAccessPath(["Organization Admin"], "/production/editing")).toBe(true);
+    expect(canAccessPath(["Branch Manager"], "/production/editor-dashboard")).toBe(true);
+    expect(canAccessPath(["Editor"], "/production/editing/job-1")).toBe(true);
+    expect(canAccessPath(["Customer Success"], "/production")).toBe(true);
+    expect(canAccessPath(["Photographer"], "/production")).toBe(false);
+  });
 });

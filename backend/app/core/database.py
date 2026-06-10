@@ -2,6 +2,7 @@ from collections.abc import Generator
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import DeclarativeBase, Session, sessionmaker
+from sqlalchemy.pool import StaticPool
 
 from app.core.config import get_settings
 
@@ -12,7 +13,11 @@ class Base(DeclarativeBase):
 
 settings = get_settings()
 engine_kwargs = {"pool_pre_ping": True}
-if not settings.database_url.startswith("sqlite"):
+if settings.database_url.startswith("sqlite"):
+    engine_kwargs.update({"connect_args": {"check_same_thread": False}})
+    if ":memory:" in settings.database_url:
+        engine_kwargs["poolclass"] = StaticPool
+else:
     engine_kwargs.update(
         {
             "pool_size": settings.database_pool_size,

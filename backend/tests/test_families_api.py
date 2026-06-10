@@ -96,6 +96,14 @@ def test_family_crud_search_and_soft_delete(
         f"/api/v1/families/{created['id']}",
         json={
             "status": "BOOKED",
+            "address": {
+                "address_line_1": "202 Updated Studio Lane",
+                "address_line_2": "Bandra East",
+                "city": "Mumbai",
+                "state": "Maharashtra",
+                "country": "India",
+                "postal_code": "400051",
+            },
             "members": [
                 {
                     "name": "Baby Sharma",
@@ -110,6 +118,27 @@ def test_family_crud_search_and_soft_delete(
     assert update_response.status_code == 200
     assert update_response.json()["data"]["status"] == "BOOKED"
     assert update_response.json()["data"]["members"][0]["relationship"] == "BABY"
+    assert update_response.json()["data"]["address"]["address_line_1"] == "202 Updated Studio Lane"
+
+    second_address_update = client.put(
+        f"/api/v1/families/{created['id']}",
+        json={
+            "address": {
+                "address_line_1": "303 Final Studio Lane",
+                "address_line_2": "Bandra East",
+                "city": "Mumbai",
+                "state": "Maharashtra",
+                "country": "India",
+                "postal_code": "400052",
+            }
+        },
+        headers=owner_headers,
+    )
+    assert second_address_update.status_code == 200
+    assert (
+        second_address_update.json()["data"]["address"]["address_line_1"]
+        == "303 Final Studio Lane"
+    )
 
     delete_response = client.delete(f"/api/v1/families/{created['id']}", headers=owner_headers)
     assert delete_response.status_code == 200
