@@ -1,21 +1,22 @@
 from datetime import date
 
-from fastapi.testclient import TestClient
-from sqlalchemy.orm import Session
-
 from app.bookings.models import Booking, BookingItem, Package
 from app.core.security import create_access_token, hash_password
 from app.families.models import Family
 from app.galleries.enums import GalleryStatus
 from app.identity.models import Branch, Organization, Role, User
 from app.sales.models import Opportunity
+from fastapi.testclient import TestClient
+from sqlalchemy.orm import Session
 
 
 def _headers(user: User) -> dict[str, str]:
     return {"Authorization": f"Bearer {create_access_token(user.id)}"}
 
 
-def _create_user(db: Session, organization: Organization, branch: Branch, role_name: str, suffix: str) -> User:
+def _create_user(
+    db: Session, organization: Organization, branch: Branch, role_name: str, suffix: str
+) -> User:
     role = db.query(Role).filter(Role.name == role_name).one()
     user = User(
         organization=organization,
@@ -103,7 +104,9 @@ def _fixture(db: Session):
     return organization, branch, owner, photographer, editor, booking, item
 
 
-def _submitted_gallery(client: TestClient, owner: User, photographer: User, booking: Booking, item: BookingItem):
+def _submitted_gallery(
+    client: TestClient, owner: User, photographer: User, booking: Booking, item: BookingItem
+):
     create_response = client.post(
         "/api/v1/galleries",
         json={
@@ -155,9 +158,7 @@ def _submitted_gallery(client: TestClient, owner: User, photographer: User, book
     return submit_response.json()["data"]
 
 
-def test_editing_job_auto_created_and_workflow_completes(
-    client: TestClient, db: Session
-) -> None:
+def test_editing_job_auto_created_and_workflow_completes(client: TestClient, db: Session) -> None:
     _, _, owner, photographer, editor, booking, item = _fixture(db)
     _submitted_gallery(client, owner, photographer, booking, item)
 

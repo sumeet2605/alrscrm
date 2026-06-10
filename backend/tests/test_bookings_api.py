@@ -219,9 +219,7 @@ def test_booking_requires_booked_opportunity(client: TestClient, db: Session) ->
     assert response.status_code == 422
 
 
-def test_duplicate_package_and_addon_names_return_conflict(
-    client: TestClient, db: Session
-) -> None:
+def test_duplicate_package_and_addon_names_return_conflict(client: TestClient, db: Session) -> None:
     organization, branch, owner, _, _, _, _ = _fixture(db)
     package_payload = {
         "organization_id": str(organization.id),

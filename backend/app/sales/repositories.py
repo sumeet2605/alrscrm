@@ -273,9 +273,7 @@ class SalesRepository:
     ) -> dict[str, int | float]:
         opportunity_query = self.db.query(Opportunity).filter(Opportunity.deleted_at.is_(None))
         followup_query = (
-            self.db.query(FollowUp)
-            .join(Opportunity)
-            .filter(Opportunity.deleted_at.is_(None))
+            self.db.query(FollowUp).join(Opportunity).filter(Opportunity.deleted_at.is_(None))
         )
         if organization_id is not None:
             opportunity_query = opportunity_query.filter(

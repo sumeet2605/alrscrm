@@ -5,9 +5,9 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.bookings.models import Booking, BookingItem
-from app.core.security import hash_password, verify_password, create_token, decode_token
+from app.core.security import create_token, decode_token, hash_password, verify_password
 from app.galleries.enums import GalleryStatus
-from app.galleries.models import FavoriteSelection, Gallery, GalleryPhoto
+from app.galleries.models import FavoriteSelection, Gallery, GalleryPhoto, GalleryUpgradeRequest
 from app.galleries.repositories import GalleryRepository
 from app.galleries.schemas.gallery import (
     FavoriteSelectionCreate,
@@ -19,15 +19,15 @@ from app.galleries.schemas.gallery import (
 from app.galleries.storage import StorageProvider
 from app.identity.policies import AuthorizationContext
 from app.shared.exceptions.application import (
+    BadRequestError,
     ConflictError,
     ForbiddenError,
+    GoneError,
     NotFoundError,
     ValidationError,
 )
-from app.shared.exceptions.application import GoneError, BadRequestError
 from app.shared.pagination import PageResult
 from app.shared.services.audit_service import record_audit_event
-from app.galleries.models import GalleryUpgradeRequest
 
 
 def _scope_filters(
@@ -144,8 +144,8 @@ def get_public_gallery(db: Session, gallery_id: UUID, token: str | None = None) 
             raise ForbiddenError("Authentication required")
         try:
             payload = decode_token(token, "gallery_access")
-        except Exception:
-            raise ForbiddenError("Authentication required")
+        except Exception as err:
+            raise ForbiddenError("Authentication required") from err
         if str(gallery.id) != payload.get("sub"):
             raise ForbiddenError("Authentication required")
     return gallery
@@ -357,14 +357,14 @@ def add_favorite(
     photo = repository.get_photo(payload.gallery_photo_id)
     if photo is None or photo.gallery_id != gallery.id or not photo.is_active:
         raise NotFoundError("Photo not found")
-    existing = repository.get_favorite_by_photo(
-        gallery.id, photo.id, payload.selected_by_email
-    )
+    existing = repository.get_favorite_by_photo(gallery.id, photo.id, payload.selected_by_email)
     if existing is not None:
         return existing
     # enforce selection limit per selector
     if gallery.selection_limit and gallery.selection_limit > 0:
-        current_count = repository.count_favorites_for_selector(gallery.id, payload.selected_by_email)
+        current_count = repository.count_favorites_for_selector(
+            gallery.id, payload.selected_by_email
+        )
         if current_count >= gallery.selection_limit:
             raise BadRequestError(
                 "Selection limit reached.\nContact studio to purchase additional edited photos."
@@ -452,7 +452,6 @@ def authenticate_public_gallery(db: Session, gallery_id: UUID, password: str) ->
 
 
 def submit_selection(db: Session, gallery_id: UUID, context: AuthorizationContext) -> Gallery:
-    repository = GalleryRepository(db)
     gallery = get_gallery(db, gallery_id, context)
     if gallery.gallery_status != GalleryStatus.SELECTION_OPEN.value:
         raise ConflictError("Selection can only be submitted while open")
@@ -496,8 +495,8 @@ def submit_public_selection(db: Session, gallery_id: UUID, token: str | None = N
             raise ForbiddenError("Authentication required")
         try:
             payload = decode_token(token, "gallery_access")
-        except Exception:
-            raise ForbiddenError("Authentication required")
+        except Exception as err:
+            raise ForbiddenError("Authentication required") from err
         if str(gallery.id) != payload.get("sub"):
             raise ForbiddenError("Authentication required")
     if gallery.gallery_status != GalleryStatus.SELECTION_OPEN.value:
@@ -533,7 +532,10 @@ def get_metrics(db: Session, context: AuthorizationContext) -> dict[str, int]:
 
 
 def create_upgrade_request(
-    db: Session, gallery_id: UUID, payload: GalleryUpgradeRequestCreate, context: AuthorizationContext
+    db: Session,
+    gallery_id: UUID,
+    payload: GalleryUpgradeRequestCreate,
+    context: AuthorizationContext,
 ) -> GalleryUpgradeRequest:
     repository = GalleryRepository(db)
     gallery = get_gallery(db, gallery_id, context)
@@ -590,7 +592,9 @@ def _get_upgrade_request_or_404(
     return req
 
 
-def approve_upgrade_request(db: Session, request_id: UUID, context: AuthorizationContext) -> GalleryUpgradeRequest:
+def approve_upgrade_request(
+    db: Session, request_id: UUID, context: AuthorizationContext
+) -> GalleryUpgradeRequest:
     req = _get_upgrade_request_or_404(db, request_id, context)
     if req.status != "PENDING":
         raise ConflictError("Only pending requests can be approved")
@@ -611,7 +615,9 @@ def approve_upgrade_request(db: Session, request_id: UUID, context: Authorizatio
     return req
 
 
-def reject_upgrade_request(db: Session, request_id: UUID, context: AuthorizationContext) -> GalleryUpgradeRequest:
+def reject_upgrade_request(
+    db: Session, request_id: UUID, context: AuthorizationContext
+) -> GalleryUpgradeRequest:
     req = _get_upgrade_request_or_404(db, request_id, context)
     if req.status != "PENDING":
         raise ConflictError("Only pending requests can be rejected")
@@ -629,7 +635,9 @@ def reject_upgrade_request(db: Session, request_id: UUID, context: Authorization
     return req
 
 
-def mark_upgrade_paid(db: Session, request_id: UUID, context: AuthorizationContext) -> GalleryUpgradeRequest:
+def mark_upgrade_paid(
+    db: Session, request_id: UUID, context: AuthorizationContext
+) -> GalleryUpgradeRequest:
     req = _get_upgrade_request_or_404(db, request_id, context)
     if req.status != "APPROVED":
         raise ConflictError("Only approved requests can be marked paid")

@@ -21,10 +21,7 @@ def list_organizations(
     context=Depends(require_permissions("identity:organizations:read")),
 ):
     result = organization_service.list_organizations(db, context, page, page_size)
-    items = [
-        OrganizationRead.model_validate(item).model_dump(mode="json")
-        for item in result.items
-    ]
+    items = [OrganizationRead.model_validate(item).model_dump(mode="json") for item in result.items]
     return api_response("Organizations retrieved", items, meta=result.pagination.as_meta())
 
 

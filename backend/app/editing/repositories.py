@@ -7,8 +7,7 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 from app.bookings.models import Booking, BookingItem
 from app.editing.enums import EditingStatus
 from app.editing.models import EditingJob, EditingReview
-from app.families.models import Family
-from app.galleries.models import FavoriteSelection, Gallery
+from app.galleries.models import FavoriteSelection
 from app.identity.models import User
 from app.shared.pagination import PageResult, paginate_query
 
@@ -61,7 +60,9 @@ class EditingRepository:
             query = query.filter(EditingJob.priority == priority)
         if assigned_editor_id is not None:
             query = query.filter(EditingJob.assigned_editor_id == assigned_editor_id)
-        return paginate_query(query.order_by(EditingJob.due_date, EditingJob.created_at), page, page_size)
+        return paginate_query(
+            query.order_by(EditingJob.due_date, EditingJob.created_at), page, page_size
+        )
 
     def create_job(self, job: EditingJob) -> EditingJob:
         self.db.add(job)
@@ -185,17 +186,20 @@ class EditingRepository:
             EditingStatus.REJECTED.value,
         ]
         return {
-            "assigned_jobs": query.filter(EditingJob.editing_status == EditingStatus.ASSIGNED.value).count(),
+            "assigned_jobs": query.filter(
+                EditingJob.editing_status == EditingStatus.ASSIGNED.value
+            ).count(),
             "due_today": query.filter(EditingJob.due_date == today).count(),
             "overdue": query.filter(
                 EditingJob.due_date < today,
                 EditingJob.editing_status.in_(active_statuses),
             ).count(),
             "completed_this_week": query.filter(
-                EditingJob.completed_at
-                >= datetime.combine(week_start, datetime.min.time(), UTC)
+                EditingJob.completed_at >= datetime.combine(week_start, datetime.min.time(), UTC)
             ).count(),
-            "current_workload": query.filter(EditingJob.editing_status.in_(active_statuses)).count(),
+            "current_workload": query.filter(
+                EditingJob.editing_status.in_(active_statuses)
+            ).count(),
         }
 
     @staticmethod

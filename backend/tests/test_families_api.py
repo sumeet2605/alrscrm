@@ -136,8 +136,7 @@ def test_family_crud_search_and_soft_delete(
     )
     assert second_address_update.status_code == 200
     assert (
-        second_address_update.json()["data"]["address"]["address_line_1"]
-        == "303 Final Studio Lane"
+        second_address_update.json()["data"]["address"]["address_line_1"] == "303 Final Studio Lane"
     )
 
     delete_response = client.delete(f"/api/v1/families/{created['id']}", headers=owner_headers)

@@ -43,7 +43,9 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["gallery_id"], ["galleries.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_gallery_upgrade_requests_gallery_id", "gallery_upgrade_requests", ["gallery_id"])
+    op.create_index(
+        "ix_gallery_upgrade_requests_gallery_id", "gallery_upgrade_requests", ["gallery_id"]
+    )
 
 
 def downgrade() -> None:

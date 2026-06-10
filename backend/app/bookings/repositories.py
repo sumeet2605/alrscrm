@@ -36,17 +36,15 @@ class BookingRepository:
             joinedload(Booking.family),
             joinedload(Booking.opportunity),
             selectinload(Booking.items).joinedload(BookingItem.package),
-            selectinload(Booking.items).selectinload(BookingItem.addons).joinedload(
-                BookingItemAddon.addon
-            ),
+            selectinload(Booking.items)
+            .selectinload(BookingItem.addons)
+            .joinedload(BookingItemAddon.addon),
             selectinload(Booking.items).selectinload(BookingItem.schedules),
         )
 
     def get_booking(self, booking_id: UUID, include_deleted: bool = False) -> Booking | None:
         query = (
-            self.db.query(Booking)
-            .options(*self.booking_options())
-            .filter(Booking.id == booking_id)
+            self.db.query(Booking).options(*self.booking_options()).filter(Booking.id == booking_id)
         )
         if not include_deleted:
             query = query.filter(Booking.deleted_at.is_(None))
@@ -169,9 +167,7 @@ class BookingRepository:
     def get_addon(self, addon_id: UUID) -> PackageAddon | None:
         return self.db.get(PackageAddon, addon_id)
 
-    def addon_name_exists(
-        self, branch_id: UUID, name: str, exclude_id: UUID | None = None
-    ) -> bool:
+    def addon_name_exists(self, branch_id: UUID, name: str, exclude_id: UUID | None = None) -> bool:
         query = self.db.query(PackageAddon.id).filter(
             PackageAddon.branch_id == branch_id,
             func.lower(PackageAddon.name) == name.strip().lower(),
@@ -255,7 +251,9 @@ class BookingRepository:
     def get_assignment(self, assignment_id: UUID) -> PhotographerAssignment | None:
         return (
             self.db.query(PhotographerAssignment)
-            .options(joinedload(PhotographerAssignment.shoot_schedule).joinedload(ShootSchedule.booking))
+            .options(
+                joinedload(PhotographerAssignment.shoot_schedule).joinedload(ShootSchedule.booking)
+            )
             .filter(PhotographerAssignment.id == assignment_id)
             .one_or_none()
         )

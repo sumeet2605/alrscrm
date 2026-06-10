@@ -23,8 +23,12 @@ def upgrade() -> None:
         sa.Column("description", sa.String(length=255), nullable=True),
         sa.Column("is_active", sa.Boolean(), nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.PrimaryKeyConstraint("id"),
         sa.UniqueConstraint("name"),
     )
@@ -44,8 +48,12 @@ def upgrade() -> None:
         sa.Column("notes", sa.Text(), nullable=True),
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.ForeignKeyConstraint(["assigned_to_user_id"], ["users.id"]),
         sa.ForeignKeyConstraint(["family_id"], ["families.id"]),
         sa.ForeignKeyConstraint(["lost_reason_id"], ["lost_reasons.id"]),
@@ -57,10 +65,14 @@ def upgrade() -> None:
         ),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_opportunities_assigned_to_user_id", "opportunities", ["assigned_to_user_id"])
+    op.create_index(
+        "ix_opportunities_assigned_to_user_id", "opportunities", ["assigned_to_user_id"]
+    )
     op.create_index("ix_opportunities_created_at", "opportunities", ["created_at"])
     op.create_index("ix_opportunities_current_stage", "opportunities", ["current_stage"])
-    op.create_index("ix_opportunities_expected_booking_date", "opportunities", ["expected_booking_date"])
+    op.create_index(
+        "ix_opportunities_expected_booking_date", "opportunities", ["expected_booking_date"]
+    )
     op.create_index("ix_opportunities_family_id", "opportunities", ["family_id"])
     op.create_index("ix_opportunities_opportunity_type", "opportunities", ["opportunity_type"])
 
@@ -74,8 +86,12 @@ def upgrade() -> None:
         sa.Column("status", sa.String(length=40), nullable=False),
         sa.Column("notes", sa.Text(), nullable=True),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.ForeignKeyConstraint(["assigned_to_user_id"], ["users.id"]),
         sa.ForeignKeyConstraint(["opportunity_id"], ["opportunities.id"]),
         sa.PrimaryKeyConstraint("id"),
@@ -96,7 +112,9 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["opportunity_id"], ["opportunities.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_opportunity_notes_created_by_user_id", "opportunity_notes", ["created_by_user_id"])
+    op.create_index(
+        "ix_opportunity_notes_created_by_user_id", "opportunity_notes", ["created_by_user_id"]
+    )
     op.create_index("ix_opportunity_notes_opportunity_id", "opportunity_notes", ["opportunity_id"])
 
     op.create_table(
@@ -117,7 +135,9 @@ def upgrade() -> None:
         "opportunity_stage_history",
         ["changed_by_user_id"],
     )
-    op.create_index("ix_opportunity_stage_history_created_at", "opportunity_stage_history", ["created_at"])
+    op.create_index(
+        "ix_opportunity_stage_history_created_at", "opportunity_stage_history", ["created_at"]
+    )
     op.create_index(
         "ix_opportunity_stage_history_opportunity_id",
         "opportunity_stage_history",
@@ -126,7 +146,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index("ix_opportunity_stage_history_opportunity_id", table_name="opportunity_stage_history")
+    op.drop_index(
+        "ix_opportunity_stage_history_opportunity_id", table_name="opportunity_stage_history"
+    )
     op.drop_index("ix_opportunity_stage_history_created_at", table_name="opportunity_stage_history")
     op.drop_index(
         "ix_opportunity_stage_history_changed_by_user_id",

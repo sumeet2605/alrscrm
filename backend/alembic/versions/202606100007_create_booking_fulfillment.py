@@ -27,8 +27,12 @@ def upgrade() -> None:
         sa.Column("price", sa.Numeric(12, 2), nullable=False),
         sa.Column("is_active", sa.Boolean(), nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.CheckConstraint("price >= 0", name="ck_package_price_non_negative"),
         sa.ForeignKeyConstraint(["organization_id"], ["organizations.id"]),
         sa.ForeignKeyConstraint(
@@ -51,8 +55,12 @@ def upgrade() -> None:
         sa.Column("price", sa.Numeric(12, 2), nullable=False),
         sa.Column("is_active", sa.Boolean(), nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.CheckConstraint("price >= 0", name="ck_package_addon_price_non_negative"),
         sa.ForeignKeyConstraint(["organization_id"], ["organizations.id"]),
         sa.ForeignKeyConstraint(
@@ -80,8 +88,12 @@ def upgrade() -> None:
         sa.Column("notes", sa.Text(), nullable=True),
         sa.Column("deleted_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.CheckConstraint("total_amount >= 0", name="ck_booking_total_non_negative"),
         sa.CheckConstraint("advance_received >= 0", name="ck_booking_advance_non_negative"),
         sa.CheckConstraint("balance_amount >= 0", name="ck_booking_balance_non_negative"),
@@ -112,8 +124,12 @@ def upgrade() -> None:
         sa.Column("final_amount", sa.Numeric(12, 2), nullable=False),
         sa.Column("status", sa.String(length=40), nullable=False),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.CheckConstraint("price >= 0", name="ck_booking_item_price_non_negative"),
         sa.CheckConstraint("discount >= 0", name="ck_booking_item_discount_non_negative"),
         sa.CheckConstraint("final_amount >= 0", name="ck_booking_item_final_non_negative"),
@@ -136,7 +152,9 @@ def upgrade() -> None:
         sa.ForeignKeyConstraint(["booking_item_id"], ["booking_items.id"]),
         sa.PrimaryKeyConstraint("id"),
     )
-    op.create_index("ix_booking_item_addons_booking_item_id", "booking_item_addons", ["booking_item_id"])
+    op.create_index(
+        "ix_booking_item_addons_booking_item_id", "booking_item_addons", ["booking_item_id"]
+    )
 
     op.create_table(
         "shoot_schedules",
@@ -148,8 +166,12 @@ def upgrade() -> None:
         sa.Column("shoot_status", sa.String(length=40), nullable=False),
         sa.Column("notes", sa.Text(), nullable=True),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
         sa.CheckConstraint("scheduled_end > scheduled_start", name="ck_schedule_end_after_start"),
         sa.ForeignKeyConstraint(["booking_id"], ["bookings.id"]),
         sa.ForeignKeyConstraint(["booking_item_id"], ["booking_items.id"]),
@@ -173,7 +195,9 @@ def upgrade() -> None:
         sa.UniqueConstraint("shoot_schedule_id", "user_id", name="uq_assignment_schedule_user"),
     )
     op.create_index("ix_photographer_assignments_user_id", "photographer_assignments", ["user_id"])
-    op.create_index("ix_photographer_assignments_assigned_at", "photographer_assignments", ["assigned_at"])
+    op.create_index(
+        "ix_photographer_assignments_assigned_at", "photographer_assignments", ["assigned_at"]
+    )
     op.create_index(
         "ix_photographer_assignments_shoot_schedule_id",
         "photographer_assignments",
@@ -182,7 +206,9 @@ def upgrade() -> None:
 
 
 def downgrade() -> None:
-    op.drop_index("ix_photographer_assignments_shoot_schedule_id", table_name="photographer_assignments")
+    op.drop_index(
+        "ix_photographer_assignments_shoot_schedule_id", table_name="photographer_assignments"
+    )
     op.drop_index("ix_photographer_assignments_assigned_at", table_name="photographer_assignments")
     op.drop_index("ix_photographer_assignments_user_id", table_name="photographer_assignments")
     op.drop_table("photographer_assignments")

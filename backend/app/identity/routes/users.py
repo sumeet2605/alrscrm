@@ -21,10 +21,7 @@ def list_users(
     context=Depends(require_permissions("identity:users:read")),
 ):
     result = user_service.list_users(db, context, page, page_size)
-    items = [
-        UserRead.model_validate(item).model_dump(mode="json")
-        for item in result.items
-    ]
+    items = [UserRead.model_validate(item).model_dump(mode="json") for item in result.items]
     return api_response("Users retrieved", items, meta=result.pagination.as_meta())
 
 

@@ -22,12 +22,10 @@ from app.galleries.schemas import (
 from app.galleries.schemas.gallery import (
     GalleryAuthenticateRequest,
     GalleryAuthenticateResponse,
-)
-from app.galleries.services import gallery_service
-from app.galleries.schemas.gallery import (
     GalleryUpgradeRequestCreate,
     GalleryUpgradeRequestRead,
 )
+from app.galleries.services import gallery_service
 from app.galleries.storage import StorageProvider, get_storage_provider
 
 router = APIRouter(prefix="/galleries", tags=["Galleries"])
@@ -284,7 +282,6 @@ def delete_public_gallery_favorite(
     return api_response("Gallery favorite deleted", {})
 
 
-
 @router.post("/public/{gallery_id}/authenticate", response_model=APIResponse)
 def authenticate_public_gallery(
     gallery_id: UUID,
@@ -292,7 +289,9 @@ def authenticate_public_gallery(
     db: Session = Depends(get_db),
 ):
     token = gallery_service.authenticate_public_gallery(db, gallery_id, payload.password)
-    return api_response("Gallery authenticated", GalleryAuthenticateResponse(access_token=token).model_dump())
+    return api_response(
+        "Gallery authenticated", GalleryAuthenticateResponse(access_token=token).model_dump()
+    )
 
 
 @router.post("/{gallery_id}/public/submit-selection", response_model=APIResponse)
@@ -310,7 +309,9 @@ def submit_public_selection(
     item = gallery_service.submit_public_selection(db, gallery_id, token)
     return api_response(
         "Selection submitted",
-        GalleryDetailRead.model_validate(gallery_service.gallery_to_detail(item)).model_dump(mode="json"),
+        GalleryDetailRead.model_validate(gallery_service.gallery_to_detail(item)).model_dump(
+            mode="json"
+        ),
     )
 
 
@@ -321,7 +322,12 @@ def submit_selection(
     context=Depends(require_permissions("galleries:write")),
 ):
     item = gallery_service.submit_selection(db, gallery_id, context)
-    return api_response("Selection submitted", GalleryDetailRead.model_validate(gallery_service.gallery_to_detail(item)).model_dump(mode="json"))
+    return api_response(
+        "Selection submitted",
+        GalleryDetailRead.model_validate(gallery_service.gallery_to_detail(item)).model_dump(
+            mode="json"
+        ),
+    )
 
 
 @router.post("/{gallery_id}/upgrade-request", response_model=APIResponse)
@@ -332,7 +338,10 @@ def create_upgrade_request(
     context=Depends(require_permissions("galleries:write")),
 ):
     item = gallery_service.create_upgrade_request(db, gallery_id, payload, context)
-    return api_response("Upgrade request created", GalleryUpgradeRequestRead.model_validate(item).model_dump(mode="json"))
+    return api_response(
+        "Upgrade request created",
+        GalleryUpgradeRequestRead.model_validate(item).model_dump(mode="json"),
+    )
 
 
 @router.get("/{gallery_id}/upgrade-requests", response_model=APIResponse)
@@ -342,7 +351,10 @@ def list_upgrade_requests(
     context=Depends(require_permissions("galleries:read")),
 ):
     items = gallery_service.list_upgrade_requests(db, gallery_id, context)
-    return api_response("Upgrade requests retrieved", [GalleryUpgradeRequestRead.model_validate(i).model_dump(mode="json") for i in items])
+    return api_response(
+        "Upgrade requests retrieved",
+        [GalleryUpgradeRequestRead.model_validate(i).model_dump(mode="json") for i in items],
+    )
 
 
 @router.put("/upgrade-requests/{request_id}/approve", response_model=APIResponse)
@@ -352,7 +364,10 @@ def approve_upgrade_request(
     context=Depends(require_permissions("galleries:write")),
 ):
     item = gallery_service.approve_upgrade_request(db, request_id, context)
-    return api_response("Upgrade request approved", GalleryUpgradeRequestRead.model_validate(item).model_dump(mode="json"))
+    return api_response(
+        "Upgrade request approved",
+        GalleryUpgradeRequestRead.model_validate(item).model_dump(mode="json"),
+    )
 
 
 @router.put("/upgrade-requests/{request_id}/reject", response_model=APIResponse)
@@ -362,7 +377,10 @@ def reject_upgrade_request(
     context=Depends(require_permissions("galleries:write")),
 ):
     item = gallery_service.reject_upgrade_request(db, request_id, context)
-    return api_response("Upgrade request rejected", GalleryUpgradeRequestRead.model_validate(item).model_dump(mode="json"))
+    return api_response(
+        "Upgrade request rejected",
+        GalleryUpgradeRequestRead.model_validate(item).model_dump(mode="json"),
+    )
 
 
 @router.put("/upgrade-requests/{request_id}/mark-paid", response_model=APIResponse)
@@ -372,7 +390,10 @@ def mark_upgrade_paid(
     context=Depends(require_permissions("galleries:write")),
 ):
     item = gallery_service.mark_upgrade_paid(db, request_id, context)
-    return api_response("Upgrade request marked paid", GalleryUpgradeRequestRead.model_validate(item).model_dump(mode="json"))
+    return api_response(
+        "Upgrade request marked paid",
+        GalleryUpgradeRequestRead.model_validate(item).model_dump(mode="json"),
+    )
 
 
 @router.post("/{gallery_id}/reopen-selection", response_model=APIResponse)
@@ -382,4 +403,9 @@ def reopen_selection(
     context=Depends(require_permissions("galleries:reopen")),
 ):
     item = gallery_service.reopen_selection(db, gallery_id, context)
-    return api_response("Gallery selection reopened", GalleryDetailRead.model_validate(gallery_service.gallery_to_detail(item)).model_dump(mode="json"))
+    return api_response(
+        "Gallery selection reopened",
+        GalleryDetailRead.model_validate(gallery_service.gallery_to_detail(item)).model_dump(
+            mode="json"
+        ),
+    )

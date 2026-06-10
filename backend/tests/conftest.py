@@ -3,13 +3,13 @@ from collections.abc import Generator
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.pool import StaticPool
+from sqlalchemy.orm import Session
 
 os.environ["DATABASE_URL"] = "sqlite+pysqlite:///:memory:"
 
-from app.core.database import Base, get_db, engine as app_engine, SessionLocal as AppSessionLocal
+from app.core.database import Base, get_db
+from app.core.database import SessionLocal as AppSessionLocal
+from app.core.database import engine as app_engine
 from app.core.security import create_access_token, hash_password
 from app.identity.models import Branch, Organization, Role, User
 from app.identity.seeds import seed_identity

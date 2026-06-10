@@ -10,9 +10,7 @@ class Settings(BaseSettings):
     debug: bool = Field(default=False, validation_alias="APP_DEBUG")
     api_v1_prefix: str = "/api/v1"
 
-    database_url: str = Field(
-        default="postgresql+psycopg://alrscrm:alrscrm@localhost:5432/alrscrm"
-    )
+    database_url: str = Field(default="postgresql+psycopg://alrscrm:alrscrm@localhost:5432/alrscrm")
     database_pool_size: int = 5
     database_max_overflow: int = 10
     redis_url: str = "redis://localhost:6379/0"

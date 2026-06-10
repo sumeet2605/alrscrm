@@ -21,10 +21,7 @@ def list_branches(
     context=Depends(require_permissions("identity:branches:read")),
 ):
     result = branch_service.list_branches(db, context, page, page_size)
-    items = [
-        BranchRead.model_validate(item).model_dump(mode="json")
-        for item in result.items
-    ]
+    items = [BranchRead.model_validate(item).model_dump(mode="json") for item in result.items]
     return api_response("Branches retrieved", items, meta=result.pagination.as_meta())
 
 

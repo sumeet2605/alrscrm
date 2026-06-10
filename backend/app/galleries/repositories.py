@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from typing import TYPE_CHECKING
 from uuid import UUID
 
 from sqlalchemy import func
@@ -10,6 +11,9 @@ from app.galleries.enums import GalleryStatus
 from app.galleries.models import FavoriteSelection, Gallery, GalleryPhoto
 from app.galleries.schemas.gallery import GalleryUpdate
 from app.shared.pagination import PageResult, paginate_query
+
+if TYPE_CHECKING:
+    from app.galleries.models.gallery import GalleryUpgradeRequest
 
 
 class GalleryRepository:
@@ -43,12 +47,14 @@ class GalleryRepository:
             query = query.filter(Gallery.gallery_status == gallery_status)
         if search:
             needle = f"%{search.strip().lower()}%"
-            query = query.join(Booking, Gallery.booking_id == Booking.id).join(
-                Family, Booking.family_id == Family.id
-            ).filter(
-                func.lower(Gallery.gallery_name).like(needle)
-                | func.lower(Booking.booking_number).like(needle)
-                | func.lower(Family.primary_contact_name).like(needle)
+            query = (
+                query.join(Booking, Gallery.booking_id == Booking.id)
+                .join(Family, Booking.family_id == Family.id)
+                .filter(
+                    func.lower(Gallery.gallery_name).like(needle)
+                    | func.lower(Booking.booking_number).like(needle)
+                    | func.lower(Family.primary_contact_name).like(needle)
+                )
             )
         return paginate_query(query.order_by(Gallery.created_at.desc()), page, page_size)
 
@@ -65,9 +71,7 @@ class GalleryRepository:
         return gallery
 
     def update_gallery(self, gallery: Gallery, payload: GalleryUpdate, password_hash: str | None):
-        for field, value in payload.model_dump(
-            exclude_unset=True, exclude={"password"}
-        ).items():
+        for field, value in payload.model_dump(exclude_unset=True, exclude={"password"}).items():
             setattr(gallery, field, value)
         if payload.password is not None:
             gallery.password_hash = password_hash

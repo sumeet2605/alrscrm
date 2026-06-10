@@ -269,7 +269,10 @@ def update_job(
     completed_count = updates.get("completed_photo_count", job.completed_photo_count)
     if completed_count > job.selected_photo_count:
         raise ValidationError("Completed photo count cannot exceed selected photo count")
-    if next_status == EditingStatus.READY_FOR_REVIEW and completed_count != job.selected_photo_count:
+    if (
+        next_status == EditingStatus.READY_FOR_REVIEW
+        and completed_count != job.selected_photo_count
+    ):
         raise ConflictError("All selected photos must be completed before review")
     if next_status == EditingStatus.READY_FOR_DELIVERY:
         raise ConflictError("Use ready-for-delivery workflow action")
@@ -427,4 +430,6 @@ def get_metrics(db: Session, context: AuthorizationContext) -> dict:
 
 
 def get_my_work(db: Session, context: AuthorizationContext) -> dict:
-    return EditingRepository(db).my_work(context.organization_id, context.branch_id, context.user_id)
+    return EditingRepository(db).my_work(
+        context.organization_id, context.branch_id, context.user_id
+    )

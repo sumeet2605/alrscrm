@@ -17,7 +17,9 @@ depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
-    op.add_column("gallery_upgrade_requests", sa.Column("organization_id", sa.Uuid(), nullable=True))
+    op.add_column(
+        "gallery_upgrade_requests", sa.Column("organization_id", sa.Uuid(), nullable=True)
+    )
     op.add_column("gallery_upgrade_requests", sa.Column("branch_id", sa.Uuid(), nullable=True))
 
     op.execute(
@@ -69,10 +71,18 @@ def upgrade() -> None:
         sa.Column("completed_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("notes", sa.Text(), nullable=True),
         sa.Column("id", sa.Uuid(), nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.CheckConstraint("selected_photo_count >= 0", name="ck_editing_selected_photo_count_non_negative"),
-        sa.CheckConstraint("completed_photo_count >= 0", name="ck_editing_completed_photo_count_non_negative"),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.CheckConstraint(
+            "selected_photo_count >= 0", name="ck_editing_selected_photo_count_non_negative"
+        ),
+        sa.CheckConstraint(
+            "completed_photo_count >= 0", name="ck_editing_completed_photo_count_non_negative"
+        ),
         sa.CheckConstraint(
             "completed_photo_count <= selected_photo_count",
             name="ck_editing_completed_not_over_selected",
@@ -116,7 +126,9 @@ def upgrade() -> None:
         sa.PrimaryKeyConstraint("id"),
     )
     op.create_index("ix_editing_reviews_editing_job_id", "editing_reviews", ["editing_job_id"])
-    op.create_index("ix_editing_reviews_reviewed_by_user_id", "editing_reviews", ["reviewed_by_user_id"])
+    op.create_index(
+        "ix_editing_reviews_reviewed_by_user_id", "editing_reviews", ["reviewed_by_user_id"]
+    )
 
 
 def downgrade() -> None:
