@@ -1,0 +1,198 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #f7f8fc;
+  color: #1f2937;
+}
+
+.loading-screen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+}
+
+.login-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 32px;
+  background:
+    linear-gradient(135deg, rgba(106, 76, 147, 0.18), rgba(200, 162, 200, 0.14)),
+    #f7f8fc;
+}
+
+.login-panel {
+  width: min(1040px, 100%);
+  display: grid;
+  grid-template-columns: minmax(0, 1.1fr) 420px;
+  gap: 32px;
+  align-items: center;
+}
+
+.login-copy h1 {
+  font-size: 52px;
+  margin-bottom: 12px;
+}
+
+.login-copy .ant-typography {
+  max-width: 520px;
+  font-size: 18px;
+}
+
+.login-card {
+  border: 1px solid rgba(17, 24, 39, 0.08);
+  box-shadow: 0 24px 70px rgba(31, 41, 55, 0.14);
+}
+
+.form-alert {
+  margin: 20px 0;
+}
+
+.app-layout {
+  min-height: 100vh;
+}
+
+.brand-block {
+  height: 72px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0 20px;
+}
+
+.brand-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  background: #6a4c93;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.brand-name,
+.brand-subtitle {
+  display: block;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.brand-subtitle {
+  opacity: 0.62;
+  font-size: 12px;
+}
+
+.app-header {
+  height: 64px;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #eef0f5;
+}
+
+.header-subtitle {
+  display: block;
+  font-size: 12px;
+}
+
+.profile-button {
+  height: 40px;
+  border-radius: 8px;
+}
+
+.app-content {
+  padding: 24px;
+}
+
+.page-stack {
+  width: 100%;
+}
+
+.page-heading {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.page-heading h2 {
+  margin: 0 0 4px;
+}
+
+.table-toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 420px) minmax(180px, 240px);
+  gap: 12px;
+  align-items: center;
+}
+
+.table-subtext {
+  display: block;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.status-row {
+  min-width: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.role-icon {
+  color: #6a4c93;
+  font-size: 22px;
+}
+
+.permission-collapse {
+  width: min(520px, 100%);
+}
+
+@media (max-width: 900px) {
+  .login-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .login-copy h1 {
+    font-size: 38px;
+  }
+
+  .app-content {
+    padding: 16px;
+  }
+
+  .page-heading {
+    flex-direction: column;
+  }
+
+  .table-toolbar,
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 600px) {
+  .login-page {
+    padding: 16px;
+  }
+
+  .app-header {
+    padding: 0 14px;
+  }
+
+  .profile-button span:last-child {
+    display: none;
+  }
+}

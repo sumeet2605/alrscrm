@@ -117,3 +117,23 @@ pip install -r backend/requirements.txt
 pytest
 ruff check backend
 ```
+
+## Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend runs at `http://localhost:5173` and proxies `/api` requests to the
+backend on `http://localhost:8000`.
+
+Frontend verification:
+
+```bash
+cd frontend
+npm run lint
+npm run test
+npm run build
+```
