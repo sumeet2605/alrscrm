@@ -46,6 +46,18 @@ class Gallery(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     created_by_user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
     password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    selection_limit: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    selection_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    selection_submitted_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    selection_locked: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    selection_deadline: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    allow_download: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
+    allow_watermark: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    reopen_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
 
     organization: Mapped[Organization] = sa_relationship(overlaps="branch")
     branch: Mapped[Branch] = sa_relationship(overlaps="organization")
@@ -107,3 +119,18 @@ class FavoriteSelection(UUIDPrimaryKeyMixin, Base):
 
     gallery: Mapped[Gallery] = sa_relationship(back_populates="favorites")
     gallery_photo: Mapped[GalleryPhoto] = sa_relationship(back_populates="favorites")
+
+
+class GalleryUpgradeRequest(UUIDPrimaryKeyMixin, TimestampMixin, Base):
+    __tablename__ = "gallery_upgrade_requests"
+
+    gallery_id: Mapped[UUID] = mapped_column(ForeignKey("galleries.id"), nullable=False, index=True)
+    current_limit: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
+    requested_limit: Mapped[int] = mapped_column(Integer, nullable=False)
+    additional_photos: Mapped[int] = mapped_column(Integer, nullable=False)
+    price_per_photo: Mapped[int] = mapped_column(Integer, nullable=False)
+    total_amount: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(40), nullable=False)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
+
+    gallery: Mapped[Gallery] = sa_relationship()

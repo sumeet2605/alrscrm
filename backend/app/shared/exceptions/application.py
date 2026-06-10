@@ -30,3 +30,13 @@ class UnauthorizedError(ApplicationError):
 class ValidationError(ApplicationError):
     status_code = 422
     message = "Validation error"
+
+
+class GoneError(ApplicationError):
+    status_code = 410
+    message = "Resource gone"
+
+
+class BadRequestError(ApplicationError):
+    status_code = 400
+    message = "Bad request"

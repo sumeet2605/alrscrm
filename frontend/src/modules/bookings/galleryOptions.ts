@@ -4,6 +4,8 @@ export const galleryStatuses: GalleryStatus[] = [
   "DRAFT",
   "UPLOADED",
   "SELECTION_OPEN",
+  "SELECTION_SUBMITTED",
+  "SELECTION_REOPENED",
   "SELECTION_CLOSED"
 ];
 
@@ -12,6 +14,8 @@ export function galleryStatusColor(status: GalleryStatus) {
     DRAFT: "default",
     UPLOADED: "blue",
     SELECTION_OPEN: "green",
+    SELECTION_SUBMITTED: "purple",
+    SELECTION_REOPENED: "orange",
     SELECTION_CLOSED: "red"
   };
   return colors[status];

@@ -1,6 +1,12 @@
 import type { PaginationMeta } from "./api";
 
-export type GalleryStatus = "DRAFT" | "UPLOADED" | "SELECTION_OPEN" | "SELECTION_CLOSED";
+export type GalleryStatus =
+  | "DRAFT"
+  | "UPLOADED"
+  | "SELECTION_OPEN"
+  | "SELECTION_SUBMITTED"
+  | "SELECTION_REOPENED"
+  | "SELECTION_CLOSED";
 
 export interface Gallery {
   id: string;
@@ -18,6 +24,14 @@ export interface Gallery {
   family_name?: string | null;
   photo_count: number;
   favorite_count: number;
+  selection_limit: number;
+  selection_count: number;
+  selection_locked: boolean;
+  selection_submitted_at?: string | null;
+  selection_deadline?: string | null;
+  allow_download: boolean;
+  allow_watermark: boolean;
+  reopen_count: number;
 }
 
 export interface GalleryPhoto {
@@ -63,6 +77,10 @@ export interface GalleryUpdatePayload {
   gallery_status?: GalleryStatus;
   password?: string | null;
   expires_at?: string | null;
+  selection_limit?: number | null;
+  selection_deadline?: string | null;
+  allow_download?: boolean | null;
+  allow_watermark?: boolean | null;
 }
 
 export interface GalleryPhotoPayload {

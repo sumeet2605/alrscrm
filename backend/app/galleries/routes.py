@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, Header, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_permissions
@@ -19,7 +19,15 @@ from app.galleries.schemas import (
     GalleryRead,
     GalleryUpdate,
 )
+from app.galleries.schemas.gallery import (
+    GalleryAuthenticateRequest,
+    GalleryAuthenticateResponse,
+)
 from app.galleries.services import gallery_service
+from app.galleries.schemas.gallery import (
+    GalleryUpgradeRequestCreate,
+    GalleryUpgradeRequestRead,
+)
 from app.galleries.storage import StorageProvider, get_storage_provider
 
 router = APIRouter(prefix="/galleries", tags=["Galleries"])
@@ -240,8 +248,14 @@ def get_public_gallery(
     gallery_id: UUID,
     db: Session = Depends(get_db),
     storage_provider: StorageProvider = Depends(get_storage_provider),
+    authorization: str | None = Header(default=None),
 ):
-    item = gallery_service.get_public_gallery(db, gallery_id)
+    token = None
+    if authorization:
+        parts = authorization.split()
+        if len(parts) == 2 and parts[0].lower() == "bearer":
+            token = parts[1]
+    item = gallery_service.get_public_gallery(db, gallery_id, token)
     return api_response("Public gallery retrieved", _gallery_detail(item, storage_provider))
 
 
@@ -268,3 +282,104 @@ def delete_public_gallery_favorite(
 ):
     gallery_service.delete_favorite(db, gallery_id, favorite_id, None)
     return api_response("Gallery favorite deleted", {})
+
+
+
+@router.post("/public/{gallery_id}/authenticate", response_model=APIResponse)
+def authenticate_public_gallery(
+    gallery_id: UUID,
+    payload: GalleryAuthenticateRequest,
+    db: Session = Depends(get_db),
+):
+    token = gallery_service.authenticate_public_gallery(db, gallery_id, payload.password)
+    return api_response("Gallery authenticated", GalleryAuthenticateResponse(access_token=token).model_dump())
+
+
+@router.post("/{gallery_id}/public/submit-selection", response_model=APIResponse)
+def submit_public_selection(
+    gallery_id: UUID,
+    db: Session = Depends(get_db),
+    storage_provider: StorageProvider = Depends(get_storage_provider),
+    authorization: str | None = Header(default=None),
+):
+    token = None
+    if authorization:
+        parts = authorization.split()
+        if len(parts) == 2 and parts[0].lower() == "bearer":
+            token = parts[1]
+    item = gallery_service.submit_public_selection(db, gallery_id, token)
+    return api_response(
+        "Selection submitted",
+        GalleryDetailRead.model_validate(gallery_service.gallery_to_detail(item)).model_dump(mode="json"),
+    )
+
+
+@router.post("/{gallery_id}/submit-selection", response_model=APIResponse)
+def submit_selection(
+    gallery_id: UUID,
+    db: Session = Depends(get_db),
+    context=Depends(require_permissions("galleries:write")),
+):
+    item = gallery_service.submit_selection(db, gallery_id, context)
+    return api_response("Selection submitted", GalleryDetailRead.model_validate(gallery_service.gallery_to_detail(item)).model_dump(mode="json"))
+
+
+@router.post("/{gallery_id}/upgrade-request", response_model=APIResponse)
+def create_upgrade_request(
+    gallery_id: UUID,
+    payload: GalleryUpgradeRequestCreate,
+    db: Session = Depends(get_db),
+    context=Depends(require_permissions("galleries:write")),
+):
+    item = gallery_service.create_upgrade_request(db, gallery_id, payload, context)
+    return api_response("Upgrade request created", GalleryUpgradeRequestRead.model_validate(item).model_dump(mode="json"))
+
+
+@router.get("/{gallery_id}/upgrade-requests", response_model=APIResponse)
+def list_upgrade_requests(
+    gallery_id: UUID,
+    db: Session = Depends(get_db),
+    context=Depends(require_permissions("galleries:read")),
+):
+    items = gallery_service.list_upgrade_requests(db, gallery_id, context)
+    return api_response("Upgrade requests retrieved", [GalleryUpgradeRequestRead.model_validate(i).model_dump(mode="json") for i in items])
+
+
+@router.put("/upgrade-requests/{request_id}/approve", response_model=APIResponse)
+def approve_upgrade_request(
+    request_id: UUID,
+    db: Session = Depends(get_db),
+    context=Depends(require_permissions("galleries:write")),
+):
+    item = gallery_service.approve_upgrade_request(db, request_id, context)
+    return api_response("Upgrade request approved", GalleryUpgradeRequestRead.model_validate(item).model_dump(mode="json"))
+
+
+@router.put("/upgrade-requests/{request_id}/reject", response_model=APIResponse)
+def reject_upgrade_request(
+    request_id: UUID,
+    db: Session = Depends(get_db),
+    context=Depends(require_permissions("galleries:write")),
+):
+    item = gallery_service.reject_upgrade_request(db, request_id, context)
+    return api_response("Upgrade request rejected", GalleryUpgradeRequestRead.model_validate(item).model_dump(mode="json"))
+
+
+@router.put("/upgrade-requests/{request_id}/mark-paid", response_model=APIResponse)
+def mark_upgrade_paid(
+    request_id: UUID,
+    db: Session = Depends(get_db),
+    context=Depends(require_permissions("galleries:write")),
+):
+    item = gallery_service.mark_upgrade_paid(db, request_id, context)
+    return api_response("Upgrade request marked paid", GalleryUpgradeRequestRead.model_validate(item).model_dump(mode="json"))
+
+
+@router.post("/{gallery_id}/reopen-selection", response_model=APIResponse)
+def reopen_selection(
+    gallery_id: UUID,
+    db: Session = Depends(get_db),
+    context=Depends(require_permissions("galleries:reopen")),
+):
+    item = gallery_service.reopen_selection(db, gallery_id, context)
+    return api_response("Gallery selection reopened", GalleryDetailRead.model_validate(gallery_service.gallery_to_detail(item)).model_dump(mode="json"))

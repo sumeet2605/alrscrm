@@ -9,24 +9,17 @@ from sqlalchemy.pool import StaticPool
 
 os.environ["DATABASE_URL"] = "sqlite+pysqlite:///:memory:"
 
-from app.core.database import Base, get_db
+from app.core.database import Base, get_db, engine as app_engine, SessionLocal as AppSessionLocal
 from app.core.security import create_access_token, hash_password
 from app.identity.models import Branch, Organization, Role, User
 from app.identity.seeds import seed_identity
 from app.main import app
 from app.sales.seeds import seed_sales
 
-engine = create_engine(
-    "sqlite+pysqlite:///:memory:",
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
-TestingSessionLocal = sessionmaker(
-    bind=engine,
-    autocommit=False,
-    autoflush=False,
-    expire_on_commit=False,
-)
+# Reuse the application's engine and session factory so the app startup checks
+# and test fixtures operate on the same in-memory SQLite database.
+engine = app_engine
+TestingSessionLocal = AppSessionLocal
 
 
 @pytest.fixture()

@@ -1,11 +1,11 @@
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.bookings.models import Booking, BookingItem
-from app.core.security import hash_password
+from app.core.security import hash_password, verify_password, create_token, decode_token
 from app.galleries.enums import GalleryStatus
 from app.galleries.models import FavoriteSelection, Gallery, GalleryPhoto
 from app.galleries.repositories import GalleryRepository
@@ -14,6 +14,7 @@ from app.galleries.schemas.gallery import (
     GalleryCreate,
     GalleryPhotoCreate,
     GalleryUpdate,
+    GalleryUpgradeRequestCreate,
 )
 from app.galleries.storage import StorageProvider
 from app.identity.policies import AuthorizationContext
@@ -23,8 +24,10 @@ from app.shared.exceptions.application import (
     NotFoundError,
     ValidationError,
 )
+from app.shared.exceptions.application import GoneError, BadRequestError
 from app.shared.pagination import PageResult
 from app.shared.services.audit_service import record_audit_event
+from app.galleries.models import GalleryUpgradeRequest
 
 
 def _scope_filters(
@@ -124,12 +127,27 @@ def get_gallery(db: Session, gallery_id: UUID, context: AuthorizationContext) ->
     return gallery
 
 
-def get_public_gallery(db: Session, gallery_id: UUID) -> Gallery:
-    gallery = GalleryRepository(db).get_gallery(gallery_id)
+def get_public_gallery(db: Session, gallery_id: UUID, token: str | None = None) -> Gallery:
+    repository = GalleryRepository(db)
+    gallery = repository.get_gallery(gallery_id)
     if gallery is None:
         raise NotFoundError("Gallery not found")
-    if gallery.expires_at is not None and gallery.expires_at < datetime.now(UTC):
-        raise ConflictError("Gallery link has expired")
+    if gallery.expires_at is not None:
+        expires = gallery.expires_at
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=UTC)
+        if expires < datetime.now(UTC):
+            raise GoneError("Gallery has expired")
+    # if gallery is password protected, require a valid temporary token
+    if gallery.password_hash:
+        if not token:
+            raise ForbiddenError("Authentication required")
+        try:
+            payload = decode_token(token, "gallery_access")
+        except Exception:
+            raise ForbiddenError("Authentication required")
+        if str(gallery.id) != payload.get("sub"):
+            raise ForbiddenError("Authentication required")
     return gallery
 
 
@@ -331,6 +349,9 @@ def add_favorite(
         if context is None
         else get_gallery(db, gallery_id, context)
     )
+    # If selection already locked (submitted), forbid any changes
+    if gallery.selection_locked:
+        raise ForbiddenError("Selection has already been submitted.")
     if gallery.gallery_status != GalleryStatus.SELECTION_OPEN.value:
         raise ConflictError("Favorites can only be selected while selection is open")
     photo = repository.get_photo(payload.gallery_photo_id)
@@ -341,6 +362,13 @@ def add_favorite(
     )
     if existing is not None:
         return existing
+    # enforce selection limit per selector
+    if gallery.selection_limit and gallery.selection_limit > 0:
+        current_count = repository.count_favorites_for_selector(gallery.id, payload.selected_by_email)
+        if current_count >= gallery.selection_limit:
+            raise BadRequestError(
+                "Selection limit reached.\nContact studio to purchase additional edited photos."
+            )
     favorite = FavoriteSelection(
         gallery_id=gallery.id,
         gallery_photo_id=photo.id,
@@ -360,6 +388,13 @@ def add_favorite(
     )
     db.commit()
     db.refresh(favorite)
+    # update gallery selection_count
+    try:
+        gallery.selection_count = gallery.selection_count + 1
+        db.add(gallery)
+        db.commit()
+    except Exception:
+        db.rollback()
     return favorite
 
 
@@ -372,13 +407,233 @@ def delete_favorite(
         if context is None
         else get_gallery(db, gallery_id, context)
     )
+    if gallery.selection_locked:
+        raise ForbiddenError("Selection has already been submitted.")
+
     favorite = repository.get_favorite(favorite_id)
     if favorite is None or favorite.gallery_id != gallery.id:
         raise NotFoundError("Favorite not found")
     repository.delete_favorite(favorite)
     db.commit()
+    try:
+        gallery.selection_count = max(0, gallery.selection_count - 1)
+        db.add(gallery)
+        db.commit()
+    except Exception:
+        db.rollback()
+
+
+def authenticate_public_gallery(db: Session, gallery_id: UUID, password: str) -> str:
+    repository = GalleryRepository(db)
+    gallery = repository.get_gallery(gallery_id)
+    if gallery is None:
+        raise NotFoundError("Gallery not found")
+        if gallery.expires_at is not None:
+            expires = gallery.expires_at
+            # normalize naive datetimes to UTC for comparison
+            if expires.tzinfo is None:
+                expires = expires.replace(tzinfo=UTC)
+            if expires < datetime.now(UTC):
+                raise GoneError("Gallery has expired")
+    if not gallery.password_hash:
+        raise BadRequestError("Gallery is not password protected")
+    if not verify_password(password, gallery.password_hash):
+        raise ForbiddenError("Invalid password")
+    token = create_token(gallery.id, "gallery_access", timedelta(hours=2))
+    record_audit_event(
+        db,
+        "gallery.password_authenticated",
+        gallery.created_by_user_id,
+        "Gallery",
+        gallery.id,
+        metadata={"domain_event": "GalleryPasswordAuthenticated"},
+    )
+    return token
+
+
+def submit_selection(db: Session, gallery_id: UUID, context: AuthorizationContext) -> Gallery:
+    repository = GalleryRepository(db)
+    gallery = get_gallery(db, gallery_id, context)
+    if gallery.gallery_status != GalleryStatus.SELECTION_OPEN.value:
+        raise ConflictError("Selection can only be submitted while open")
+    gallery.selection_locked = True
+    gallery.selection_submitted_at = datetime.now(UTC)
+    gallery.gallery_status = GalleryStatus.SELECTION_SUBMITTED.value
+    record_audit_event(
+        db,
+        "gallery.selection_submitted",
+        context.user_id,
+        "Gallery",
+        gallery.id,
+        metadata={"domain_event": "GallerySelectionSubmitted"},
+    )
+    db.commit()
+    return gallery
+
+
+def submit_public_selection(db: Session, gallery_id: UUID, token: str | None = None) -> Gallery:
+    repository = GalleryRepository(db)
+    gallery = repository.get_gallery(gallery_id)
+    if gallery is None:
+        raise NotFoundError("Gallery not found")
+    if gallery.expires_at is not None:
+        expires = gallery.expires_at
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=UTC)
+        if expires < datetime.now(UTC):
+            raise GoneError("Gallery has expired")
+    # if gallery is password protected, require a valid temporary token
+    if gallery.password_hash:
+        if not token:
+            raise ForbiddenError("Authentication required")
+        try:
+            payload = decode_token(token, "gallery_access")
+        except Exception:
+            raise ForbiddenError("Authentication required")
+        if str(gallery.id) != payload.get("sub"):
+            raise ForbiddenError("Authentication required")
+    if gallery.gallery_status != GalleryStatus.SELECTION_OPEN.value:
+        raise ConflictError("Selection can only be submitted while open")
+    gallery.selection_locked = True
+    gallery.selection_submitted_at = datetime.now(UTC)
+    gallery.gallery_status = GalleryStatus.SELECTION_SUBMITTED.value
+    # use gallery owner as actor for public submissions
+    actor_id = gallery.created_by_user_id
+    record_audit_event(
+        db,
+        "gallery.selection_submitted",
+        actor_id,
+        "Gallery",
+        gallery.id,
+        metadata={"domain_event": "GallerySelectionSubmitted"},
+    )
+    db.commit()
+    return gallery
 
 
 def get_metrics(db: Session, context: AuthorizationContext) -> dict[str, int]:
     organization_id, branch_id = _scope_filters(context)
     return GalleryRepository(db).metrics(organization_id, branch_id)
+
+
+def create_upgrade_request(
+    db: Session, gallery_id: UUID, payload: GalleryUpgradeRequestCreate, context: AuthorizationContext
+) -> GalleryUpgradeRequest:
+    repository = GalleryRepository(db)
+    gallery = get_gallery(db, gallery_id, context)
+    current_limit = gallery.selection_limit or 0
+    requested_limit = payload.requested_limit
+    if requested_limit <= current_limit:
+        raise ValidationError("Requested limit must be greater than current limit")
+    additional = requested_limit - current_limit
+    total_amount = additional * payload.price_per_photo
+    req = GalleryUpgradeRequest(
+        gallery_id=gallery.id,
+        current_limit=current_limit,
+        requested_limit=requested_limit,
+        additional_photos=additional,
+        price_per_photo=payload.price_per_photo,
+        total_amount=total_amount,
+        status="PENDING",
+        notes=payload.notes,
+    )
+    repository.create_upgrade_request(req)
+    db.commit()
+    record_audit_event(
+        db,
+        "gallery.upgrade_requested",
+        context.user_id,
+        "GalleryUpgradeRequest",
+        req.id,
+        metadata={"domain_event": "GalleryUpgradeRequested", "gallery_id": str(gallery.id)},
+    )
+    db.refresh(req)
+    return req
+
+
+def list_upgrade_requests(db: Session, gallery_id: UUID, context: AuthorizationContext) -> list[GalleryUpgradeRequest]:
+    _ = get_gallery(db, gallery_id, context)
+    return GalleryRepository(db).list_upgrade_requests_for_gallery(gallery_id)
+
+
+def _get_upgrade_request_or_404(db: Session, request_id: UUID) -> GalleryUpgradeRequest:
+    repository = GalleryRepository(db)
+    req = repository.get_upgrade_request(request_id)
+    if req is None:
+        raise NotFoundError("Upgrade request not found")
+    return req
+
+
+def approve_upgrade_request(db: Session, request_id: UUID, context: AuthorizationContext) -> GalleryUpgradeRequest:
+    req = _get_upgrade_request_or_404(db, request_id)
+    if req.status != "PENDING":
+        raise ConflictError("Only pending requests can be approved")
+    # update gallery selection_limit
+    gallery = GalleryRepository(db).get_gallery(req.gallery_id)
+    gallery.selection_limit = req.requested_limit
+    req.status = "APPROVED"
+    GalleryRepository(db).update_upgrade_request(req)
+    db.commit()
+    record_audit_event(
+        db,
+        "gallery.upgrade_approved",
+        context.user_id,
+        "GalleryUpgradeRequest",
+        req.id,
+        metadata={"domain_event": "GalleryUpgradeApproved", "gallery_id": str(req.gallery_id)},
+    )
+    return req
+
+
+def reject_upgrade_request(db: Session, request_id: UUID, context: AuthorizationContext) -> GalleryUpgradeRequest:
+    req = _get_upgrade_request_or_404(db, request_id)
+    if req.status != "PENDING":
+        raise ConflictError("Only pending requests can be rejected")
+    req.status = "REJECTED"
+    GalleryRepository(db).update_upgrade_request(req)
+    db.commit()
+    record_audit_event(
+        db,
+        "gallery.upgrade_rejected",
+        context.user_id,
+        "GalleryUpgradeRequest",
+        req.id,
+        metadata={"domain_event": "GalleryUpgradeRejected", "gallery_id": str(req.gallery_id)},
+    )
+    return req
+
+
+def mark_upgrade_paid(db: Session, request_id: UUID, context: AuthorizationContext) -> GalleryUpgradeRequest:
+    req = _get_upgrade_request_or_404(db, request_id)
+    if req.status != "APPROVED":
+        raise ConflictError("Only approved requests can be marked paid")
+    req.status = "PAID"
+    GalleryRepository(db).update_upgrade_request(req)
+    db.commit()
+    record_audit_event(
+        db,
+        "gallery.upgrade_paid",
+        context.user_id,
+        "GalleryUpgradeRequest",
+        req.id,
+        metadata={"domain_event": "GalleryUpgradePaid", "gallery_id": str(req.gallery_id)},
+    )
+    return req
+
+
+def reopen_selection(db: Session, gallery_id: UUID, context: AuthorizationContext) -> Gallery:
+    gallery = get_gallery(db, gallery_id, context)
+    # permission checks are handled by route's require_permissions
+    gallery.gallery_status = GalleryStatus.SELECTION_REOPENED.value
+    gallery.selection_locked = False
+    gallery.reopen_count = (gallery.reopen_count or 0) + 1
+    record_audit_event(
+        db,
+        "gallery.selection_reopened",
+        context.user_id,
+        "Gallery",
+        gallery.id,
+        metadata={"domain_event": "GallerySelectionReopened"},
+    )
+    db.commit()
+    return gallery

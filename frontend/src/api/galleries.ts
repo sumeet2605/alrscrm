@@ -102,18 +102,39 @@ export async function getGalleryMetrics(): Promise<GalleryMetrics> {
   return response.data.data;
 }
 
-export async function getPublicGallery(id: string): Promise<GalleryDetail> {
-  const response = await apiClient.get<ApiEnvelope<GalleryDetail>>(`/galleries/${id}/public`);
+export async function getPublicGallery(id: string, token?: string): Promise<GalleryDetail> {
+  const headers: Record<string, string> = {};
+  if (token) {
+    headers.Authorization = `Bearer ${token}`;
+  }
+  const response = await apiClient.get<ApiEnvelope<GalleryDetail>>(`/galleries/${id}/public`, {
+    headers,
+  });
+  return response.data.data;
+}
+
+export async function authenticatePublicGallery(
+  id: string,
+  password: string
+): Promise<{ access_token: string }> {
+  const response = await apiClient.post<ApiEnvelope<{ access_token: string }>>(
+    `/galleries/public/${id}/authenticate`,
+    { password }
+  );
   return response.data.data;
 }
 
 export async function addPublicGalleryFavorite(
   id: string,
-  payload: FavoritePayload
+  payload: FavoritePayload,
+  token?: string
 ): Promise<FavoriteSelection> {
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
   const response = await apiClient.post<ApiEnvelope<FavoriteSelection>>(
     `/galleries/${id}/public/favorites`,
-    payload
+    payload,
+    { headers }
   );
   return response.data.data;
 }
@@ -122,7 +143,48 @@ export async function deletePublicGalleryFavorite(
   id: string,
   favoriteId: string
 ): Promise<void> {
-  await apiClient.delete<ApiEnvelope<Record<string, never>>>(
-    `/galleries/${id}/public/favorites/${favoriteId}`
+  await apiClient.delete<ApiEnvelope<Record<string, never>>>(`/galleries/${id}/public/favorites/${favoriteId}`);
+}
+
+export async function createUpgradeRequest(
+  galleryId: string,
+  payload: {
+    requested_limit: number;
+    additional_photos: number;
+    price_per_photo: number;
+    notes?: string | null;
+  }
+): Promise<any> {
+  const response = await apiClient.post<ApiEnvelope<any>>(`/galleries/${galleryId}/upgrade-request`, payload);
+  return response.data.data;
+}
+
+export async function listUpgradeRequests(galleryId: string): Promise<any[]> {
+  const response = await apiClient.get<ApiEnvelope<any[]>>(`/galleries/${galleryId}/upgrade-requests`);
+  return response.data.data;
+}
+
+export async function submitSelection(id: string): Promise<GalleryDetail> {
+  const response = await apiClient.post<ApiEnvelope<GalleryDetail>>(
+    `/galleries/${id}/submit-selection`
   );
+  return response.data.data;
+}
+
+export async function reopenSelection(id: string): Promise<GalleryDetail> {
+  const response = await apiClient.post<ApiEnvelope<GalleryDetail>>(
+    `/galleries/${id}/reopen-selection`
+  );
+  return response.data.data;
+}
+
+export async function submitPublicSelection(id: string, token?: string): Promise<GalleryDetail> {
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const response = await apiClient.post<ApiEnvelope<GalleryDetail>>(
+    `/galleries/${id}/public/submit-selection`,
+    {},
+    { headers }
+  );
+  return response.data.data;
 }

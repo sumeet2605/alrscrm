@@ -27,6 +27,10 @@ class GalleryCreate(BaseModel):
     gallery_status: GalleryStatus = GalleryStatus.DRAFT
     password: str | None = Field(default=None, min_length=6, max_length=128)
     expires_at: datetime | None = None
+    selection_limit: int = 0
+    selection_deadline: datetime | None = None
+    allow_download: bool = False
+    allow_watermark: bool = True
 
     @field_validator("gallery_name")
     @classmethod
@@ -39,6 +43,10 @@ class GalleryUpdate(BaseModel):
     gallery_status: GalleryStatus | None = None
     password: str | None = Field(default=None, min_length=6, max_length=128)
     expires_at: datetime | None = None
+    selection_limit: int | None = None
+    selection_deadline: datetime | None = None
+    allow_download: bool | None = None
+    allow_watermark: bool | None = None
 
     @field_validator("gallery_name")
     @classmethod
@@ -136,6 +144,14 @@ class GalleryRead(BaseModel):
     family_name: str | None = None
     photo_count: int = 0
     favorite_count: int = 0
+    selection_limit: int = 0
+    selection_count: int = 0
+    selection_locked: bool = False
+    selection_submitted_at: datetime | None = None
+    selection_deadline: datetime | None = None
+    allow_download: bool = False
+    allow_watermark: bool = True
+    reopen_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -143,6 +159,36 @@ class GalleryRead(BaseModel):
 class GalleryDetailRead(GalleryRead):
     photos: list[GalleryPhotoRead] = Field(default_factory=list)
     favorites: list[FavoriteSelectionRead] = Field(default_factory=list)
+
+
+class GalleryAuthenticateRequest(BaseModel):
+    password: str = Field(min_length=1)
+
+
+class GalleryAuthenticateResponse(BaseModel):
+    access_token: str
+
+
+class GalleryUpgradeRequestCreate(BaseModel):
+    requested_limit: int
+    price_per_photo: int
+    notes: str | None = None
+
+
+class GalleryUpgradeRequestRead(BaseModel):
+    id: UUID
+    gallery_id: UUID
+    current_limit: int
+    requested_limit: int
+    additional_photos: int
+    price_per_photo: int
+    total_amount: int
+    status: str
+    notes: str | None = None
+    created_at: datetime
+    updated_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class GalleryMetricsRead(BaseModel):

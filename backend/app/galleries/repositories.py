@@ -102,6 +102,16 @@ class GalleryRepository:
             query = query.filter(FavoriteSelection.selected_by_email == selected_by_email)
         return query.one_or_none()
 
+    def count_favorites_for_selector(self, gallery_id: UUID, selected_by_email: str | None) -> int:
+        query = self.db.query(func.count(FavoriteSelection.id)).filter(
+            FavoriteSelection.gallery_id == gallery_id,
+        )
+        if selected_by_email is None:
+            query = query.filter(FavoriteSelection.selected_by_email.is_(None))
+        else:
+            query = query.filter(FavoriteSelection.selected_by_email == selected_by_email)
+        return int(query.scalar() or 0)
+
     def delete_favorite(self, favorite: FavoriteSelection) -> None:
         self.db.delete(favorite)
 
@@ -149,3 +159,28 @@ class GalleryRepository:
 
     def make_photo(self, gallery_id: UUID, **kwargs) -> GalleryPhoto:
         return GalleryPhoto(gallery_id=gallery_id, uploaded_at=datetime.now(UTC), **kwargs)
+
+    def create_upgrade_request(self, req: "GalleryUpgradeRequest"):
+        self.db.add(req)
+        return req
+
+    def list_upgrade_requests_for_gallery(self, gallery_id: UUID) -> list["GalleryUpgradeRequest"]:
+        from app.galleries.models.gallery import GalleryUpgradeRequest
+
+        return (
+            self.db.query(GalleryUpgradeRequest)
+            .filter(GalleryUpgradeRequest.gallery_id == gallery_id)
+            .order_by(GalleryUpgradeRequest.created_at.desc())
+            .all()
+        )
+
+    def get_upgrade_request(self, request_id: UUID):
+        from app.galleries.models.gallery import GalleryUpgradeRequest
+
+        return self.db.get(GalleryUpgradeRequest, request_id)
+
+    def update_upgrade_request(self, req: "GalleryUpgradeRequest", **changes):
+        for k, v in changes.items():
+            setattr(req, k, v)
+        self.db.add(req)
+        return req
