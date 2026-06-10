@@ -138,6 +138,40 @@ body {
   align-items: center;
 }
 
+.sales-toolbar {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.3fr) repeat(4, minmax(150px, 0.7fr));
+  gap: 12px;
+  align-items: center;
+}
+
+.pipeline-board {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(220px, 1fr));
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.pipeline-column {
+  min-height: 420px;
+  border: 1px solid #eef0f5;
+  border-radius: 8px;
+  background: #fbfcff;
+  padding: 12px;
+}
+
+.pipeline-column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.pipeline-card {
+  cursor: pointer;
+}
+
 .table-subtext {
   display: block;
   color: #6b7280;
@@ -209,6 +243,7 @@ body {
 
   .table-toolbar,
   .family-toolbar,
+  .sales-toolbar,
   .form-grid,
   .inline-form-row,
   .details-grid {

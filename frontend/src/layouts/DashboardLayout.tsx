@@ -3,6 +3,7 @@ import {
   ContactsOutlined,
   DashboardOutlined,
   LogoutOutlined,
+  RiseOutlined,
   SafetyCertificateOutlined,
   TeamOutlined,
   UserOutlined
@@ -19,6 +20,7 @@ const { Header, Sider, Content } = Layout;
 const navItems = [
   { key: "/dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
   { key: "/families", icon: <ContactsOutlined />, label: "Families" },
+  { key: "/sales", icon: <RiseOutlined />, label: "Sales" },
   { key: "/branches", icon: <ApartmentOutlined />, label: "Branches" },
   { key: "/users", icon: <TeamOutlined />, label: "Users" },
   { key: "/roles", icon: <SafetyCertificateOutlined />, label: "Roles" }

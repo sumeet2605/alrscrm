@@ -81,6 +81,25 @@ export interface components {
       "source"?: components["schemas"]["LeadSource"] | null;
       "status"?: components["schemas"]["FamilyStatus"] | null;
     };
+    "FollowUpCreate": {
+      "assigned_to_user_id": string;
+      "completed_at"?: string | null;
+      "due_date": string;
+      "followup_type"?: components["schemas"]["FollowUpType"];
+      "notes"?: string | null;
+      "opportunity_id": string;
+      "status"?: components["schemas"]["FollowUpStatus"];
+    };
+    "FollowUpStatus": string;
+    "FollowUpType": string;
+    "FollowUpUpdate": {
+      "assigned_to_user_id"?: string | null;
+      "completed_at"?: string | null;
+      "due_date"?: string | null;
+      "followup_type"?: components["schemas"]["FollowUpType"] | null;
+      "notes"?: string | null;
+      "status"?: components["schemas"]["FollowUpStatus"] | null;
+    };
     "Gender": string;
     "HTTPValidationError": {
       "detail"?: components["schemas"]["ValidationError"][];
@@ -89,6 +108,37 @@ export interface components {
     "LoginRequest": {
       "email": string;
       "password": string;
+    };
+    "OpportunityCreate": {
+      "assigned_to_user_id": string;
+      "branch_id": string;
+      "current_stage"?: components["schemas"]["OpportunityStage"];
+      "estimated_value"?: number | string;
+      "expected_booking_date"?: string | null;
+      "family_id": string;
+      "lost_reason_id"?: string | null;
+      "notes"?: string | null;
+      "opportunity_type": components["schemas"]["OpportunityType"];
+      "organization_id": string;
+      "probability"?: number;
+    };
+    "OpportunityNoteCreate": {
+      "note": string;
+    };
+    "OpportunityStage": string;
+    "OpportunityType": string;
+    "OpportunityUpdate": {
+      "assigned_to_user_id"?: string | null;
+      "branch_id"?: string | null;
+      "current_stage"?: components["schemas"]["OpportunityStage"] | null;
+      "estimated_value"?: number | string | null;
+      "expected_booking_date"?: string | null;
+      "family_id"?: string | null;
+      "lost_reason_id"?: string | null;
+      "notes"?: string | null;
+      "opportunity_type"?: components["schemas"]["OpportunityType"] | null;
+      "probability"?: number | null;
+      "stage_change_notes"?: string | null;
     };
     "OrganizationCreate": {
       "code": string;
@@ -329,6 +379,182 @@ export interface paths {
       requestBody: never;
       responses: {
       "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/followups": {
+    get: {
+      parameters: {
+      query: {
+        "page"?: number;
+        "page_size"?: number;
+        "branch_id"?: string | null;
+        "assigned_to_user_id"?: string | null;
+        "status"?: components["schemas"]["FollowUpStatus"] | null;
+        "due_from"?: string | null;
+        "due_to"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["FollowUpCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/followups/{followup_id}": {
+    put: {
+      parameters: {
+      path: {
+        "followup_id": string;
+      };
+    };
+      requestBody: components["schemas"]["FollowUpUpdate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/lost-reasons": {
+    get: {
+      parameters: Record<string, never>;
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      };
+    };
+  };
+  "/api/v1/opportunities": {
+    get: {
+      parameters: {
+      query: {
+        "page"?: number;
+        "page_size"?: number;
+        "search"?: string | null;
+        "stage"?: components["schemas"]["OpportunityStage"] | null;
+        "assigned_to_user_id"?: string | null;
+        "opportunity_type"?: components["schemas"]["OpportunityType"] | null;
+        "lost_reason_id"?: string | null;
+        "branch_id"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["OpportunityCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/opportunities/metrics": {
+    get: {
+      parameters: Record<string, never>;
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      };
+    };
+  };
+  "/api/v1/opportunities/pipeline": {
+    get: {
+      parameters: Record<string, never>;
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      };
+    };
+  };
+  "/api/v1/opportunities/{opportunity_id}": {
+    get: {
+      parameters: {
+      path: {
+        "opportunity_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    put: {
+      parameters: {
+      path: {
+        "opportunity_id": string;
+      };
+    };
+      requestBody: components["schemas"]["OpportunityUpdate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    delete: {
+      parameters: {
+      path: {
+        "opportunity_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/opportunities/{opportunity_id}/history": {
+    get: {
+      parameters: {
+      path: {
+        "opportunity_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/opportunities/{opportunity_id}/notes": {
+    get: {
+      parameters: {
+      path: {
+        "opportunity_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    post: {
+      parameters: {
+      path: {
+        "opportunity_id": string;
+      };
+    };
+      requestBody: components["schemas"]["OpportunityNoteCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
       "422": components["schemas"]["HTTPValidationError"];
       };
     };

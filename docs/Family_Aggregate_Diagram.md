@@ -82,6 +82,15 @@ classDiagram
       UUID tag_id
     }
 
+    class Opportunity {
+      UUID id
+      UUID family_id
+      UUID organization_id
+      UUID branch_id
+      OpportunityType opportunity_type
+      OpportunityStage current_stage
+    }
+
     Organization "1" --> "*" Branch : owns
     Organization "1" --> "*" Family : scopes
     Branch "1" --> "*" Family : intake scope
@@ -90,6 +99,7 @@ classDiagram
     Family "1" *-- "*" ServiceInterest : owns
     Family "1" --> "*" FamilyTagMapping : references
     FamilyTag "1" --> "*" FamilyTagMapping : owns tag identity
+    Family "1" --> "*" Opportunity : referenced by sales
 ```
 
 ## Boundary Classification
@@ -102,6 +112,7 @@ classDiagram
 | `ServiceInterest` | Inside Family aggregate | Owned by `Family`; no independent API or lifecycle. |
 | `FamilyTag` | Outside Family aggregate | Reusable tag identity; modeled as its own table. No API exists yet. |
 | `FamilyTagMapping` | Association | Connects Family to external reusable tags. |
+| `Opportunity` | Separate Sales aggregate | References `family_id`; does not own Family profile fields. |
 | `Organization` | Separate Identity aggregate | Existing Sprint 1 aggregate used for tenant scope. |
 | `Branch` | Separate Identity aggregate | Existing Sprint 1 aggregate used for branch scope. |
 
@@ -123,5 +134,6 @@ classDiagram
 - `RefreshTokenSession`
 - `AuditLog`
 - `FamilyTag`
+- `Opportunity`
 
 These entities either belong to Identity and Access, Authentication, Audit, or reusable taxonomy boundaries.

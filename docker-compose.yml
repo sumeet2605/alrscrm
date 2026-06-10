@@ -17,6 +17,7 @@ services:
     command: >
       sh -c "alembic upgrade head &&
              python -m scripts.seed_identity &&
+             python -m scripts.seed_sales &&
              python -m scripts.seed_super_admin &&
              uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
     volumes:

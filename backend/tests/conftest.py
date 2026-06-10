@@ -14,6 +14,7 @@ from app.core.security import create_access_token, hash_password
 from app.identity.models import Branch, Organization, Role, User
 from app.identity.seeds import seed_identity
 from app.main import app
+from app.sales.seeds import seed_sales
 
 engine = create_engine(
     "sqlite+pysqlite:///:memory:",
@@ -34,6 +35,7 @@ def db() -> Generator[Session]:
     session = TestingSessionLocal()
     try:
         seed_identity(session)
+        seed_sales(session)
         yield session
     finally:
         session.close()

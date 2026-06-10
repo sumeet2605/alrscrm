@@ -6,6 +6,7 @@ from app.core.config import get_settings
 from app.core.database import Base
 from app.families import models as family_models  # noqa: F401
 from app.identity import models  # noqa: F401
+from app.sales import models as sales_models  # noqa: F401
 from app.shared.models import audit_log  # noqa: F401
 from sqlalchemy import engine_from_config, pool
 

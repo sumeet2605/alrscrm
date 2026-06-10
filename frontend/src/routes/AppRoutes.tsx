@@ -7,6 +7,10 @@ import { FamilyDetailsPage } from "../modules/families/FamilyDetailsPage";
 import { FamilyFormPage } from "../modules/families/FamilyFormPage";
 import { FamilyListPage } from "../modules/families/FamilyListPage";
 import { RoleManagementPage } from "../modules/roles/RoleManagementPage";
+import { OpportunityDetailsPage } from "../modules/sales/OpportunityDetailsPage";
+import { OpportunityFormPage } from "../modules/sales/OpportunityFormPage";
+import { OpportunityListPage } from "../modules/sales/OpportunityListPage";
+import { SalesDashboardPage } from "../modules/sales/SalesDashboardPage";
 import { UserManagementPage } from "../modules/users/UserManagementPage";
 import { LoginPage } from "../pages/LoginPage";
 import { ProtectedRoute } from "./ProtectedRoute";
@@ -23,6 +27,10 @@ export function AppRoutes() {
           <Route path="/families/new" element={<FamilyFormPage />} />
           <Route path="/families/:familyId" element={<FamilyDetailsPage />} />
           <Route path="/families/:familyId/edit" element={<FamilyFormPage />} />
+          <Route path="/sales" element={<SalesDashboardPage />} />
+          <Route path="/sales/opportunities" element={<OpportunityListPage />} />
+          <Route path="/sales/opportunities/new" element={<OpportunityFormPage />} />
+          <Route path="/sales/opportunities/:opportunityId" element={<OpportunityDetailsPage />} />
           <Route path="/branches" element={<BranchManagementPage />} />
           <Route path="/users" element={<UserManagementPage />} />
           <Route path="/roles" element={<RoleManagementPage />} />

@@ -2,12 +2,14 @@ import {
   ApartmentOutlined,
   CheckCircleOutlined,
   DollarOutlined,
+  PercentageOutlined,
   TeamOutlined
 } from "@ant-design/icons";
 import { useQuery } from "@tanstack/react-query";
 import { Card, Col, Row, Space, Statistic, Table, Tag, Typography } from "antd";
 
 import { listBranches, listUsers } from "../../api/identity";
+import { getSalesMetrics } from "../../api/sales";
 import { useAuth } from "../../contexts/AuthContext";
 
 const activity = [
@@ -26,6 +28,10 @@ export function DashboardPage() {
     queryKey: ["dashboard", "branches"],
     queryFn: () => listBranches({ page: 1, page_size: 1 })
   });
+  const salesMetricsQuery = useQuery({
+    queryKey: ["dashboard", "sales-metrics"],
+    queryFn: getSalesMetrics
+  });
 
   return (
     <Space direction="vertical" size={20} className="page-stack">
@@ -40,12 +46,23 @@ export function DashboardPage() {
       <Row gutter={[16, 16]}>
         <Col xs={24} sm={12} xl={6}>
           <Card>
-            <Statistic title="Revenue" value="N/A" prefix={<DollarOutlined />} />
+            <Statistic
+              title="Average Opportunity Value"
+              value={salesMetricsQuery.data?.average_opportunity_value ?? 0}
+              loading={salesMetricsQuery.isLoading}
+              prefix="₹"
+              precision={0}
+            />
           </Card>
         </Col>
         <Col xs={24} sm={12} xl={6}>
           <Card>
-            <Statistic title="Bookings" value="N/A" prefix={<CheckCircleOutlined />} />
+            <Statistic
+              title="Booked Opportunities"
+              value={salesMetricsQuery.data?.booked_opportunities ?? 0}
+              loading={salesMetricsQuery.isLoading}
+              prefix={<CheckCircleOutlined />}
+            />
           </Card>
         </Col>
         <Col xs={24} sm={12} xl={6}>
@@ -65,6 +82,47 @@ export function DashboardPage() {
               value={branchesQuery.data?.meta.total ?? 0}
               loading={branchesQuery.isLoading}
               prefix={<ApartmentOutlined />}
+            />
+          </Card>
+        </Col>
+      </Row>
+      <Row gutter={[16, 16]}>
+        <Col xs={24} sm={12} xl={6}>
+          <Card>
+            <Statistic
+              title="Open Opportunities"
+              value={salesMetricsQuery.data?.open_opportunities ?? 0}
+              loading={salesMetricsQuery.isLoading}
+              prefix={<DollarOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} xl={6}>
+          <Card>
+            <Statistic
+              title="Lost Opportunities"
+              value={salesMetricsQuery.data?.lost_opportunities ?? 0}
+              loading={salesMetricsQuery.isLoading}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} xl={6}>
+          <Card>
+            <Statistic
+              title="Conversion Rate"
+              value={salesMetricsQuery.data?.conversion_rate ?? 0}
+              suffix="%"
+              loading={salesMetricsQuery.isLoading}
+              prefix={<PercentageOutlined />}
+            />
+          </Card>
+        </Col>
+        <Col xs={24} sm={12} xl={6}>
+          <Card>
+            <Statistic
+              title="Missed Follow Ups"
+              value={salesMetricsQuery.data?.missed_followups ?? 0}
+              loading={salesMetricsQuery.isLoading}
             />
           </Card>
         </Col>
