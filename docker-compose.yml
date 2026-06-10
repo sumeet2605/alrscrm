@@ -1,0 +1,49 @@
+name: alrscrm
+
+services:
+  api:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file:
+      - backend/.env.example
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    command: >
+      sh -c "alembic upgrade head &&
+             python -m scripts.seed_identity &&
+             python -m scripts.seed_sales &&
+             python -m scripts.seed_super_admin &&
+             uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload"
+    volumes:
+      - ./backend:/app
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: alrscrm
+      POSTGRES_USER: alrscrm
+      POSTGRES_PASSWORD: alrscrm
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U alrscrm -d alrscrm"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+volumes:
+  postgres_data:
+    name: alrscrm_postgres_data

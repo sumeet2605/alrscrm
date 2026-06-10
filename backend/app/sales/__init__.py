@@ -1,0 +1,1 @@
+"""Sales pipeline bounded context."""
