@@ -12,6 +12,7 @@ import {
   ShopOutlined,
   TeamOutlined,
   ToolOutlined,
+  BankOutlined,
   UserOutlined
 } from "@ant-design/icons";
 import { Avatar, Button, Dropdown, Layout, Menu, Space, Typography, theme } from "antd";
@@ -32,6 +33,7 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { key: "/dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
+  { key: "/organizations", icon: <BankOutlined />, label: "Organizations" },
   { key: "/families", icon: <ContactsOutlined />, label: "Families" },
   { key: "/sales", icon: <RiseOutlined />, label: "Sales" },
   {
@@ -83,6 +85,7 @@ function filterNavItems(items: NavItem[], roleNames: string[]): MenuProps["items
 }
 
 function selectedMenuPath(pathname: string): string {
+  if (pathname.startsWith("/organizations")) return "/organizations";
   if (pathname.startsWith("/packages")) return "/packages";
   if (pathname.startsWith("/galleries")) return "/galleries";
   if (pathname.startsWith("/delivery/dashboard")) return "/delivery/dashboard";

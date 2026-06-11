@@ -20,6 +20,9 @@ import { DeliveryQueuePage } from "../modules/delivery/DeliveryQueuePage";
 import { FamilyDetailsPage } from "../modules/families/FamilyDetailsPage";
 import { FamilyFormPage } from "../modules/families/FamilyFormPage";
 import { FamilyListPage } from "../modules/families/FamilyListPage";
+import { OrganizationDetailPage } from "../modules/organizations/OrganizationDetailPage";
+import { OrganizationListPage } from "../modules/organizations/OrganizationListPage";
+import { OrganizationOnboardingPage } from "../modules/organizations/OrganizationOnboardingPage";
 import { EditingJobDetailPage } from "../modules/production/EditingJobDetailPage";
 import { EditingQueuePage } from "../modules/production/EditingQueuePage";
 import { EditorDashboardPage } from "../modules/production/EditorDashboardPage";
@@ -43,6 +46,10 @@ export function AppRoutes() {
         <Route element={<DashboardLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/organizations" element={<OrganizationListPage />} />
+          <Route path="/organizations/new" element={<OrganizationOnboardingPage />} />
+          <Route path="/organizations/:organizationId" element={<OrganizationDetailPage />} />
+          <Route path="/organizations/:organizationId/settings" element={<OrganizationDetailPage />} />
           <Route path="/families" element={<FamilyListPage />} />
           <Route path="/families/new" element={<FamilyFormPage />} />
           <Route path="/families/:familyId" element={<FamilyDetailsPage />} />

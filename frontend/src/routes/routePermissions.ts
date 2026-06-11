@@ -13,6 +13,8 @@ const fullAccessRoutes = [
   "/roles"
 ];
 
+const platformRoutes = ["/organizations"];
+
 export const roleRoutes: Record<string, string[]> = {
   Owner: fullAccessRoutes,
   "Organization Admin": fullAccessRoutes,
@@ -49,7 +51,7 @@ export const roleRoutes: Record<string, string[]> = {
     "/schedules",
     "/production"
   ],
-  "Super Admin": fullAccessRoutes
+  "Super Admin": [...platformRoutes, ...fullAccessRoutes]
 };
 
 export function canAccessPath(roleNames: string[], path: string): boolean {
@@ -65,6 +67,9 @@ export function canAccessPath(roleNames: string[], path: string): boolean {
     return roleNames.some((role) =>
       ["Super Admin", "Organization Admin", "Owner", "Branch Manager"].includes(role)
     );
+  }
+  if (path.startsWith("/organizations")) {
+    return roleNames.includes("Super Admin");
   }
   return roleNames.some((role) => roleRoutes[role]?.some((route) => path.startsWith(route)));
 }

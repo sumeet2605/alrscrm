@@ -18,6 +18,15 @@ ROLE_DEFINITIONS: tuple[tuple[str, str, bool, int], ...] = (
 PERMISSION_DEFINITIONS: tuple[tuple[str, str, str], ...] = (
     ("identity:organizations:read", "Read organizations", "View organizations."),
     ("identity:organizations:write", "Manage organizations", "Create and update organizations."),
+    ("organizations:view", "View organizations", "View SaaS customer organizations."),
+    ("organizations:create", "Create organizations", "Create SaaS customer organizations."),
+    ("organizations:update", "Update organizations", "Update SaaS customer organizations."),
+    (
+        "organizations:deactivate",
+        "Deactivate organizations",
+        "Deactivate SaaS customer organizations.",
+    ),
+    ("organizations:onboard", "Onboard organizations", "Run SaaS organization onboarding."),
     ("identity:branches:read", "Read branches", "View branches."),
     ("identity:branches:write", "Manage branches", "Create and update branches."),
     ("identity:users:read", "Read users", "View users."),
@@ -69,8 +78,12 @@ PERMISSION_DEFINITIONS: tuple[tuple[str, str, str], ...] = (
 
 ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
     "Super Admin": tuple(code for code, _, _ in PERMISSION_DEFINITIONS),
-    "Organization Admin": tuple(code for code, _, _ in PERMISSION_DEFINITIONS),
-    "Owner": tuple(code for code, _, _ in PERMISSION_DEFINITIONS),
+    "Organization Admin": tuple(
+        code for code, _, _ in PERMISSION_DEFINITIONS if not code.startswith("organizations:")
+    ),
+    "Owner": tuple(
+        code for code, _, _ in PERMISSION_DEFINITIONS if not code.startswith("organizations:")
+    ),
     "Branch Manager": (
         "identity:branches:read",
         "identity:users:read",

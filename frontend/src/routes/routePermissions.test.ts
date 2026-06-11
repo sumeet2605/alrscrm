@@ -3,6 +3,13 @@ import { describe, expect, it } from "vitest";
 import { canAccessPath } from "./routePermissions";
 
 describe("routePermissions", () => {
+  it("allows organization management only for Super Admin", () => {
+    expect(canAccessPath(["Super Admin"], "/organizations")).toBe(true);
+    expect(canAccessPath(["Super Admin"], "/organizations/new")).toBe(true);
+    expect(canAccessPath(["Organization Admin"], "/organizations")).toBe(false);
+    expect(canAccessPath(["Owner"], "/organizations/new")).toBe(false);
+  });
+
   it("allows package management only for administrative booking roles", () => {
     expect(canAccessPath(["Super Admin"], "/packages")).toBe(true);
     expect(canAccessPath(["Organization Admin"], "/packages")).toBe(true);

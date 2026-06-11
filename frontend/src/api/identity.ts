@@ -5,6 +5,14 @@ import type {
   BranchListParams,
   BranchPayload,
   BranchUpdatePayload,
+  Organization,
+  OrganizationListParams,
+  OrganizationOnboardingPayload,
+  OrganizationOnboardingResult,
+  OrganizationPayload,
+  OrganizationSettings,
+  OrganizationSettingsUpdatePayload,
+  OrganizationUpdatePayload,
   Role,
   User,
   UserListParams,
@@ -17,11 +25,82 @@ export interface ListResult<T> {
   meta: PaginationMeta;
 }
 
-function buildParams(params: BranchListParams | UserListParams): Record<string, string | number> {
+function buildParams(
+  params: BranchListParams | UserListParams | OrganizationListParams
+): Record<string, string | number> {
   return {
     page: params.page ?? 1,
     page_size: params.page_size ?? 10
   };
+}
+
+export async function listOrganizations(
+  params: OrganizationListParams
+): Promise<ListResult<Organization>> {
+  const response = await apiClient.get<ApiEnvelope<Organization[]>>("/organizations", {
+    params: buildParams(params)
+  });
+  return { items: response.data.data, meta: response.data.meta! };
+}
+
+export async function createOrganization(payload: OrganizationPayload): Promise<Organization> {
+  const response = await apiClient.post<ApiEnvelope<Organization>>("/organizations", payload);
+  return response.data.data;
+}
+
+export async function onboardOrganization(
+  payload: OrganizationOnboardingPayload
+): Promise<OrganizationOnboardingResult> {
+  const response = await apiClient.post<ApiEnvelope<OrganizationOnboardingResult>>(
+    "/organizations/onboard",
+    payload
+  );
+  return response.data.data;
+}
+
+export async function getOrganization(id: string): Promise<Organization> {
+  const response = await apiClient.get<ApiEnvelope<Organization>>(`/organizations/${id}`);
+  return response.data.data;
+}
+
+export async function updateOrganization(
+  id: string,
+  payload: OrganizationUpdatePayload
+): Promise<Organization> {
+  const response = await apiClient.patch<ApiEnvelope<Organization>>(
+    `/organizations/${id}`,
+    payload
+  );
+  return response.data.data;
+}
+
+export async function activateOrganization(id: string): Promise<Organization> {
+  const response = await apiClient.post<ApiEnvelope<Organization>>(
+    `/organizations/${id}/activate`
+  );
+  return response.data.data;
+}
+
+export async function deactivateOrganization(id: string): Promise<void> {
+  await apiClient.post<ApiEnvelope<Record<string, never>>>(`/organizations/${id}/deactivate`);
+}
+
+export async function getOrganizationSettings(id: string): Promise<OrganizationSettings> {
+  const response = await apiClient.get<ApiEnvelope<OrganizationSettings>>(
+    `/organizations/${id}/settings`
+  );
+  return response.data.data;
+}
+
+export async function updateOrganizationSettings(
+  id: string,
+  payload: OrganizationSettingsUpdatePayload
+): Promise<OrganizationSettings> {
+  const response = await apiClient.patch<ApiEnvelope<OrganizationSettings>>(
+    `/organizations/${id}/settings`,
+    payload
+  );
+  return response.data.data;
 }
 
 export async function listBranches(params: BranchListParams): Promise<ListResult<Branch>> {

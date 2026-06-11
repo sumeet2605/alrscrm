@@ -280,6 +280,38 @@ export interface components {
       "is_active"?: boolean;
       "name": string;
     };
+    "OrganizationOnboardingBranch": {
+      "name"?: string;
+    };
+    "OrganizationOnboardingCreate": {
+      "branch": components["schemas"]["OrganizationOnboardingBranch"];
+      "organization": components["schemas"]["OrganizationOnboardingDetails"];
+      "owner": components["schemas"]["OrganizationOnboardingOwner"];
+    };
+    "OrganizationOnboardingDetails": {
+      "code": string;
+      "email"?: string | null;
+      "name": string;
+      "phone"?: string | null;
+      "timezone"?: string;
+    };
+    "OrganizationOnboardingOwner": {
+      "email": string;
+      "name": string;
+      "phone"?: string | null;
+    };
+    "OrganizationSettingsUpdate": {
+      "address"?: string | null;
+      "contact_email"?: string | null;
+      "contact_phone"?: string | null;
+      "currency"?: string | null;
+      "delivery_expiry_default"?: number | null;
+      "gallery_selection_default_limit"?: number | null;
+      "logo_url"?: string | null;
+      "studio_name"?: string | null;
+      "timezone"?: string | null;
+      "website"?: string | null;
+    };
     "OrganizationUpdate": {
       "code"?: string | null;
       "is_active"?: boolean | null;
@@ -1621,6 +1653,16 @@ export interface paths {
       };
     };
   };
+  "/api/v1/organizations/onboard": {
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["OrganizationOnboardingCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
   "/api/v1/organizations/{organization_id}": {
     get: {
       parameters: {
@@ -1653,6 +1695,60 @@ export interface paths {
       };
     };
       requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/organizations/{organization_id}/activate": {
+    post: {
+      parameters: {
+      path: {
+        "organization_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/organizations/{organization_id}/deactivate": {
+    post: {
+      parameters: {
+      path: {
+        "organization_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/organizations/{organization_id}/settings": {
+    get: {
+      parameters: {
+      path: {
+        "organization_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    patch: {
+      parameters: {
+      path: {
+        "organization_id": string;
+      };
+    };
+      requestBody: components["schemas"]["OrganizationSettingsUpdate"];
       responses: {
       "200": components["schemas"]["APIResponse"];
       "422": components["schemas"]["HTTPValidationError"];
