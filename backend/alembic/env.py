@@ -8,6 +8,7 @@ from app.core.database import Base
 from app.delivery import models as delivery_models  # noqa: F401
 from app.editing import models as editing_models  # noqa: F401
 from app.families import models as family_models  # noqa: F401
+from app.finance import models as finance_models  # noqa: F401
 from app.galleries import models as gallery_models  # noqa: F401
 from app.identity import models  # noqa: F401
 from app.sales import models as sales_models  # noqa: F401

@@ -44,4 +44,14 @@ describe("routePermissions", () => {
     expect(canAccessPath(["Photographer"], "/delivery")).toBe(false);
     expect(canAccessPath([], "/client/delivery/delivery-1")).toBe(true);
   });
+
+  it("allows finance access only to administrative finance roles", () => {
+    expect(canAccessPath(["Super Admin"], "/finance")).toBe(true);
+    expect(canAccessPath(["Owner"], "/finance/invoices")).toBe(true);
+    expect(canAccessPath(["Organization Admin"], "/finance/payments/payment-1")).toBe(true);
+    expect(canAccessPath(["Branch Manager"], "/finance/invoices/invoice-1")).toBe(true);
+    expect(canAccessPath(["Sales Executive"], "/finance")).toBe(false);
+    expect(canAccessPath(["Photographer"], "/finance/payments")).toBe(false);
+    expect(canAccessPath(["Editor"], "/finance/invoices")).toBe(false);
+  });
 });

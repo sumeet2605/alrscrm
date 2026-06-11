@@ -20,6 +20,11 @@ import { DeliveryQueuePage } from "../modules/delivery/DeliveryQueuePage";
 import { FamilyDetailsPage } from "../modules/families/FamilyDetailsPage";
 import { FamilyFormPage } from "../modules/families/FamilyFormPage";
 import { FamilyListPage } from "../modules/families/FamilyListPage";
+import { FinanceDashboardPage } from "../modules/finance/FinanceDashboardPage";
+import { InvoiceDetailPage } from "../modules/finance/InvoiceDetailPage";
+import { InvoiceListPage } from "../modules/finance/InvoiceListPage";
+import { PaymentDetailPage } from "../modules/finance/PaymentDetailPage";
+import { PaymentListPage } from "../modules/finance/PaymentListPage";
 import { OrganizationDetailPage } from "../modules/organizations/OrganizationDetailPage";
 import { OrganizationListPage } from "../modules/organizations/OrganizationListPage";
 import { OrganizationOnboardingPage } from "../modules/organizations/OrganizationOnboardingPage";
@@ -72,6 +77,11 @@ export function AppRoutes() {
           <Route path="/delivery" element={<DeliveryQueuePage />} />
           <Route path="/delivery/dashboard" element={<DeliveryDashboardPage />} />
           <Route path="/delivery/:deliveryId" element={<DeliveryDetailPage />} />
+          <Route path="/finance" element={<FinanceDashboardPage />} />
+          <Route path="/finance/invoices" element={<InvoiceListPage />} />
+          <Route path="/finance/invoices/:invoiceId" element={<InvoiceDetailPage />} />
+          <Route path="/finance/payments" element={<PaymentListPage />} />
+          <Route path="/finance/payments/:paymentId" element={<PaymentDetailPage />} />
           <Route path="/schedules" element={<ScheduleCalendarPage />} />
           <Route path="/schedules/assignments" element={<AssignmentBoardPage />} />
           <Route path="/branches" element={<BranchManagementPage />} />

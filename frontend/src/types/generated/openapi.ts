@@ -175,6 +175,21 @@ export interface components {
       "selected_by_email"?: string | null;
       "selected_by_name": string;
     };
+    "FinanceSettingsUpdate": {
+      "auto_create_booking_invoice"?: boolean | null;
+      "billing_address"?: string | null;
+      "billing_state"?: string | null;
+      "billing_state_code"?: string | null;
+      "branch_id"?: string | null;
+      "default_currency"?: string | null;
+      "default_due_days"?: number | null;
+      "gstin"?: string | null;
+      "invoice_prefix"?: string | null;
+      "legal_name"?: string | null;
+      "registration_type"?: components["schemas"]["GSTRegistrationType"] | null;
+      "require_payment_before_delivery"?: boolean | null;
+      "trade_name"?: string | null;
+    };
     "FollowUpCreate": {
       "assigned_to_user_id": string;
       "completed_at"?: string | null;
@@ -194,6 +209,7 @@ export interface components {
       "notes"?: string | null;
       "status"?: components["schemas"]["FollowUpStatus"] | null;
     };
+    "GSTRegistrationType": "REGULAR" | "COMPOSITION" | "EXEMPT" | "UNREGISTERED";
     "GalleryAuthenticateRequest": {
       "password": string;
     };
@@ -238,6 +254,64 @@ export interface components {
     "Gender": "MALE" | "FEMALE" | "OTHER";
     "HTTPValidationError": {
       "detail"?: components["schemas"]["ValidationError"][];
+    };
+    "InvoiceCreate": {
+      "booking_id": string;
+      "branch_id": string;
+      "buyer_billing_address"?: string | null;
+      "buyer_billing_name"?: string | null;
+      "buyer_gstin"?: string | null;
+      "buyer_state_code"?: string | null;
+      "currency"?: string;
+      "due_date": string;
+      "family_id": string;
+      "gst_registration_type"?: components["schemas"]["GSTRegistrationType"];
+      "line_items": components["schemas"]["InvoiceLineItemCreate"][];
+      "notes"?: string | null;
+      "organization_id": string;
+      "place_of_supply_state_code"?: string | null;
+      "reverse_charge_applicable"?: boolean;
+      "seller_address"?: string | null;
+      "seller_gstin"?: string | null;
+      "seller_legal_name"?: string | null;
+      "seller_state_code"?: string | null;
+      "seller_trade_name"?: string | null;
+      "supply_type"?: components["schemas"]["SupplyType"];
+    };
+    "InvoiceLineItemCreate": {
+      "cgst_amount"?: number | string;
+      "cgst_rate"?: number | string;
+      "description": string;
+      "discount_amount"?: number | string;
+      "igst_amount"?: number | string;
+      "igst_rate"?: number | string;
+      "quantity": number | string;
+      "sac_code"?: string | null;
+      "service_type": string;
+      "sgst_amount"?: number | string;
+      "sgst_rate"?: number | string;
+      "tax_rate"?: number | string;
+      "unit_price": number | string;
+    };
+    "InvoiceStatus": "DRAFT" | "ISSUED" | "PARTIALLY_PAID" | "PAID" | "VOID" | "OVERDUE";
+    "InvoiceUpdate": {
+      "buyer_billing_address"?: string | null;
+      "buyer_billing_name"?: string | null;
+      "buyer_gstin"?: string | null;
+      "buyer_state_code"?: string | null;
+      "currency"?: string | null;
+      "due_date"?: string | null;
+      "gst_registration_type"?: components["schemas"]["GSTRegistrationType"] | null;
+      "line_items"?: components["schemas"]["InvoiceLineItemCreate"][] | null;
+      "notes"?: string | null;
+      "place_of_supply_state_code"?: string | null;
+      "reverse_charge_applicable"?: boolean | null;
+      "seller_address"?: string | null;
+      "seller_gstin"?: string | null;
+      "seller_legal_name"?: string | null;
+      "seller_state_code"?: string | null;
+      "seller_trade_name"?: string | null;
+      "supply_type"?: components["schemas"]["SupplyType"] | null;
     };
     "LeadSource": "INSTAGRAM" | "WHATSAPP" | "GOOGLE" | "REFERRAL" | "WEBSITE" | "WALKIN" | "OTHER";
     "LoginRequest": {
@@ -350,6 +424,17 @@ export interface components {
       "price"?: number | string | null;
       "service_type"?: components["schemas"]["ServiceType"] | null;
     };
+    "PaymentCreate": {
+      "amount": number | string;
+      "invoice_id": string;
+      "notes"?: string | null;
+      "payment_method": components["schemas"]["PaymentMethod"];
+      "payment_status"?: components["schemas"]["PaymentStatus"];
+      "received_date"?: string;
+      "transaction_reference"?: string | null;
+    };
+    "PaymentMethod": "CASH" | "UPI" | "BANK_TRANSFER" | "CARD" | "CHEQUE" | "OTHER";
+    "PaymentStatus": "PENDING" | "COMPLETED" | "FAILED" | "REFUNDED";
     "PhotographerAssignmentCreate": {
       "role": components["schemas"]["AssignmentRole"];
       "shoot_schedule_id": string;
@@ -382,6 +467,7 @@ export interface components {
       "shoot_status"?: components["schemas"]["ShootStatus"] | null;
     };
     "ShootStatus": "NOT_SCHEDULED" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "RESCHEDULED" | "CANCELLED";
+    "SupplyType": "INTRA_STATE" | "INTER_STATE" | "NON_GST";
     "UserCreate": {
       "branch_id"?: string | null;
       "email": string;
@@ -1125,6 +1211,37 @@ export interface paths {
       };
     };
   };
+  "/api/v1/finance/metrics": {
+    get: {
+      parameters: Record<string, never>;
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      };
+    };
+  };
+  "/api/v1/finance/settings": {
+    get: {
+      parameters: {
+      query: {
+        "branch_id"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    patch: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["FinanceSettingsUpdate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
   "/api/v1/followups": {
     get: {
       parameters: {
@@ -1604,6 +1721,87 @@ export interface paths {
       };
     };
   };
+  "/api/v1/invoices": {
+    get: {
+      parameters: {
+      query: {
+        "page"?: number;
+        "page_size"?: number;
+        "branch_id"?: string | null;
+        "invoice_status"?: components["schemas"]["InvoiceStatus"] | null;
+        "booking_id"?: string | null;
+        "family_id"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["InvoiceCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/invoices/{invoice_id}": {
+    get: {
+      parameters: {
+      path: {
+        "invoice_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    put: {
+      parameters: {
+      path: {
+        "invoice_id": string;
+      };
+    };
+      requestBody: components["schemas"]["InvoiceUpdate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/invoices/{invoice_id}/issue": {
+    post: {
+      parameters: {
+      path: {
+        "invoice_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/invoices/{invoice_id}/void": {
+    post: {
+      parameters: {
+      path: {
+        "invoice_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
   "/api/v1/lost-reasons": {
     get: {
       parameters: Record<string, never>;
@@ -1905,6 +2103,47 @@ export interface paths {
       };
     };
       requestBody: components["schemas"]["PackageUpdate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/payments": {
+    get: {
+      parameters: {
+      query: {
+        "page"?: number;
+        "page_size"?: number;
+        "branch_id"?: string | null;
+        "payment_status"?: components["schemas"]["PaymentStatus"] | null;
+        "payment_method"?: components["schemas"]["PaymentMethod"] | null;
+        "invoice_id"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["PaymentCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/payments/{payment_id}": {
+    get: {
+      parameters: {
+      path: {
+        "payment_id": string;
+      };
+    };
+      requestBody: never;
       responses: {
       "200": components["schemas"]["APIResponse"];
       "422": components["schemas"]["HTTPValidationError"];

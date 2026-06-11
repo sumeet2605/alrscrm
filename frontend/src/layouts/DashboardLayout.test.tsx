@@ -93,4 +93,21 @@ describe("DashboardLayout", () => {
 
     expect(screen.getByText("Delivery Queue Route")).toBeInTheDocument();
   });
+
+  it("navigates to finance invoices from the finance menu", async () => {
+    const user = userEvent.setup();
+    renderWithProviders(
+      <Routes>
+        <Route element={<DashboardLayout />}>
+          <Route path="/dashboard" element={<div>Dashboard Route</div>} />
+          <Route path="/finance/invoices" element={<div>Invoice List Route</div>} />
+        </Route>
+      </Routes>,
+      ["/dashboard"]
+    );
+
+    await user.click(screen.getByText("Invoices"));
+
+    expect(screen.getByText("Invoice List Route")).toBeInTheDocument();
+  });
 });

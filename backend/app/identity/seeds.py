@@ -74,6 +74,13 @@ PERMISSION_DEFINITIONS: tuple[tuple[str, str, str], ...] = (
     ("delivery:reopen", "Reopen deliveries", "Approve client delivery reopen requests."),
     ("delivery:download_audit", "View delivery downloads", "View delivery download audit logs."),
     ("delivery:dashboard", "View delivery dashboards", "View delivery dashboards and metrics."),
+    ("finance:view", "View finance", "View invoices, payments, and finance reports."),
+    ("finance:create_invoice", "Create invoices", "Create customer invoices."),
+    ("finance:update_invoice", "Update invoices", "Update draft invoices and settings."),
+    ("finance:void_invoice", "Void invoices", "Void customer invoices."),
+    ("finance:create_payment", "Create payments", "Record invoice payments."),
+    ("finance:refund_payment", "Refund payments", "Record payment refunds."),
+    ("finance:dashboard", "View finance dashboard", "View finance dashboard metrics."),
 )
 
 ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
@@ -130,6 +137,13 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "delivery:reopen",
         "delivery:download_audit",
         "delivery:dashboard",
+        "finance:view",
+        "finance:create_invoice",
+        "finance:update_invoice",
+        "finance:void_invoice",
+        "finance:create_payment",
+        "finance:refund_payment",
+        "finance:dashboard",
     ),
     "Sales Executive": (
         "identity:users:read",

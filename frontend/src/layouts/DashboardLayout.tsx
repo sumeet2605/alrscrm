@@ -1,18 +1,19 @@
 import {
   ApartmentOutlined,
   AppstoreAddOutlined,
-  PictureOutlined,
+  BankOutlined,
   ContactsOutlined,
   DashboardOutlined,
+  DollarOutlined,
   LogoutOutlined,
-  ScheduleOutlined,
-  SendOutlined,
+  PictureOutlined,
   RiseOutlined,
   SafetyCertificateOutlined,
+  ScheduleOutlined,
+  SendOutlined,
   ShopOutlined,
   TeamOutlined,
   ToolOutlined,
-  BankOutlined,
   UserOutlined
 } from "@ant-design/icons";
 import { Avatar, Button, Dropdown, Layout, Menu, Space, Typography, theme } from "antd";
@@ -67,6 +68,16 @@ const navItems: NavItem[] = [
       { key: "/delivery/dashboard", label: "Delivery Dashboard" }
     ]
   },
+  {
+    key: "finance-menu",
+    icon: <DollarOutlined />,
+    label: "Finance",
+    children: [
+      { key: "/finance", label: "Finance Dashboard" },
+      { key: "/finance/invoices", label: "Invoices" },
+      { key: "/finance/payments", label: "Payments" }
+    ]
+  },
   { key: "/branches", icon: <ApartmentOutlined />, label: "Branches" },
   { key: "/users", icon: <TeamOutlined />, label: "Users" },
   { key: "/roles", icon: <SafetyCertificateOutlined />, label: "Roles" }
@@ -90,6 +101,9 @@ function selectedMenuPath(pathname: string): string {
   if (pathname.startsWith("/galleries")) return "/galleries";
   if (pathname.startsWith("/delivery/dashboard")) return "/delivery/dashboard";
   if (pathname.startsWith("/delivery")) return "/delivery";
+  if (pathname.startsWith("/finance/invoices")) return "/finance/invoices";
+  if (pathname.startsWith("/finance/payments")) return "/finance/payments";
+  if (pathname.startsWith("/finance")) return "/finance";
   if (pathname.startsWith("/production/editing")) return "/production/editing";
   if (pathname.startsWith("/production/editor-dashboard")) return "/production/editor-dashboard";
   if (pathname.startsWith("/production")) return "/production";
@@ -138,7 +152,7 @@ export function DashboardLayout() {
         <Menu
           theme="dark"
           mode="inline"
-          defaultOpenKeys={["bookings-menu", "production-menu", "operations-menu"]}
+          defaultOpenKeys={["bookings-menu", "production-menu", "operations-menu", "finance-menu"]}
           selectedKeys={[selectedPath]}
           items={accessibleItems}
           onClick={({ key }) => navigate(key)}
