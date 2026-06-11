@@ -27,6 +27,8 @@ export interface DeliveryJob {
   delivery_date: string;
   expiry_date: string;
   delivery_link?: string | null;
+  delivery_access_url?: string | null;
+  password_required: boolean;
   download_count: number;
   max_downloads: number;
   allow_re_download: boolean;
@@ -36,6 +38,7 @@ export interface DeliveryJob {
   zip_generation_status: ZipGenerationStatus;
   client_notified_at?: string | null;
   last_downloaded_at?: string | null;
+  reopen_requested_at?: string | null;
   delivery_notes?: string | null;
   deleted_at?: string | null;
   created_at: string;
@@ -44,6 +47,7 @@ export interface DeliveryJob {
   booking_number?: string | null;
   gallery_name?: string | null;
   service_type?: string | null;
+  artifacts: DeliveryArtifact[];
 }
 
 export interface ClientDelivery extends DeliveryJob {
@@ -57,11 +61,11 @@ export interface DeliveryJobPayload {
   re_download_fee?: string;
   watermark_enabled?: boolean;
   original_download_enabled?: boolean;
+  password?: string | null;
   delivery_notes?: string | null;
 }
 
 export interface DeliveryJobUpdatePayload {
-  delivery_status?: DeliveryStatus;
   expiry_date?: string | null;
   delivery_link?: string | null;
   max_downloads?: number;
@@ -69,7 +73,7 @@ export interface DeliveryJobUpdatePayload {
   re_download_fee?: string;
   watermark_enabled?: boolean;
   original_download_enabled?: boolean;
-  zip_generation_status?: ZipGenerationStatus;
+  password?: string | null;
   delivery_notes?: string | null;
 }
 
@@ -79,6 +83,33 @@ export interface DeliveryDownload {
   downloaded_at: string;
   ip_address?: string | null;
   user_agent?: string | null;
+}
+
+export interface DeliveryArtifact {
+  id: string;
+  delivery_job_id: string;
+  artifact_type: string;
+  storage_key: string;
+  checksum: string;
+  file_size: number;
+  generated_at: string;
+}
+
+export interface DeliveryAuthenticateResponse {
+  session_token: string;
+  expires_in_seconds: number;
+}
+
+export interface DeliveryReopenPayload {
+  requested_by_name: string;
+  requested_by_email: string;
+  reason: string;
+}
+
+export interface DeliveryDownloadResponse {
+  download_url: string;
+  download_count: number;
+  remaining_downloads: number;
 }
 
 export interface DeliveryMetrics {
@@ -104,4 +135,3 @@ export interface DeliveryListResult {
   items: DeliveryJob[];
   meta: PaginationMeta;
 }
-

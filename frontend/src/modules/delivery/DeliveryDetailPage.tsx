@@ -1,8 +1,10 @@
 import {
   DownloadOutlined,
+  KeyOutlined,
   LinkOutlined,
   ReloadOutlined,
   SendOutlined,
+  StopOutlined,
   ToolOutlined
 } from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -24,17 +26,29 @@ import { useParams } from "react-router-dom";
 
 import {
   approveDeliveryReopen,
+  closeDelivery,
   generateDeliveryZip,
   getDeliveryJob,
   listDeliveryDownloads,
+  rotateDeliveryAccessToken,
+  revokeDeliveryAccessTokens,
   sendDelivery
 } from "../../api/delivery";
-import type { DeliveryDownload } from "../../types/delivery";
-import { deliveryStatusColor, labelFromEnum, zipStatusColor } from "./deliveryOptions";
+import { useAuth } from "../../contexts/AuthContext";
+import type { DeliveryArtifact, DeliveryDownload } from "../../types/delivery";
+import {
+  canManageDelivery,
+  deliveryStatusColor,
+  labelFromEnum,
+  zipStatusColor
+} from "./deliveryOptions";
 
 export function DeliveryDetailPage() {
   const { deliveryId } = useParams();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const roleNames = user?.roles.map((role) => role.name) ?? [];
+  const canManage = canManageDelivery(roleNames);
   const jobQuery = useQuery({
     queryKey: ["delivery-job", deliveryId],
     queryFn: () => getDeliveryJob(deliveryId!),
@@ -75,12 +89,41 @@ export function DeliveryDetailPage() {
       await refresh();
     }
   });
+  const closeMutation = useMutation({
+    mutationFn: closeDelivery,
+    onSuccess: async () => {
+      message.success("Delivery closed");
+      await refresh();
+    }
+  });
+  const rotateTokenMutation = useMutation({
+    mutationFn: rotateDeliveryAccessToken,
+    onSuccess: async () => {
+      message.success("Delivery link rotated");
+      await refresh();
+    }
+  });
+  const revokeTokenMutation = useMutation({
+    mutationFn: revokeDeliveryAccessTokens,
+    onSuccess: async () => {
+      message.success("Delivery links revoked");
+      await refresh();
+    }
+  });
 
-  const clientLink = job ? `${window.location.origin}/client/delivery/${job.id}` : "";
-  const columns: ColumnsType<DeliveryDownload> = [
+  const clientLink = job?.delivery_access_url
+    ? `${window.location.origin}${job.delivery_access_url}`
+    : null;
+  const downloadColumns: ColumnsType<DeliveryDownload> = [
     { title: "Downloaded At", dataIndex: "downloaded_at" },
     { title: "IP Address", dataIndex: "ip_address" },
     { title: "User Agent", dataIndex: "user_agent" }
+  ];
+  const artifactColumns: ColumnsType<DeliveryArtifact> = [
+    { title: "Type", dataIndex: "artifact_type" },
+    { title: "Size", dataIndex: "file_size", render: (value: number) => `${value} bytes` },
+    { title: "Generated At", dataIndex: "generated_at" },
+    { title: "Checksum", dataIndex: "checksum", ellipsis: true }
   ];
 
   return (
@@ -92,30 +135,55 @@ export function DeliveryDetailPage() {
             Manage final client delivery, download limits, expiry, and reopen requests.
           </Typography.Text>
         </div>
-        <Space wrap>
-          <Button
-            icon={<ToolOutlined />}
-            onClick={() => job && generateMutation.mutate(job.id)}
-            disabled={!job || !["PENDING", "ZIP_GENERATING", "REOPENED"].includes(job.delivery_status)}
-          >
-            Generate ZIP
-          </Button>
-          <Button
-            icon={<SendOutlined />}
-            type="primary"
-            onClick={() => job && sendMutation.mutate(job.id)}
-            disabled={!job || !["READY", "REOPENED"].includes(job.delivery_status)}
-          >
-            Send
-          </Button>
-          <Button
-            icon={<ReloadOutlined />}
-            onClick={() => job && reopenMutation.mutate(job.id)}
-            disabled={job?.delivery_status !== "REOPEN_REQUESTED"}
-          >
-            Approve Reopen
-          </Button>
-        </Space>
+        {canManage ? (
+          <Space wrap>
+            <Button
+              icon={<ToolOutlined />}
+              onClick={() => job && generateMutation.mutate(job.id)}
+              disabled={
+                !job || !["PENDING", "ZIP_GENERATING", "REOPENED"].includes(job.delivery_status)
+              }
+            >
+              Generate ZIP
+            </Button>
+            <Button
+              icon={<SendOutlined />}
+              type="primary"
+              onClick={() => job && sendMutation.mutate(job.id)}
+              disabled={!job || !["READY", "REOPENED"].includes(job.delivery_status)}
+            >
+              Send
+            </Button>
+            <Button
+              icon={<ReloadOutlined />}
+              onClick={() => job && reopenMutation.mutate(job.id)}
+              disabled={job?.delivery_status !== "REOPEN_REQUESTED"}
+            >
+              Approve Reopen
+            </Button>
+            <Button
+              icon={<KeyOutlined />}
+              onClick={() => job && rotateTokenMutation.mutate(job.id)}
+              disabled={!job || job.delivery_status === "CLOSED"}
+            >
+              Rotate Link
+            </Button>
+            <Button
+              icon={<StopOutlined />}
+              onClick={() => job && revokeTokenMutation.mutate(job.id)}
+              disabled={!job || job.delivery_status === "CLOSED"}
+            >
+              Revoke Links
+            </Button>
+            <Button
+              danger
+              onClick={() => job && closeMutation.mutate(job.id)}
+              disabled={!job || !["DELIVERED", "EXPIRED", "REOPENED"].includes(job.delivery_status)}
+            >
+              Close
+            </Button>
+          </Space>
+        ) : null}
       </div>
 
       {jobQuery.isError ? (
@@ -157,10 +225,16 @@ export function DeliveryDetailPage() {
                 <Descriptions.Item label="Delivery Date">{job.delivery_date}</Descriptions.Item>
                 <Descriptions.Item label="Expiry Date">{job.expiry_date}</Descriptions.Item>
                 <Descriptions.Item label="Client Link" span={2}>
-                  <Space>
-                    <Typography.Text copyable>{clientLink}</Typography.Text>
-                    <Button icon={<LinkOutlined />} href={clientLink} target="_blank" />
-                  </Space>
+                  {clientLink ? (
+                    <Space>
+                      <Typography.Text copyable>{clientLink}</Typography.Text>
+                      <Button icon={<LinkOutlined />} href={clientLink} target="_blank" />
+                    </Space>
+                  ) : (
+                    <Typography.Text type="secondary">
+                      Secure link is shown only after send or rotation.
+                    </Typography.Text>
+                  )}
                 </Descriptions.Item>
               </Descriptions>
             </Card>
@@ -191,10 +265,18 @@ export function DeliveryDetailPage() {
           rowKey="id"
           dataSource={downloadsQuery.data ?? []}
           loading={downloadsQuery.isLoading}
-          columns={columns}
+          columns={downloadColumns}
+        />
+      </Card>
+
+      <Card title="Delivery Artifacts">
+        <Table<DeliveryArtifact>
+          rowKey="id"
+          dataSource={job?.artifacts ?? []}
+          loading={jobQuery.isLoading}
+          columns={artifactColumns}
         />
       </Card>
     </Space>
   );
 }
-

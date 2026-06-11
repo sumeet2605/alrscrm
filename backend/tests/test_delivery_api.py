@@ -1,9 +1,9 @@
-from datetime import date, timedelta
+from datetime import UTC, date, datetime, timedelta
 from uuid import UUID
 
 from app.bookings.models import Booking, BookingItem, Package
 from app.core.security import create_access_token, hash_password
-from app.delivery.models import DeliveryJob
+from app.delivery.models import DeliveryAccessToken, DeliveryJob, DeliveryReopenAttempt
 from app.families.models import Family
 from app.galleries.enums import GalleryStatus
 from app.identity.models import Branch, Organization, Role, User
@@ -210,6 +210,35 @@ def _ready_delivery_job(client: TestClient, db: Session):
     return owner, editor, delivery_job
 
 
+def _access_token_from_url(access_url: str) -> str:
+    return access_url.rsplit("/", 1)[-1]
+
+
+def _generate_and_send(client: TestClient, owner: User, delivery_job: dict) -> tuple[dict, str]:
+    generate_response = client.post(
+        f"/api/v1/delivery/jobs/{delivery_job['id']}/generate-zip",
+        headers=_headers(owner),
+    )
+    assert generate_response.status_code == 200
+    send_response = client.post(
+        f"/api/v1/delivery/jobs/{delivery_job['id']}/send",
+        headers=_headers(owner),
+    )
+    assert send_response.status_code == 200
+    sent_job = send_response.json()["data"]
+    assert sent_job["delivery_access_url"]
+    return sent_job, _access_token_from_url(sent_job["delivery_access_url"])
+
+
+def _delivery_session(client: TestClient, token: str, password: str | None = None) -> str:
+    payload = {"token": token}
+    if password is not None:
+        payload["password"] = password
+    response = client.post("/api/v1/delivery/public/authenticate", json=payload)
+    assert response.status_code == 200
+    return response.json()["data"]["session_token"]
+
+
 def test_ready_for_delivery_creates_delivery_job(client: TestClient, db: Session) -> None:
     owner, _, delivery_job = _ready_delivery_job(client, db)
 
@@ -217,7 +246,8 @@ def test_ready_for_delivery_creates_delivery_job(client: TestClient, db: Session
     assert delivery_job["edited_photo_count"] == 2
     assert delivery_job["download_count"] == 0
     assert delivery_job["max_downloads"] == 10
-    assert delivery_job["delivery_link"] == f"/client/delivery/{delivery_job['id']}"
+    assert delivery_job["delivery_link"] is None
+    assert delivery_job["password_required"] is False
 
     metrics_response = client.get("/api/v1/delivery/metrics", headers=_headers(owner))
     assert metrics_response.status_code == 200
@@ -232,28 +262,23 @@ def test_delivery_download_limit_and_audit(client: TestClient, db: Session) -> N
         headers=_headers(owner),
     )
     assert update_response.status_code == 200
-    assert (
-        client.post(
-            f"/api/v1/delivery/jobs/{delivery_job['id']}/generate-zip",
-            headers=_headers(owner),
-        ).status_code
-        == 200
-    )
-    assert (
-        client.post(
-            f"/api/v1/delivery/jobs/{delivery_job['id']}/send",
-            headers=_headers(owner),
-        ).status_code
-        == 200
-    )
+    _, token = _generate_and_send(client, owner, delivery_job)
 
-    public_response = client.get(f"/api/v1/delivery/client/{delivery_job['id']}")
+    public_response = client.get(f"/api/v1/delivery/client/{token}")
     assert public_response.status_code == 200
-    download_response = client.post(f"/api/v1/delivery/client/{delivery_job['id']}/download")
+    session_token = _delivery_session(client, token)
+    download_response = client.post(
+        f"/api/v1/delivery/client/{token}/download",
+        headers={"Authorization": f"Bearer {session_token}"},
+    )
     assert download_response.status_code == 200
     assert download_response.json()["data"]["download_count"] == 1
+    assert download_response.json()["data"]["download_url"]
 
-    blocked_response = client.post(f"/api/v1/delivery/client/{delivery_job['id']}/download")
+    blocked_response = client.post(
+        f"/api/v1/delivery/client/{token}/download",
+        headers={"Authorization": f"Bearer {session_token}"},
+    )
     assert blocked_response.status_code == 403
 
     downloads_response = client.get(
@@ -266,35 +291,51 @@ def test_delivery_download_limit_and_audit(client: TestClient, db: Session) -> N
 
 def test_delivery_expiry_and_reopen(client: TestClient, db: Session) -> None:
     owner, _, delivery_job = _ready_delivery_job(client, db)
-    assert (
-        client.post(
-            f"/api/v1/delivery/jobs/{delivery_job['id']}/generate-zip",
-            headers=_headers(owner),
-        ).status_code
-        == 200
-    )
-    assert (
-        client.post(
-            f"/api/v1/delivery/jobs/{delivery_job['id']}/send",
-            headers=_headers(owner),
-        ).status_code
-        == 200
-    )
+    _, token = _generate_and_send(client, owner, delivery_job)
 
     job = db.get(DeliveryJob, UUID(delivery_job["id"]))
     assert job is not None
     job.expiry_date = date.today() - timedelta(days=1)
     db.commit()
 
-    expired_response = client.get(f"/api/v1/delivery/client/{delivery_job['id']}")
+    expired_response = client.get(f"/api/v1/delivery/client/{token}")
     assert expired_response.status_code == 410
 
     reopen_response = client.post(
-        f"/api/v1/delivery/jobs/{delivery_job['id']}/reopen-request",
-        json={"notes": "Need one more download"},
+        f"/api/v1/delivery/client/{token}/reopen-request",
+        json={
+            "requested_by_name": "Client Parent",
+            "requested_by_email": "client@example.com",
+            "reason": "Need one more download",
+        },
     )
+    assert reopen_response.status_code == 409
+
+
+def test_reopen_requires_delivered_state_and_cooldown(client: TestClient, db: Session) -> None:
+    owner, _, delivery_job = _ready_delivery_job(client, db)
+    _, token = _generate_and_send(client, owner, delivery_job)
+    session_token = _delivery_session(client, token)
+    assert (
+        client.post(
+            f"/api/v1/delivery/client/{token}/download",
+            headers={"Authorization": f"Bearer {session_token}"},
+        ).status_code
+        == 200
+    )
+
+    payload = {
+        "requested_by_name": "Client Parent",
+        "requested_by_email": "client@example.com",
+        "reason": "Need one more download",
+    }
+    reopen_response = client.post(f"/api/v1/delivery/client/{token}/reopen-request", json=payload)
     assert reopen_response.status_code == 200
     assert reopen_response.json()["data"]["delivery_status"] == "REOPEN_REQUESTED"
+    duplicate_response = client.post(
+        f"/api/v1/delivery/client/{token}/reopen-request", json=payload
+    )
+    assert duplicate_response.status_code == 409
 
     approve_response = client.post(
         f"/api/v1/delivery/jobs/{delivery_job['id']}/approve-reopen",
@@ -302,6 +343,104 @@ def test_delivery_expiry_and_reopen(client: TestClient, db: Session) -> None:
     )
     assert approve_response.status_code == 200
     assert approve_response.json()["data"]["delivery_status"] == "REOPENED"
+    assert approve_response.json()["data"]["delivery_access_url"]
+
+
+def test_password_protected_delivery_requires_session(client: TestClient, db: Session) -> None:
+    owner, _, delivery_job = _ready_delivery_job(client, db)
+    update_response = client.put(
+        f"/api/v1/delivery/jobs/{delivery_job['id']}",
+        json={"password": "ClientPass123"},
+        headers=_headers(owner),
+    )
+    assert update_response.status_code == 200
+    sent_job, token = _generate_and_send(client, owner, delivery_job)
+    assert sent_job["password_required"] is True
+
+    assert (
+        client.post(
+            "/api/v1/delivery/public/authenticate",
+            json={"token": token, "password": "WrongPass"},
+        ).status_code
+        == 401
+    )
+    session_token = _delivery_session(client, token, "ClientPass123")
+    download_response = client.post(
+        f"/api/v1/delivery/client/{token}/download",
+        headers={"Authorization": f"Bearer {session_token}"},
+    )
+    assert download_response.status_code == 200
+
+
+def test_expired_and_revoked_access_tokens_are_rejected(client: TestClient, db: Session) -> None:
+    owner, _, delivery_job = _ready_delivery_job(client, db)
+    _, token = _generate_and_send(client, owner, delivery_job)
+    access_token = (
+        db.query(DeliveryAccessToken)
+        .filter(
+            DeliveryAccessToken.delivery_job_id == UUID(delivery_job["id"]),
+            DeliveryAccessToken.revoked_at.is_(None),
+        )
+        .one()
+    )
+    access_token.expires_at = datetime.now(UTC) - timedelta(minutes=1)
+    db.commit()
+    assert client.get(f"/api/v1/delivery/client/{token}").status_code == 401
+
+    rotate_response = client.post(
+        f"/api/v1/delivery/jobs/{delivery_job['id']}/access-token/rotate",
+        headers=_headers(owner),
+    )
+    assert rotate_response.status_code == 200
+    new_token = _access_token_from_url(rotate_response.json()["data"]["delivery_access_url"])
+    revoke_response = client.post(
+        f"/api/v1/delivery/jobs/{delivery_job['id']}/access-token/revoke",
+        headers=_headers(owner),
+    )
+    assert revoke_response.status_code == 200
+    assert client.get(f"/api/v1/delivery/client/{new_token}").status_code == 401
+
+
+def test_reopen_request_rate_limit(client: TestClient, db: Session) -> None:
+    owner, _, delivery_job = _ready_delivery_job(client, db)
+    _, token = _generate_and_send(client, owner, delivery_job)
+    session_token = _delivery_session(client, token)
+    assert (
+        client.post(
+            f"/api/v1/delivery/client/{token}/download",
+            headers={"Authorization": f"Bearer {session_token}"},
+        ).status_code
+        == 200
+    )
+    now = datetime.now(UTC)
+    for _ in range(5):
+        db.add(
+            DeliveryReopenAttempt(
+                delivery_job_id=UUID(delivery_job["id"]),
+                ip_address="testclient",
+                attempted_at=now,
+            )
+        )
+    db.commit()
+    response = client.post(
+        f"/api/v1/delivery/client/{token}/reopen-request",
+        json={
+            "requested_by_name": "Client Parent",
+            "requested_by_email": "client@example.com",
+            "reason": "Need one more download",
+        },
+    )
+    assert response.status_code == 403
+
+
+def test_delivery_lifecycle_status_cannot_be_bypassed(client: TestClient, db: Session) -> None:
+    owner, _, delivery_job = _ready_delivery_job(client, db)
+    response = client.put(
+        f"/api/v1/delivery/jobs/{delivery_job['id']}",
+        json={"delivery_status": "SENT", "zip_generation_status": "COMPLETED"},
+        headers=_headers(owner),
+    )
+    assert response.status_code == 422
 
 
 def test_delivery_access_is_tenant_scoped_and_editor_is_view_only(
@@ -318,6 +457,24 @@ def test_delivery_access_is_tenant_scoped_and_editor_is_view_only(
         headers=_headers(editor),
     )
     assert editor_update.status_code == 403
+
+    other_branch = Branch(
+        organization=editor.organization,
+        name="Other Branch",
+        code="DLV-OTHER",
+        city="Pune",
+        is_active=True,
+    )
+    db.add(other_branch)
+    db.commit()
+    other_branch_manager = _create_user(
+        db, editor.organization, other_branch, "Branch Manager", ".other-branch"
+    )
+    branch_scoped_response = client.get(
+        f"/api/v1/delivery/jobs/{delivery_job['id']}",
+        headers=_headers(other_branch_manager),
+    )
+    assert branch_scoped_response.status_code == 403
 
     other_organization = Organization(name="Other Delivery Studio", code="DLO", is_active=True)
     other_branch = Branch(

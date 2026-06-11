@@ -51,3 +51,9 @@ export function zipStatusColor(status: ZipGenerationStatus): string {
   };
   return colors[status];
 }
+
+export function canManageDelivery(roleNames: string[]): boolean {
+  return roleNames.some((role) =>
+    ["Super Admin", "Organization Admin", "Owner", "Branch Manager"].includes(role)
+  );
+}

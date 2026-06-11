@@ -6,6 +6,10 @@ import { renderWithProviders } from "../../test/render";
 import { ClientDeliveryPage } from "./ClientDeliveryPage";
 
 vi.mock("../../api/delivery", () => ({
+  authenticateClientDelivery: vi.fn(async () => ({
+    session_token: "delivery-session-token",
+    expires_in_seconds: 86400
+  })),
   downloadClientDelivery: vi.fn(),
   getClientDelivery: vi.fn(async () => ({
     id: "delivery-1",
@@ -19,6 +23,7 @@ vi.mock("../../api/delivery", () => ({
     max_downloads: 10,
     remaining_downloads: 9,
     allow_re_download: false,
+    password_required: false,
     watermark_enabled: true,
     original_download_enabled: false,
     gallery_name: "Newborn Finals",
@@ -31,9 +36,9 @@ describe("ClientDeliveryPage", () => {
   it("renders public delivery access", async () => {
     renderWithProviders(
       <Routes>
-        <Route path="/client/delivery/:deliveryId" element={<ClientDeliveryPage />} />
+        <Route path="/client/delivery/:token" element={<ClientDeliveryPage />} />
       </Routes>,
-      ["/client/delivery/delivery-1"]
+      ["/client/delivery/secure-token"]
     );
 
     expect(await screen.findByText("DL-2026-000001")).toBeInTheDocument();

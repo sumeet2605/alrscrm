@@ -4,6 +4,15 @@ import { describe, expect, it, vi } from "vitest";
 import { renderWithProviders } from "../../test/render";
 import { DeliveryQueuePage } from "./DeliveryQueuePage";
 
+vi.mock("../../contexts/AuthContext", () => ({
+  useAuth: () => ({
+    user: {
+      id: "user-1",
+      roles: [{ id: "role-1", name: "Owner" }]
+    }
+  })
+}));
+
 vi.mock("../../api/delivery", () => ({
   approveDeliveryReopen: vi.fn(),
   generateDeliveryZip: vi.fn(),

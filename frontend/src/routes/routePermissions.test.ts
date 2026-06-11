@@ -33,6 +33,7 @@ describe("routePermissions", () => {
     expect(canAccessPath(["Organization Admin"], "/delivery/dashboard")).toBe(true);
     expect(canAccessPath(["Branch Manager"], "/delivery/job-1")).toBe(true);
     expect(canAccessPath(["Editor"], "/delivery/job-1")).toBe(true);
+    expect(canAccessPath(["Editor"], "/delivery/dashboard")).toBe(false);
     expect(canAccessPath(["Photographer"], "/delivery")).toBe(false);
     expect(canAccessPath([], "/client/delivery/delivery-1")).toBe(true);
   });

@@ -38,7 +38,7 @@ export function AppRoutes() {
     <Routes>
       <Route path="/login" element={<LoginPage />} />
       <Route path="/client/galleries/:galleryId" element={<ClientSelectionPage />} />
-      <Route path="/client/delivery/:deliveryId" element={<ClientDeliveryPage />} />
+      <Route path="/client/delivery/:token" element={<ClientDeliveryPage />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />

@@ -1,13 +1,20 @@
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from uuid import UUID
 
-from sqlalchemy import func
+from sqlalchemy import func, text
 from sqlalchemy.orm import Session, joinedload, selectinload
 
 from app.bookings.models import Booking
 from app.delivery.enums import DeliveryStatus
-from app.delivery.models import DeliveryAudit, DeliveryDownload, DeliveryJob
+from app.delivery.models import (
+    DeliveryAccessToken,
+    DeliveryArtifact,
+    DeliveryAudit,
+    DeliveryDownload,
+    DeliveryJob,
+    DeliveryReopenAttempt,
+)
 from app.editing.models import EditingJob
 from app.galleries.models import Gallery
 from app.shared.pagination import PageResult, paginate_query
@@ -25,6 +32,7 @@ class DeliveryRepository:
             joinedload(DeliveryJob.editing_job).joinedload(EditingJob.booking_item),
             selectinload(DeliveryJob.downloads),
             selectinload(DeliveryJob.audits),
+            selectinload(DeliveryJob.artifacts),
         )
 
     def get_job(self, job_id: UUID) -> DeliveryJob | None:
@@ -106,10 +114,77 @@ class DeliveryRepository:
         self.db.add(audit)
         return audit
 
+    def add_access_token(self, access_token: DeliveryAccessToken) -> DeliveryAccessToken:
+        self.db.add(access_token)
+        return access_token
+
+    def active_access_token_by_hash(self, token_hash: str) -> DeliveryAccessToken | None:
+        return (
+            self.db.query(DeliveryAccessToken)
+            .filter(DeliveryAccessToken.token_hash == token_hash)
+            .one_or_none()
+        )
+
+    def active_access_tokens_for_job(self, job_id: UUID) -> list[DeliveryAccessToken]:
+        return (
+            self.db.query(DeliveryAccessToken)
+            .filter(
+                DeliveryAccessToken.delivery_job_id == job_id,
+                DeliveryAccessToken.revoked_at.is_(None),
+            )
+            .all()
+        )
+
+    def add_artifact(self, artifact: DeliveryArtifact) -> DeliveryArtifact:
+        self.db.add(artifact)
+        return artifact
+
+    def latest_artifact(self, job_id: UUID, artifact_type: str) -> DeliveryArtifact | None:
+        return (
+            self.db.query(DeliveryArtifact)
+            .filter(
+                DeliveryArtifact.delivery_job_id == job_id,
+                DeliveryArtifact.artifact_type == artifact_type,
+            )
+            .order_by(DeliveryArtifact.generated_at.desc())
+            .first()
+        )
+
+    def add_reopen_attempt(self, attempt: DeliveryReopenAttempt) -> DeliveryReopenAttempt:
+        self.db.add(attempt)
+        return attempt
+
+    def reopen_attempts_for_ip(self, ip_address: str | None, since: datetime) -> int:
+        query = self.db.query(func.count(DeliveryReopenAttempt.id)).filter(
+            DeliveryReopenAttempt.attempted_at >= since
+        )
+        if ip_address is None:
+            query = query.filter(DeliveryReopenAttempt.ip_address.is_(None))
+        else:
+            query = query.filter(DeliveryReopenAttempt.ip_address == ip_address)
+        return int(query.scalar() or 0)
+
+    def recent_reopen_attempt_for_job(self, job_id: UUID) -> DeliveryReopenAttempt | None:
+        since = datetime.now(UTC) - timedelta(hours=24)
+        return (
+            self.db.query(DeliveryReopenAttempt)
+            .filter(
+                DeliveryReopenAttempt.delivery_job_id == job_id,
+                DeliveryReopenAttempt.attempted_at >= since,
+            )
+            .order_by(DeliveryReopenAttempt.attempted_at.desc())
+            .first()
+        )
+
     def next_delivery_number(self) -> str:
         year = datetime.now(UTC).year
+        if self.db.bind and self.db.bind.dialect.name == "postgresql":
+            sequence_value = self.db.execute(
+                text("SELECT nextval('delivery_number_seq')")
+            ).scalar_one()
+            return f"DLV-{year}-{int(sequence_value):06d}"
         count = self.db.query(DeliveryJob).count() + 1
-        return f"DL-{year}-{count:06d}"
+        return f"DLV-{year}-{count:06d}"
 
     def metrics(self, organization_id: UUID | None, branch_id: UUID | None) -> dict:
         today = date.today()

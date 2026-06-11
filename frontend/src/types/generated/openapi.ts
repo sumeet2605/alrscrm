@@ -66,12 +66,17 @@ export interface components {
       "organization_id"?: string | null;
       "phone"?: string | null;
     };
+    "DeliveryAuthenticateRequest": {
+      "password"?: string | null;
+      "token": string;
+    };
     "DeliveryJobCreate": {
       "allow_re_download"?: boolean;
       "delivery_notes"?: string | null;
       "editing_job_id": string;
       "max_downloads"?: number;
       "original_download_enabled"?: boolean;
+      "password"?: string | null;
       "re_download_fee"?: number | string;
       "watermark_enabled"?: boolean;
     };
@@ -79,16 +84,17 @@ export interface components {
       "allow_re_download"?: boolean | null;
       "delivery_link"?: string | null;
       "delivery_notes"?: string | null;
-      "delivery_status"?: components["schemas"]["DeliveryStatus"] | null;
       "expiry_date"?: string | null;
       "max_downloads"?: number | null;
       "original_download_enabled"?: boolean | null;
+      "password"?: string | null;
       "re_download_fee"?: number | string | null;
       "watermark_enabled"?: boolean | null;
-      "zip_generation_status"?: components["schemas"]["ZipGenerationStatus"] | null;
     };
     "DeliveryReopenRequest": {
-      "notes"?: string | null;
+      "reason": string;
+      "requested_by_email": string;
+      "requested_by_name": string;
     };
     "DeliveryStatus": "PENDING" | "ZIP_GENERATING" | "READY" | "SENT" | "DELIVERED" | "EXPIRED" | "REOPEN_REQUESTED" | "REOPENED" | "CLOSED";
     "EditingAssignEditor": {
@@ -376,7 +382,6 @@ export interface components {
       "msg": string;
       "type": string;
     };
-    "ZipGenerationStatus": "PENDING" | "GENERATING" | "COMPLETED" | "FAILED";
   };
 }
 
@@ -630,11 +635,11 @@ export interface paths {
       };
     };
   };
-  "/api/v1/delivery/client/{job_id}": {
+  "/api/v1/delivery/client/{token}": {
     get: {
       parameters: {
       path: {
-        "job_id": string;
+        "token": string;
       };
     };
       requestBody: never;
@@ -644,14 +649,31 @@ export interface paths {
       };
     };
   };
-  "/api/v1/delivery/client/{job_id}/download": {
+  "/api/v1/delivery/client/{token}/download": {
     post: {
       parameters: {
       path: {
-        "job_id": string;
+        "token": string;
+      };
+      header: {
+        "authorization"?: string | null;
       };
     };
       requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/client/{token}/reopen-request": {
+    post: {
+      parameters: {
+      path: {
+        "token": string;
+      };
+    };
+      requestBody: components["schemas"]["DeliveryReopenRequest"];
       responses: {
       "200": components["schemas"]["APIResponse"];
       "422": components["schemas"]["HTTPValidationError"];
@@ -710,7 +732,49 @@ export interface paths {
       };
     };
   };
+  "/api/v1/delivery/jobs/{job_id}/access-token/revoke": {
+    post: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/jobs/{job_id}/access-token/rotate": {
+    post: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
   "/api/v1/delivery/jobs/{job_id}/approve-reopen": {
+    post: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/jobs/{job_id}/close": {
     post: {
       parameters: {
       path: {
@@ -752,20 +816,6 @@ export interface paths {
       };
     };
   };
-  "/api/v1/delivery/jobs/{job_id}/reopen-request": {
-    post: {
-      parameters: {
-      path: {
-        "job_id": string;
-      };
-    };
-      requestBody: components["schemas"]["DeliveryReopenRequest"] | null;
-      responses: {
-      "200": components["schemas"]["APIResponse"];
-      "422": components["schemas"]["HTTPValidationError"];
-      };
-    };
-  };
   "/api/v1/delivery/jobs/{job_id}/send": {
     post: {
       parameters: {
@@ -786,6 +836,16 @@ export interface paths {
       requestBody: never;
       responses: {
       "200": components["schemas"]["APIResponse"];
+      };
+    };
+  };
+  "/api/v1/delivery/public/authenticate": {
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["DeliveryAuthenticateRequest"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
       };
     };
   };

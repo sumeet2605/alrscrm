@@ -11,12 +11,22 @@ import {
   listDeliveryJobs,
   sendDelivery
 } from "../../api/delivery";
+import { useAuth } from "../../contexts/AuthContext";
 import type { DeliveryJob, DeliveryStatus } from "../../types/delivery";
-import { deliveryStatusColor, deliveryStatuses, labelFromEnum, zipStatusColor } from "./deliveryOptions";
+import {
+  canManageDelivery,
+  deliveryStatusColor,
+  deliveryStatuses,
+  labelFromEnum,
+  zipStatusColor
+} from "./deliveryOptions";
 
 export function DeliveryQueuePage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
+  const roleNames = user?.roles.map((role) => role.name) ?? [];
+  const canManage = canManageDelivery(roleNames);
   const [status, setStatus] = useState<DeliveryStatus | undefined>();
   const [search, setSearch] = useState("");
   const jobsQuery = useQuery({
@@ -95,23 +105,27 @@ export function DeliveryQueuePage() {
       render: (_, job) => (
         <Space>
           <Button icon={<EyeOutlined />} onClick={() => navigate(`/delivery/${job.id}`)} />
-          <Button
-            onClick={() => generateMutation.mutate(job.id)}
-            disabled={!["PENDING", "ZIP_GENERATING", "REOPENED"].includes(job.delivery_status)}
-          >
-            ZIP
-          </Button>
-          <Button
-            icon={<SendOutlined />}
-            onClick={() => sendMutation.mutate(job.id)}
-            disabled={!["READY", "REOPENED"].includes(job.delivery_status)}
-          />
-          <Button
-            onClick={() => reopenMutation.mutate(job.id)}
-            disabled={job.delivery_status !== "REOPEN_REQUESTED"}
-          >
-            Reopen
-          </Button>
+          {canManage ? (
+            <>
+              <Button
+                onClick={() => generateMutation.mutate(job.id)}
+                disabled={!["PENDING", "ZIP_GENERATING", "REOPENED"].includes(job.delivery_status)}
+              >
+                ZIP
+              </Button>
+              <Button
+                icon={<SendOutlined />}
+                onClick={() => sendMutation.mutate(job.id)}
+                disabled={!["READY", "REOPENED"].includes(job.delivery_status)}
+              />
+              <Button
+                onClick={() => reopenMutation.mutate(job.id)}
+                disabled={job.delivery_status !== "REOPEN_REQUESTED"}
+              >
+                Reopen
+              </Button>
+            </>
+          ) : null}
         </Space>
       )
     }

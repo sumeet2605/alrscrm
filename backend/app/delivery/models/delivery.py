@@ -60,6 +60,7 @@ class DeliveryJob(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     delivery_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     expiry_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
     delivery_link: Mapped[str | None] = mapped_column(Text, nullable=True)
+    delivery_password_hash: Mapped[str | None] = mapped_column(String(255), nullable=True)
     download_count: Mapped[int] = mapped_column(Integer, nullable=False, default=0)
     max_downloads: Mapped[int] = mapped_column(Integer, nullable=False, default=10)
     allow_re_download: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
@@ -71,6 +72,9 @@ class DeliveryJob(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         DateTime(timezone=True), nullable=True
     )
     last_downloaded_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    reopen_requested_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
     delivery_notes: Mapped[str | None] = mapped_column(Text, nullable=True)
@@ -86,6 +90,12 @@ class DeliveryJob(UUIDPrimaryKeyMixin, TimestampMixin, Base):
         back_populates="delivery_job", cascade="all, delete-orphan"
     )
     audits: Mapped[list[DeliveryAudit]] = sa_relationship(
+        back_populates="delivery_job", cascade="all, delete-orphan"
+    )
+    access_tokens: Mapped[list[DeliveryAccessToken]] = sa_relationship(
+        back_populates="delivery_job", cascade="all, delete-orphan"
+    )
+    artifacts: Mapped[list[DeliveryArtifact]] = sa_relationship(
         back_populates="delivery_job", cascade="all, delete-orphan"
     )
 
@@ -107,6 +117,16 @@ class DeliveryDownload(UUIDPrimaryKeyMixin, Base):
 
 class DeliveryAudit(UUIDPrimaryKeyMixin, Base):
     __tablename__ = "delivery_audits"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["branch_id", "organization_id"],
+            ["branches.id", "branches.organization_id"],
+            name="fk_delivery_audit_branch_organization",
+        ),
+    )
+
+    organization_id: Mapped[UUID] = mapped_column(ForeignKey("organizations.id"), nullable=False)
+    branch_id: Mapped[UUID] = mapped_column(nullable=False, index=True)
 
     delivery_job_id: Mapped[UUID] = mapped_column(
         ForeignKey("delivery_jobs.id"), nullable=False, index=True
@@ -118,3 +138,57 @@ class DeliveryAudit(UUIDPrimaryKeyMixin, Base):
     event_details: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     delivery_job: Mapped[DeliveryJob] = sa_relationship(back_populates="audits")
+
+
+class DeliveryAccessToken(UUIDPrimaryKeyMixin, Base):
+    __tablename__ = "delivery_access_tokens"
+    __table_args__ = (UniqueConstraint("token_hash", name="uq_delivery_access_token_hash"),)
+
+    delivery_job_id: Mapped[UUID] = mapped_column(
+        ForeignKey("delivery_jobs.id"), nullable=False, index=True
+    )
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
+    last_accessed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    delivery_job: Mapped[DeliveryJob] = sa_relationship(back_populates="access_tokens")
+
+
+class DeliveryArtifact(UUIDPrimaryKeyMixin, Base):
+    __tablename__ = "delivery_artifacts"
+    __table_args__ = (
+        CheckConstraint("file_size >= 0", name="ck_delivery_artifact_file_size_non_negative"),
+    )
+
+    delivery_job_id: Mapped[UUID] = mapped_column(
+        ForeignKey("delivery_jobs.id"), nullable=False, index=True
+    )
+    artifact_type: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
+    storage_key: Mapped[str] = mapped_column(Text, nullable=False)
+    checksum: Mapped[str] = mapped_column(String(128), nullable=False)
+    file_size: Mapped[int] = mapped_column(Integer, nullable=False)
+    generated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
+
+    delivery_job: Mapped[DeliveryJob] = sa_relationship(back_populates="artifacts")
+
+
+class DeliveryReopenAttempt(UUIDPrimaryKeyMixin, Base):
+    __tablename__ = "delivery_reopen_attempts"
+
+    delivery_job_id: Mapped[UUID] = mapped_column(
+        ForeignKey("delivery_jobs.id"), nullable=False, index=True
+    )
+    ip_address: Mapped[str | None] = mapped_column(String(64), nullable=True, index=True)
+    attempted_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )

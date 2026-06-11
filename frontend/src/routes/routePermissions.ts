@@ -61,5 +61,10 @@ export function canAccessPath(roleNames: string[], path: string): boolean {
   ) {
     return true;
   }
+  if (path.startsWith("/delivery/dashboard")) {
+    return roleNames.some((role) =>
+      ["Super Admin", "Organization Admin", "Owner", "Branch Manager"].includes(role)
+    );
+  }
   return roleNames.some((role) => roleRoutes[role]?.some((route) => path.startsWith(route)));
 }

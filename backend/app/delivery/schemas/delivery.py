@@ -15,12 +15,15 @@ def _clean_optional(value: str | None) -> str | None:
 
 
 class DeliveryJobCreate(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
     editing_job_id: UUID
     max_downloads: int = Field(default=10, ge=0)
     allow_re_download: bool = False
     re_download_fee: Decimal = Field(default=Decimal("0"), ge=0, max_digits=12, decimal_places=2)
     watermark_enabled: bool = True
     original_download_enabled: bool = False
+    password: str | None = Field(default=None, min_length=8, max_length=128)
     delivery_notes: str | None = Field(default=None, max_length=5000)
 
     @field_validator("delivery_notes")
@@ -30,7 +33,8 @@ class DeliveryJobCreate(BaseModel):
 
 
 class DeliveryJobUpdate(BaseModel):
-    delivery_status: DeliveryStatus | None = None
+    model_config = ConfigDict(extra="forbid")
+
     expiry_date: date | None = None
     delivery_link: str | None = Field(default=None, max_length=2000)
     max_downloads: int | None = Field(default=None, ge=0)
@@ -38,7 +42,7 @@ class DeliveryJobUpdate(BaseModel):
     re_download_fee: Decimal | None = Field(default=None, ge=0, max_digits=12, decimal_places=2)
     watermark_enabled: bool | None = None
     original_download_enabled: bool | None = None
-    zip_generation_status: ZipGenerationStatus | None = None
+    password: str | None = Field(default=None, min_length=8, max_length=128)
     delivery_notes: str | None = Field(default=None, max_length=5000)
 
     @field_validator("delivery_link", "delivery_notes")
@@ -47,13 +51,37 @@ class DeliveryJobUpdate(BaseModel):
         return _clean_optional(value)
 
 
-class DeliveryReopenRequest(BaseModel):
-    notes: str | None = Field(default=None, max_length=5000)
+class DeliveryAuthenticateRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
 
-    @field_validator("notes")
+    token: str = Field(min_length=32, max_length=256)
+    password: str | None = Field(default=None, min_length=1, max_length=128)
+
+
+class DeliveryAuthenticateResponse(BaseModel):
+    session_token: str
+    expires_in_seconds: int = 86400
+
+
+class DeliveryAccessTokenRead(BaseModel):
+    delivery_access_url: str
+    expires_at: datetime
+
+
+class DeliveryReopenRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    requested_by_name: str = Field(min_length=1, max_length=160)
+    requested_by_email: str = Field(min_length=3, max_length=255)
+    reason: str = Field(min_length=1, max_length=5000)
+
+    @field_validator("requested_by_name", "requested_by_email", "reason")
     @classmethod
-    def clean_notes(cls, value: str | None) -> str | None:
-        return _clean_optional(value)
+    def clean_required(cls, value: str) -> str:
+        cleaned = value.strip()
+        if not cleaned:
+            raise ValueError("Value is required")
+        return cleaned
 
 
 class DeliveryDownloadRead(BaseModel):
@@ -62,6 +90,18 @@ class DeliveryDownloadRead(BaseModel):
     downloaded_at: datetime
     ip_address: str | None = None
     user_agent: str | None = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class DeliveryArtifactRead(BaseModel):
+    id: UUID
+    delivery_job_id: UUID
+    artifact_type: str
+    storage_key: str
+    checksum: str
+    file_size: int
+    generated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -80,6 +120,8 @@ class DeliveryJobRead(BaseModel):
     delivery_date: date
     expiry_date: date
     delivery_link: str | None = None
+    delivery_access_url: str | None = None
+    password_required: bool = False
     download_count: int
     max_downloads: int
     allow_re_download: bool
@@ -89,6 +131,7 @@ class DeliveryJobRead(BaseModel):
     zip_generation_status: ZipGenerationStatus
     client_notified_at: datetime | None = None
     last_downloaded_at: datetime | None = None
+    reopen_requested_at: datetime | None = None
     delivery_notes: str | None = None
     deleted_at: datetime | None = None
     created_at: datetime
@@ -97,6 +140,7 @@ class DeliveryJobRead(BaseModel):
     booking_number: str | None = None
     gallery_name: str | None = None
     service_type: str | None = None
+    artifacts: list[DeliveryArtifactRead] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -109,6 +153,7 @@ class ClientDeliveryRead(BaseModel):
     delivery_date: date
     expiry_date: date
     delivery_link: str | None = None
+    password_required: bool = False
     download_count: int
     max_downloads: int
     remaining_downloads: int
@@ -120,6 +165,12 @@ class ClientDeliveryRead(BaseModel):
     booking_number: str | None = None
     gallery_name: str | None = None
     service_type: str | None = None
+
+
+class DeliveryDownloadResponse(BaseModel):
+    download_url: str
+    download_count: int
+    remaining_downloads: int
 
 
 class DeliveryMetricsRead(BaseModel):
