@@ -242,6 +242,7 @@ export interface components {
     "LeadSource": "INSTAGRAM" | "WHATSAPP" | "GOOGLE" | "REFERRAL" | "WEBSITE" | "WALKIN" | "OTHER";
     "LoginRequest": {
       "email": string;
+      "organization_code": string;
       "password": string;
     };
     "OpportunityCreate": {
@@ -389,6 +390,7 @@ export interface components {
       "last_name": string;
       "organization_id": string;
       "password": string;
+      "password_reset_required"?: boolean;
       "phone"?: string | null;
       "role_ids"?: string[];
       "username"?: string | null;
@@ -401,6 +403,7 @@ export interface components {
       "last_name"?: string | null;
       "organization_id"?: string | null;
       "password"?: string | null;
+      "password_reset_required"?: boolean | null;
       "phone"?: string | null;
       "role_ids"?: string[] | null;
       "username"?: string | null;
@@ -1190,6 +1193,83 @@ export interface paths {
       };
     };
   };
+  "/api/v1/galleries/client/{access_token}": {
+    get: {
+      parameters: {
+      path: {
+        "access_token": string;
+      };
+      header: {
+        "authorization"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/client/{access_token}/authenticate": {
+    post: {
+      parameters: {
+      path: {
+        "access_token": string;
+      };
+    };
+      requestBody: components["schemas"]["GalleryAuthenticateRequest"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/client/{access_token}/favorites": {
+    post: {
+      parameters: {
+      path: {
+        "access_token": string;
+      };
+    };
+      requestBody: components["schemas"]["FavoriteSelectionCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/client/{access_token}/favorites/{favorite_id}": {
+    delete: {
+      parameters: {
+      path: {
+        "access_token": string;
+        "favorite_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/client/{access_token}/submit-selection": {
+    post: {
+      parameters: {
+      path: {
+        "access_token": string;
+      };
+      header: {
+        "authorization"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
   "/api/v1/galleries/metrics": {
     get: {
       parameters: Record<string, never>;
@@ -1275,6 +1355,34 @@ export interface paths {
       };
     };
       requestBody: components["schemas"]["GalleryUpdate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/{gallery_id}/access-token/revoke": {
+    post: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/{gallery_id}/access-token/rotate": {
+    post: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+      };
+    };
+      requestBody: never;
       responses: {
       "200": components["schemas"]["APIResponse"];
       "422": components["schemas"]["HTTPValidationError"];

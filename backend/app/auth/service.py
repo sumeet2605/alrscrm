@@ -14,19 +14,51 @@ from app.core.security import (
     hash_token_identifier,
     verify_password,
 )
-from app.identity.models import User
-from app.identity.services.user_service import get_user, get_user_by_email
+from app.identity.models import Organization, User
+from app.identity.services.user_service import get_user, get_user_by_organization_email
 from app.shared.exceptions.application import UnauthorizedError
 from app.shared.services.audit_service import record_audit_event
 
 
+def _normalize_organization_code(organization_code: str) -> str:
+    return organization_code.strip().upper()
+
+
+def _token_claims(user: User) -> dict[str, str | None]:
+    return {
+        "organization_id": str(user.organization_id),
+        "branch_id": str(user.branch_id) if user.branch_id else None,
+    }
+
+
 def authenticate_user(
-    db: Session, email: str, password: str, ip_address: str | None = None
+    db: Session,
+    organization_code: str,
+    email: str,
+    password: str,
+    ip_address: str | None = None,
 ) -> User:
-    check_login_rate_limit(email, ip_address)
-    user = get_user_by_email(db, email)
+    normalized_code = _normalize_organization_code(organization_code)
+    check_login_rate_limit(email, ip_address, normalized_code)
+    organization = (
+        db.query(Organization)
+        .filter(Organization.code == normalized_code, Organization.is_active.is_(True))
+        .one_or_none()
+    )
+    user = (
+        get_user_by_organization_email(db, organization.id, email)
+        if organization is not None
+        else None
+    )
     if user is None or not verify_password(password, user.password_hash):
-        record_audit_event(db, "auth.login_failed", None, "User", metadata={"email": email})
+        record_audit_event(
+            db,
+            "auth.login_failed",
+            None,
+            "User",
+            metadata={"email": email, "organization_code": normalized_code},
+            organization_id=organization.id if organization else None,
+        )
         db.commit()
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
@@ -34,7 +66,15 @@ def authenticate_user(
         )
     if not user.is_active:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Inactive user")
-    record_audit_event(db, "auth.login_succeeded", user.id, "User", user.id)
+    record_audit_event(
+        db,
+        "auth.login_succeeded",
+        user.id,
+        "User",
+        user.id,
+        organization_id=user.organization_id,
+        branch_id=user.branch_id,
+    )
     db.commit()
     return user
 
@@ -57,9 +97,10 @@ def issue_token_pair(
     )
     db.add(refresh_session)
     db.commit()
+    claims = _token_claims(get_user(db, user_id))
     return {
-        "access_token": create_access_token(user_id),
-        "refresh_token": create_refresh_token_with_identifier(user_id, token_identifier),
+        "access_token": create_access_token(user_id, claims),
+        "refresh_token": create_refresh_token_with_identifier(user_id, token_identifier, claims),
         "token_type": "bearer",
     }
 

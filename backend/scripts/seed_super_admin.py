@@ -1,4 +1,5 @@
 import os
+from typing import Final
 
 from app.core.database import SessionLocal
 from app.core.security import hash_password
@@ -7,7 +8,6 @@ from app.identity.seeds import seed_identity
 
 ADMIN_USERNAME = "admin"
 ADMIN_EMAIL = "admin@admin.com"
-ADMIN_PASSWORD = "Admin@123"
 PLATFORM_ORGANIZATION_CODE = "ALRSCRM"
 LEGACY_ORGANIZATION_CODE = "ALRS"
 PLATFORM_ORGANIZATION_NAME = "ALRSCRM"
@@ -18,7 +18,31 @@ SAMPLE_ORGANIZATION_NAME = "Alluring Lens Studios"
 SAMPLE_BRANCH_CODE = "MAIN"
 SAMPLE_BRANCH_NAME = "Main Studio"
 SAMPLE_OWNER_EMAIL = "owner@alluringlens.com"
-SAMPLE_OWNER_PASSWORD = "Owner@123"
+KNOWN_DEFAULT_PASSWORDS: Final = {"Admin@123", "Owner@123", "password", "Password123"}
+
+
+class BootstrapConfigurationError(RuntimeError):
+    pass
+
+
+def _is_truthy(value: str | None) -> bool:
+    return (value or "").strip().lower() in {"1", "true", "yes", "y", "on"}
+
+
+def _environment() -> str:
+    return os.getenv("APP_ENV") or os.getenv("ENVIRONMENT") or "local"
+
+
+def _require_password(env_name: str, *, creating_user: bool, force_reset: bool) -> str | None:
+    password = os.getenv(env_name)
+    if not creating_user and not force_reset:
+        return None
+    if not password:
+        raise BootstrapConfigurationError(f"{env_name} is required for bootstrap user creation")
+    if _environment().lower() not in {"local", "test", "development"}:
+        if password in KNOWN_DEFAULT_PASSWORDS or len(password) < 12:
+            raise BootstrapConfigurationError(f"{env_name} must be a strong non-default password")
+    return password
 
 
 def _get_or_create_settings(db, organization: Organization) -> OrganizationSettings:
@@ -97,15 +121,21 @@ def _ensure_user(
     branch: Branch,
     role: Role,
     email: str,
-    password: str,
     first_name: str,
     last_name: str,
     username: str | None = None,
+    password_env: str,
+    force_reset: bool = False,
 ) -> User:
     user = (
         db.query(User)
         .filter(User.organization_id == organization.id, User.email == email)
         .one_or_none()
+    )
+    password = _require_password(
+        password_env,
+        creating_user=user is None,
+        force_reset=force_reset,
     )
     if user is None:
         user = User(
@@ -113,10 +143,11 @@ def _ensure_user(
             branch=branch,
             username=username,
             email=email,
-            password_hash=hash_password(password),
+            password_hash=hash_password(password or ""),
             first_name=first_name,
             last_name=last_name,
             is_active=True,
+            password_reset_required=True,
             roles=[role],
         )
         db.add(user)
@@ -124,10 +155,12 @@ def _ensure_user(
         user.organization = organization
         user.branch = branch
         user.username = username
-        user.password_hash = hash_password(password)
         user.first_name = first_name
         user.last_name = last_name
         user.is_active = True
+        if force_reset and password is not None:
+            user.password_hash = hash_password(password)
+            user.password_reset_required = True
         if role not in user.roles:
             user.roles.append(role)
     return user
@@ -136,6 +169,8 @@ def _ensure_user(
 def main() -> None:
     db = SessionLocal()
     try:
+        admin_email = os.getenv("BOOTSTRAP_ADMIN_EMAIL", ADMIN_EMAIL).strip().lower()
+        admin_username = os.getenv("BOOTSTRAP_ADMIN_USERNAME", ADMIN_USERNAME).strip() or None
         seed_identity(db)
         organization = _get_or_create_organization(
             db,
@@ -152,11 +187,12 @@ def main() -> None:
             organization=organization,
             branch=platform_branch,
             role=super_admin_role,
-            email=ADMIN_EMAIL,
-            password=ADMIN_PASSWORD,
+            email=admin_email,
             first_name="Admin",
             last_name="User",
-            username=ADMIN_USERNAME,
+            username=admin_username,
+            password_env="BOOTSTRAP_ADMIN_PASSWORD",
+            force_reset=_is_truthy(os.getenv("BOOTSTRAP_FORCE_PASSWORD_RESET")),
         )
 
         if os.getenv("SEED_SAMPLE_TENANT", "false").lower() == "true":
@@ -178,9 +214,10 @@ def main() -> None:
                 branch=sample_branch,
                 role=owner_role,
                 email=SAMPLE_OWNER_EMAIL,
-                password=SAMPLE_OWNER_PASSWORD,
                 first_name="Alluring",
                 last_name="Owner",
+                password_env="SAMPLE_OWNER_PASSWORD",
+                force_reset=_is_truthy(os.getenv("SAMPLE_OWNER_FORCE_PASSWORD_RESET")),
             )
         db.commit()
     finally:

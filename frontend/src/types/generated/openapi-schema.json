@@ -1877,6 +1877,12 @@
             "title": "Email",
             "type": "string"
           },
+          "organization_code": {
+            "maxLength": 40,
+            "minLength": 1,
+            "title": "Organization Code",
+            "type": "string"
+          },
           "password": {
             "maxLength": 128,
             "minLength": 1,
@@ -1885,6 +1891,7 @@
           }
         },
         "required": [
+          "organization_code",
           "email",
           "password"
         ],
@@ -3021,6 +3028,11 @@
             "title": "Password",
             "type": "string"
           },
+          "password_reset_required": {
+            "default": false,
+            "title": "Password Reset Required",
+            "type": "boolean"
+          },
           "phone": {
             "anyOf": [
               {
@@ -3152,6 +3164,17 @@
               }
             ],
             "title": "Password"
+          },
+          "password_reset_required": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Password Reset Required"
           },
           "phone": {
             "anyOf": [
@@ -6699,6 +6722,278 @@
         ]
       }
     },
+    "/api/v1/galleries/client/{access_token}": {
+      "get": {
+        "operationId": "get_client_gallery_api_v1_galleries_client__access_token__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "access_token",
+            "required": true,
+            "schema": {
+              "title": "Access Token",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Client Gallery",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/client/{access_token}/authenticate": {
+      "post": {
+        "operationId": "authenticate_client_gallery_api_v1_galleries_client__access_token__authenticate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "access_token",
+            "required": true,
+            "schema": {
+              "title": "Access Token",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GalleryAuthenticateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Authenticate Client Gallery",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/client/{access_token}/favorites": {
+      "post": {
+        "operationId": "add_client_gallery_favorite_api_v1_galleries_client__access_token__favorites_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "access_token",
+            "required": true,
+            "schema": {
+              "title": "Access Token",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/FavoriteSelectionCreate"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Add Client Gallery Favorite",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/client/{access_token}/favorites/{favorite_id}": {
+      "delete": {
+        "operationId": "delete_client_gallery_favorite_api_v1_galleries_client__access_token__favorites__favorite_id__delete",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "access_token",
+            "required": true,
+            "schema": {
+              "title": "Access Token",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "favorite_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Favorite Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Delete Client Gallery Favorite",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/client/{access_token}/submit-selection": {
+      "post": {
+        "operationId": "submit_client_selection_api_v1_galleries_client__access_token__submit_selection_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "access_token",
+            "required": true,
+            "schema": {
+              "title": "Access Token",
+              "type": "string"
+            }
+          },
+          {
+            "in": "header",
+            "name": "authorization",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Authorization"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Submit Client Selection",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
     "/api/v1/galleries/metrics": {
       "get": {
         "operationId": "get_gallery_metrics_api_v1_galleries_metrics_get",
@@ -7021,6 +7316,102 @@
           }
         ],
         "summary": "Update Gallery",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/{gallery_id}/access-token/revoke": {
+      "post": {
+        "operationId": "revoke_gallery_access_tokens_api_v1_galleries__gallery_id__access_token_revoke_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gallery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gallery Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Revoke Gallery Access Tokens",
+        "tags": [
+          "Galleries"
+        ]
+      }
+    },
+    "/api/v1/galleries/{gallery_id}/access-token/rotate": {
+      "post": {
+        "operationId": "rotate_gallery_access_token_api_v1_galleries__gallery_id__access_token_rotate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "gallery_id",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "title": "Gallery Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Rotate Gallery Access Token",
         "tags": [
           "Galleries"
         ]

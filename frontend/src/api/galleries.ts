@@ -4,6 +4,7 @@ import type {
   FavoritePayload,
   FavoriteSelection,
   Gallery,
+  GalleryAccessToken,
   GalleryDetail,
   GalleryListParams,
   GalleryListResult,
@@ -107,7 +108,7 @@ export async function getPublicGallery(id: string, token?: string): Promise<Gall
   if (token) {
     headers.Authorization = `Bearer ${token}`;
   }
-  const response = await apiClient.get<ApiEnvelope<GalleryDetail>>(`/galleries/${id}/public`, {
+  const response = await apiClient.get<ApiEnvelope<GalleryDetail>>(`/galleries/client/${id}`, {
     headers,
   });
   return response.data.data;
@@ -118,7 +119,7 @@ export async function authenticatePublicGallery(
   password: string
 ): Promise<{ access_token: string }> {
   const response = await apiClient.post<ApiEnvelope<{ access_token: string }>>(
-    `/galleries/public/${id}/authenticate`,
+    `/galleries/client/${id}/authenticate`,
     { password }
   );
   return response.data.data;
@@ -132,7 +133,7 @@ export async function addPublicGalleryFavorite(
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
   const response = await apiClient.post<ApiEnvelope<FavoriteSelection>>(
-    `/galleries/${id}/public/favorites`,
+    `/galleries/client/${id}/favorites`,
     payload,
     { headers }
   );
@@ -143,7 +144,23 @@ export async function deletePublicGalleryFavorite(
   id: string,
   favoriteId: string
 ): Promise<void> {
-  await apiClient.delete<ApiEnvelope<Record<string, never>>>(`/galleries/${id}/public/favorites/${favoriteId}`);
+  await apiClient.delete<ApiEnvelope<Record<string, never>>>(
+    `/galleries/client/${id}/favorites/${favoriteId}`
+  );
+}
+
+export async function rotateGalleryAccessToken(id: string): Promise<GalleryAccessToken> {
+  const response = await apiClient.post<ApiEnvelope<GalleryAccessToken>>(
+    `/galleries/${id}/access-token/rotate`
+  );
+  return response.data.data;
+}
+
+export async function revokeGalleryAccessTokens(id: string): Promise<GalleryAccessToken> {
+  const response = await apiClient.post<ApiEnvelope<GalleryAccessToken>>(
+    `/galleries/${id}/access-token/revoke`
+  );
+  return response.data.data;
 }
 
 export async function createUpgradeRequest(
@@ -182,7 +199,7 @@ export async function submitPublicSelection(id: string, token?: string): Promise
   const headers: Record<string, string> = {};
   if (token) headers.Authorization = `Bearer ${token}`;
   const response = await apiClient.post<ApiEnvelope<GalleryDetail>>(
-    `/galleries/${id}/public/submit-selection`,
+    `/galleries/client/${id}/submit-selection`,
     {},
     { headers }
   );

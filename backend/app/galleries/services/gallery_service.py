@@ -1,3 +1,4 @@
+import secrets
 from datetime import UTC, datetime, timedelta
 from uuid import UUID
 
@@ -5,9 +6,21 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.bookings.models import Booking, BookingItem
-from app.core.security import create_token, decode_token, hash_password, verify_password
+from app.core.security import (
+    create_token,
+    decode_token,
+    hash_password,
+    hash_token_identifier,
+    verify_password,
+)
 from app.galleries.enums import GalleryStatus
-from app.galleries.models import FavoriteSelection, Gallery, GalleryPhoto, GalleryUpgradeRequest
+from app.galleries.models import (
+    FavoriteSelection,
+    Gallery,
+    GalleryAccessToken,
+    GalleryPhoto,
+    GalleryUpgradeRequest,
+)
 from app.galleries.repositories import GalleryRepository
 from app.galleries.schemas.gallery import (
     FavoriteSelectionCreate,
@@ -41,6 +54,51 @@ def _scope_filters(
             raise ForbiddenError("Gallery branch is outside the caller scope")
         scoped_branch_id = context.branch_id
     return context.organization_id, scoped_branch_id
+
+
+def _public_gallery_url(raw_token: str) -> str:
+    return f"/client/gallery/{raw_token}"
+
+
+def _generate_raw_access_token() -> str:
+    return secrets.token_urlsafe(32)
+
+
+def _gallery_token_expiry(gallery: Gallery) -> datetime:
+    if gallery.expires_at is not None:
+        expires = gallery.expires_at
+        if expires.tzinfo is None:
+            expires = expires.replace(tzinfo=UTC)
+        return expires
+    return datetime.now(UTC) + timedelta(days=90)
+
+
+def _ensure_public_gallery_not_expired(gallery: Gallery) -> None:
+    if gallery.expires_at is None:
+        return
+    expires = gallery.expires_at
+    if expires.tzinfo is None:
+        expires = expires.replace(tzinfo=UTC)
+    if expires < datetime.now(UTC):
+        raise GoneError("Gallery has expired")
+
+
+def _validate_gallery_access_token(db: Session, raw_token: str | UUID) -> Gallery:
+    access_token = GalleryRepository(db).active_access_token_by_hash(
+        hash_token_identifier(str(raw_token))
+    )
+    if access_token is None or access_token.revoked_at is not None:
+        raise ForbiddenError("Invalid gallery access token")
+    now = datetime.now(UTC)
+    expires_at = access_token.expires_at
+    if expires_at.tzinfo is None:
+        expires_at = expires_at.replace(tzinfo=UTC)
+    if expires_at <= now:
+        raise GoneError("Gallery access token has expired")
+    gallery = access_token.gallery
+    _ensure_public_gallery_not_expired(gallery)
+    access_token.last_accessed_at = now
+    return gallery
 
 
 def _ensure_gallery_scope(context: AuthorizationContext, gallery: Gallery) -> None:
@@ -127,18 +185,8 @@ def get_gallery(db: Session, gallery_id: UUID, context: AuthorizationContext) ->
     return gallery
 
 
-def get_public_gallery(db: Session, gallery_id: UUID, token: str | None = None) -> Gallery:
-    repository = GalleryRepository(db)
-    gallery = repository.get_gallery(gallery_id)
-    if gallery is None:
-        raise NotFoundError("Gallery not found")
-    if gallery.expires_at is not None:
-        expires = gallery.expires_at
-        if expires.tzinfo is None:
-            expires = expires.replace(tzinfo=UTC)
-        if expires < datetime.now(UTC):
-            raise GoneError("Gallery has expired")
-    # if gallery is password protected, require a valid temporary token
+def get_public_gallery(db: Session, access_token: str, token: str | None = None) -> Gallery:
+    gallery = _validate_gallery_access_token(db, access_token)
     if gallery.password_hash:
         if not token:
             raise ForbiddenError("Authentication required")
@@ -149,6 +197,74 @@ def get_public_gallery(db: Session, gallery_id: UUID, token: str | None = None) 
         if str(gallery.id) != payload.get("sub"):
             raise ForbiddenError("Authentication required")
     return gallery
+
+
+def rotate_gallery_access_token(
+    db: Session, gallery_id: UUID, context: AuthorizationContext
+) -> dict:
+    gallery = get_gallery(db, gallery_id, context)
+    repository = GalleryRepository(db)
+    now = datetime.now(UTC)
+    for access_token in repository.active_access_tokens_for_gallery(gallery.id):
+        access_token.revoked_at = now
+    raw_token = _generate_raw_access_token()
+    expires_at = _gallery_token_expiry(gallery)
+    repository.add_access_token(
+        GalleryAccessToken(
+            gallery_id=gallery.id,
+            token_hash=hash_token_identifier(raw_token),
+            expires_at=expires_at,
+            created_at=now,
+            created_by_user_id=context.user_id,
+        )
+    )
+    record_audit_event(
+        db,
+        "gallery.access_token_rotated",
+        context.user_id,
+        "Gallery",
+        gallery.id,
+        metadata={
+            "domain_event": "GalleryAccessTokenRotated",
+            "organization_id": str(gallery.organization_id),
+            "branch_id": str(gallery.branch_id),
+        },
+        organization_id=gallery.organization_id,
+        branch_id=gallery.branch_id,
+    )
+    db.commit()
+    return {
+        "access_token": raw_token,
+        "access_url": _public_gallery_url(raw_token),
+        "expires_at": expires_at,
+        "revoked": False,
+    }
+
+
+def revoke_gallery_access_tokens(
+    db: Session, gallery_id: UUID, context: AuthorizationContext
+) -> dict:
+    gallery = get_gallery(db, gallery_id, context)
+    repository = GalleryRepository(db)
+    now = datetime.now(UTC)
+    for access_token in repository.active_access_tokens_for_gallery(gallery.id):
+        access_token.revoked_at = now
+    record_audit_event(
+        db,
+        "gallery.access_token_revoked",
+        context.user_id,
+        "Gallery",
+        gallery.id,
+        metadata={
+            "domain_event": "GalleryAccessTokenRevoked",
+            "organization_id": str(gallery.organization_id),
+            "branch_id": str(gallery.branch_id),
+        },
+        organization_id=gallery.organization_id,
+        branch_id=gallery.branch_id,
+    )
+    db.commit()
+    return {"access_token": None, "access_url": None, "expires_at": now, "revoked": True}
 
 
 def create_gallery(db: Session, payload: GalleryCreate, context: AuthorizationContext) -> Gallery:
@@ -339,13 +455,13 @@ def list_favorites(
 
 def add_favorite(
     db: Session,
-    gallery_id: UUID,
+    gallery_id: UUID | str,
     payload: FavoriteSelectionCreate,
     context: AuthorizationContext | None,
 ) -> FavoriteSelection:
     repository = GalleryRepository(db)
     gallery = (
-        get_public_gallery(db, gallery_id)
+        get_public_gallery(db, str(gallery_id))
         if context is None
         else get_gallery(db, gallery_id, context)
     )
@@ -385,6 +501,8 @@ def add_favorite(
         "FavoriteSelection",
         favorite.id,
         metadata={"domain_event": "FavoriteSelected", "gallery_id": str(gallery.id)},
+        organization_id=gallery.organization_id,
+        branch_id=gallery.branch_id,
     )
     db.commit()
     db.refresh(favorite)
@@ -399,11 +517,11 @@ def add_favorite(
 
 
 def delete_favorite(
-    db: Session, gallery_id: UUID, favorite_id: UUID, context: AuthorizationContext | None
+    db: Session, gallery_id: UUID | str, favorite_id: UUID, context: AuthorizationContext | None
 ) -> None:
     repository = GalleryRepository(db)
     gallery = (
-        get_public_gallery(db, gallery_id)
+        get_public_gallery(db, str(gallery_id))
         if context is None
         else get_gallery(db, gallery_id, context)
     )
@@ -423,18 +541,8 @@ def delete_favorite(
         db.rollback()
 
 
-def authenticate_public_gallery(db: Session, gallery_id: UUID, password: str) -> str:
-    repository = GalleryRepository(db)
-    gallery = repository.get_gallery(gallery_id)
-    if gallery is None:
-        raise NotFoundError("Gallery not found")
-        if gallery.expires_at is not None:
-            expires = gallery.expires_at
-            # normalize naive datetimes to UTC for comparison
-            if expires.tzinfo is None:
-                expires = expires.replace(tzinfo=UTC)
-            if expires < datetime.now(UTC):
-                raise GoneError("Gallery has expired")
+def authenticate_public_gallery(db: Session, access_token: str, password: str) -> str:
+    gallery = _validate_gallery_access_token(db, access_token)
     if not gallery.password_hash:
         raise BadRequestError("Gallery is not password protected")
     if not verify_password(password, gallery.password_hash):
@@ -447,6 +555,8 @@ def authenticate_public_gallery(db: Session, gallery_id: UUID, password: str) ->
         "Gallery",
         gallery.id,
         metadata={"domain_event": "GalleryPasswordAuthenticated"},
+        organization_id=gallery.organization_id,
+        branch_id=gallery.branch_id,
     )
     return token
 
@@ -478,27 +588,8 @@ def submit_selection(db: Session, gallery_id: UUID, context: AuthorizationContex
     return gallery
 
 
-def submit_public_selection(db: Session, gallery_id: UUID, token: str | None = None) -> Gallery:
-    repository = GalleryRepository(db)
-    gallery = repository.get_gallery(gallery_id)
-    if gallery is None:
-        raise NotFoundError("Gallery not found")
-    if gallery.expires_at is not None:
-        expires = gallery.expires_at
-        if expires.tzinfo is None:
-            expires = expires.replace(tzinfo=UTC)
-        if expires < datetime.now(UTC):
-            raise GoneError("Gallery has expired")
-    # if gallery is password protected, require a valid temporary token
-    if gallery.password_hash:
-        if not token:
-            raise ForbiddenError("Authentication required")
-        try:
-            payload = decode_token(token, "gallery_access")
-        except Exception as err:
-            raise ForbiddenError("Authentication required") from err
-        if str(gallery.id) != payload.get("sub"):
-            raise ForbiddenError("Authentication required")
+def submit_public_selection(db: Session, access_token: str, token: str | None = None) -> Gallery:
+    gallery = get_public_gallery(db, access_token, token)
     if gallery.gallery_status != GalleryStatus.SELECTION_OPEN.value:
         raise ConflictError("Selection can only be submitted while open")
     gallery.selection_locked = True
@@ -521,6 +612,8 @@ def submit_public_selection(db: Session, gallery_id: UUID, token: str | None = N
         "Gallery",
         gallery.id,
         metadata={"domain_event": "GallerySelectionSubmitted"},
+        organization_id=gallery.organization_id,
+        branch_id=gallery.branch_id,
     )
     db.commit()
     return gallery

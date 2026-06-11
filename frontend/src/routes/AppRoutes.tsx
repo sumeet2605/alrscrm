@@ -40,7 +40,7 @@ export function AppRoutes() {
   return (
     <Routes>
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/client/galleries/:galleryId" element={<ClientSelectionPage />} />
+      <Route path="/client/gallery/:token" element={<ClientSelectionPage />} />
       <Route path="/client/delivery/:token" element={<ClientDeliveryPage />} />
       <Route element={<ProtectedRoute />}>
         <Route element={<DashboardLayout />}>

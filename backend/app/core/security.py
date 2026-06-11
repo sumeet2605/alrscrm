@@ -32,6 +32,7 @@ def create_token(
     token_type: str,
     expires_delta: timedelta | None = None,
     token_identifier: str | None = None,
+    claims: dict[str, Any] | None = None,
 ) -> str:
     settings = get_settings()
     expires_at = datetime.now(UTC) + (
@@ -45,15 +46,18 @@ def create_token(
         "jti": token_identifier or str(uuid4()),
         "exp": expires_at,
     }
+    if claims:
+        payload.update(claims)
     return jwt.encode(payload, settings.jwt_secret_key, algorithm=settings.jwt_algorithm)
 
 
-def create_access_token(subject: UUID) -> str:
+def create_access_token(subject: UUID, claims: dict[str, Any] | None = None) -> str:
     settings = get_settings()
     return create_token(
         subject,
         "access",
         timedelta(minutes=settings.access_token_expire_minutes),
+        claims=claims,
     )
 
 
@@ -66,13 +70,16 @@ def create_refresh_token(subject: UUID) -> str:
     )
 
 
-def create_refresh_token_with_identifier(subject: UUID, token_identifier: str) -> str:
+def create_refresh_token_with_identifier(
+    subject: UUID, token_identifier: str, claims: dict[str, Any] | None = None
+) -> str:
     settings = get_settings()
     return create_token(
         subject,
         "refresh",
         timedelta(minutes=settings.refresh_token_expire_minutes),
         token_identifier=token_identifier,
+        claims=claims,
     )
 
 

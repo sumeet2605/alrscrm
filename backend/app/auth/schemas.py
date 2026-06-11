@@ -6,6 +6,7 @@ from app.identity.schemas.user import UserRead
 
 
 class LoginRequest(BaseModel):
+    organization_code: str = Field(min_length=1, max_length=40)
     email: EmailStr
     password: str = Field(min_length=1, max_length=128)
 

@@ -1,4 +1,4 @@
-import { LockOutlined, MailOutlined } from "@ant-design/icons";
+import { BankOutlined, LockOutlined, MailOutlined } from "@ant-design/icons";
 import { Alert, Button, Card, Form, Input, Typography } from "antd";
 import { useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
@@ -45,6 +45,13 @@ export function LoginPage() {
           <Typography.Text type="secondary">Use your studio account to continue.</Typography.Text>
           {error ? <Alert className="form-alert" type="error" message={error} showIcon /> : null}
           <Form<LoginRequest> layout="vertical" onFinish={handleSubmit} requiredMark={false}>
+            <Form.Item
+              label="Organization Code"
+              name="organization_code"
+              rules={[{ required: true, message: "Organization code is required" }]}
+            >
+              <Input prefix={<BankOutlined />} size="large" autoComplete="organization" />
+            </Form.Item>
             <Form.Item
               label="Email"
               name="email"

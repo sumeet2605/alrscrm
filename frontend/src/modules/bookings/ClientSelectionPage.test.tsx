@@ -50,9 +50,9 @@ describe("ClientSelectionPage", () => {
     mocks.addPublicGalleryFavorite.mockResolvedValue({ id: "favorite-1" });
     renderWithProviders(
       <Routes>
-        <Route path="/client/galleries/:galleryId" element={<ClientSelectionPage />} />
+        <Route path="/client/gallery/:token" element={<ClientSelectionPage />} />
       </Routes>,
-      ["/client/galleries/gallery-1"]
+      ["/client/gallery/public-token-1"]
     );
 
     expect(await screen.findByText("Client Gallery")).toBeInTheDocument();
@@ -61,11 +61,15 @@ describe("ClientSelectionPage", () => {
     await user.click(screen.getByRole("button", { name: "Select photo" }));
 
     await waitFor(() =>
-      expect(mocks.addPublicGalleryFavorite).toHaveBeenCalledWith("gallery-1", {
-        gallery_photo_id: "photo-1",
-        selected_by_name: "Client Parent",
-        selected_by_email: "client@example.com"
-      }, undefined)
+      expect(mocks.addPublicGalleryFavorite).toHaveBeenCalledWith(
+        "public-token-1",
+        {
+          gallery_photo_id: "photo-1",
+          selected_by_name: "Client Parent",
+          selected_by_email: "client@example.com"
+        },
+        undefined
+      )
     );
   });
 });
