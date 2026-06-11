@@ -18,6 +18,29 @@ depends_on: str | Sequence[str] | None = None
 
 def upgrade() -> None:
     op.execute("CREATE SEQUENCE IF NOT EXISTS delivery_number_seq START WITH 1 INCREMENT BY 1")
+    op.execute(
+        """
+        DO $$
+        DECLARE
+            current_max bigint;
+        BEGIN
+            SELECT COALESCE(
+                MAX(
+                    substring(delivery_number from 'DLV-[0-9]{4}-([0-9]+)$')::bigint
+                ),
+                0
+            )
+            INTO current_max
+            FROM delivery_jobs;
+
+            IF current_max > 0 THEN
+                PERFORM setval('delivery_number_seq', current_max, true);
+            ELSE
+                PERFORM setval('delivery_number_seq', 1, false);
+            END IF;
+        END $$;
+        """
+    )
     op.add_column(
         "delivery_audits",
         sa.Column("organization_id", sa.Uuid(), nullable=True),
