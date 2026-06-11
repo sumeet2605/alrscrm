@@ -1,10 +1,20 @@
-import { useQuery } from "@tanstack/react-query";
-import { Alert, Card, Descriptions, Space, Tag, Typography } from "antd";
+import { DownloadOutlined } from "@ant-design/icons";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { Alert, Button, Card, Descriptions, Space, Tag, Typography } from "antd";
 import dayjs from "dayjs";
 import { useParams } from "react-router-dom";
 
-import { getPayment } from "../../api/finance";
+import { downloadPaymentReceipt, getPayment } from "../../api/finance";
 import { labelFromEnum, money, paymentStatusColor } from "./financeOptions";
+
+function saveBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 export function PaymentDetailPage() {
   const { paymentId } = useParams();
@@ -14,6 +24,14 @@ export function PaymentDetailPage() {
     enabled: Boolean(paymentId)
   });
   const payment = paymentQuery.data;
+  const receiptMutation = useMutation({
+    mutationFn: downloadPaymentReceipt,
+    onSuccess: (blob) => {
+      if (payment) {
+        saveBlob(blob, `${payment.payment_number}-receipt.pdf`);
+      }
+    }
+  });
 
   return (
     <Space direction="vertical" size={16} className="page-stack">
@@ -24,6 +42,15 @@ export function PaymentDetailPage() {
             Payment receipt details linked to the source invoice.
           </Typography.Text>
         </div>
+        {payment ? (
+          <Button
+            icon={<DownloadOutlined />}
+            onClick={() => receiptMutation.mutate(payment.id)}
+            loading={receiptMutation.isPending}
+          >
+            Receipt PDF
+          </Button>
+        ) : null}
       </div>
 
       {paymentQuery.isError ? (

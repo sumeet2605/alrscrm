@@ -11,6 +11,7 @@ import {
   SafetyCertificateOutlined,
   ScheduleOutlined,
   SendOutlined,
+  SettingOutlined,
   ShopOutlined,
   TeamOutlined,
   ToolOutlined,
@@ -78,6 +79,12 @@ const navItems: NavItem[] = [
       { key: "/finance/payments", label: "Payments" }
     ]
   },
+  {
+    key: "settings-menu",
+    icon: <SettingOutlined />,
+    label: "Settings",
+    children: [{ key: "/settings/integrations", label: "Integrations" }]
+  },
   { key: "/branches", icon: <ApartmentOutlined />, label: "Branches" },
   { key: "/users", icon: <TeamOutlined />, label: "Users" },
   { key: "/roles", icon: <SafetyCertificateOutlined />, label: "Roles" }
@@ -104,6 +111,7 @@ function selectedMenuPath(pathname: string): string {
   if (pathname.startsWith("/finance/invoices")) return "/finance/invoices";
   if (pathname.startsWith("/finance/payments")) return "/finance/payments";
   if (pathname.startsWith("/finance")) return "/finance";
+  if (pathname.startsWith("/settings/integrations")) return "/settings/integrations";
   if (pathname.startsWith("/production/editing")) return "/production/editing";
   if (pathname.startsWith("/production/editor-dashboard")) return "/production/editor-dashboard";
   if (pathname.startsWith("/production")) return "/production";
@@ -152,7 +160,13 @@ export function DashboardLayout() {
         <Menu
           theme="dark"
           mode="inline"
-          defaultOpenKeys={["bookings-menu", "production-menu", "operations-menu", "finance-menu"]}
+          defaultOpenKeys={[
+            "bookings-menu",
+            "production-menu",
+            "operations-menu",
+            "finance-menu",
+            "settings-menu"
+          ]}
           selectedKeys={[selectedPath]}
           items={accessibleItems}
           onClick={({ key }) => navigate(key)}

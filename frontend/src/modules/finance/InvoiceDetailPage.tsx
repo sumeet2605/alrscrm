@@ -1,4 +1,9 @@
-import { CloseCircleOutlined, SendOutlined, WalletOutlined } from "@ant-design/icons";
+import {
+  CloseCircleOutlined,
+  DownloadOutlined,
+  SendOutlined,
+  WalletOutlined
+} from "@ant-design/icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   App,
@@ -19,7 +24,13 @@ import dayjs from "dayjs";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
-import { createPayment, getInvoice, issueInvoice, voidInvoice } from "../../api/finance";
+import {
+  createPayment,
+  downloadInvoicePdf,
+  getInvoice,
+  issueInvoice,
+  voidInvoice
+} from "../../api/finance";
 import { useAuth } from "../../contexts/AuthContext";
 import type {
   InvoiceLineItem,
@@ -43,6 +54,15 @@ type PaymentFormValues = {
   transaction_reference?: string;
   notes?: string;
 };
+
+function saveBlob(blob: Blob, fileName: string) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = fileName;
+  link.click();
+  URL.revokeObjectURL(url);
+}
 
 export function InvoiceDetailPage() {
   const { invoiceId } = useParams();
@@ -89,6 +109,14 @@ export function InvoiceDetailPage() {
       setPaymentModalOpen(false);
       form.resetFields();
       await refresh();
+    }
+  });
+  const pdfMutation = useMutation({
+    mutationFn: downloadInvoicePdf,
+    onSuccess: (blob) => {
+      if (invoice) {
+        saveBlob(blob, `${invoice.invoice_number}.pdf`);
+      }
     }
   });
 
@@ -153,6 +181,13 @@ export function InvoiceDetailPage() {
         </div>
         {canManage && invoice ? (
           <Space wrap>
+            <Button
+              icon={<DownloadOutlined />}
+              onClick={() => pdfMutation.mutate(invoice.id)}
+              loading={pdfMutation.isPending}
+            >
+              GST PDF
+            </Button>
             <Button
               icon={<SendOutlined />}
               onClick={() => issueMutation.mutate(invoice.id)}

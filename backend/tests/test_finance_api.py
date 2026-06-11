@@ -237,6 +237,22 @@ def test_invoice_payment_metrics_lifecycle(client: TestClient, db: Session) -> N
     payment = payment_response.json()["data"]
     assert payment["payment_number"].startswith("PAY-")
 
+    invoice_pdf_response = client.get(
+        f"/api/v1/invoices/{invoice['id']}/pdf",
+        headers=_headers(owner),
+    )
+    assert invoice_pdf_response.status_code == 200
+    assert invoice_pdf_response.headers["content-type"] == "application/pdf"
+    assert invoice_pdf_response.content.startswith(b"%PDF")
+
+    receipt_response = client.get(
+        f"/api/v1/payments/{payment['id']}/receipt",
+        headers=_headers(owner),
+    )
+    assert receipt_response.status_code == 200
+    assert receipt_response.headers["content-type"] == "application/pdf"
+    assert receipt_response.content.startswith(b"%PDF")
+
     invoice_detail_response = client.get(
         f"/api/v1/invoices/{invoice['id']}",
         headers=_headers(owner),

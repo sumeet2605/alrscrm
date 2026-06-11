@@ -81,6 +81,8 @@ PERMISSION_DEFINITIONS: tuple[tuple[str, str, str], ...] = (
     ("finance:create_payment", "Create payments", "Record invoice payments."),
     ("finance:refund_payment", "Refund payments", "Record payment refunds."),
     ("finance:dashboard", "View finance dashboard", "View finance dashboard metrics."),
+    ("integrations:view", "View integrations", "View tenant integrations and health."),
+    ("integrations:manage", "Manage integrations", "Create, update, and verify integrations."),
 )
 
 ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
@@ -144,6 +146,8 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "finance:create_payment",
         "finance:refund_payment",
         "finance:dashboard",
+        "integrations:view",
+        "integrations:manage",
     ),
     "Sales Executive": (
         "identity:users:read",

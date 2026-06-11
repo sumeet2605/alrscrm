@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_permissions
@@ -8,6 +8,7 @@ from app.api.responses import api_response
 from app.api.schemas import APIResponse
 from app.core.database import get_db
 from app.finance.enums import InvoiceStatus, PaymentMethod, PaymentStatus
+from app.finance.pdf import invoice_pdf, payment_receipt_pdf
 from app.finance.schemas import (
     FinanceMetricsRead,
     FinanceSettingsRead,
@@ -116,6 +117,22 @@ def get_invoice(
     return api_response("Invoice retrieved", _invoice(item))
 
 
+@invoices_router.get("/{invoice_id}/pdf")
+def download_invoice_pdf(
+    invoice_id: UUID,
+    db: Session = Depends(get_db),
+    context=Depends(require_permissions("finance:view")),
+):
+    item = finance_service.get_invoice(db, invoice_id, context)
+    return Response(
+        content=invoice_pdf(item),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{item.invoice_number}.pdf"',
+        },
+    )
+
+
 @invoices_router.put("/{invoice_id}", response_model=APIResponse)
 def update_invoice(
     invoice_id: UUID,
@@ -193,3 +210,19 @@ def get_payment(
 ):
     item = finance_service.get_payment(db, payment_id, context)
     return api_response("Payment retrieved", _payment(item))
+
+
+@payments_router.get("/{payment_id}/receipt")
+def download_payment_receipt(
+    payment_id: UUID,
+    db: Session = Depends(get_db),
+    context=Depends(require_permissions("finance:view")),
+):
+    item = finance_service.get_payment(db, payment_id, context)
+    return Response(
+        content=payment_receipt_pdf(item),
+        media_type="application/pdf",
+        headers={
+            "Content-Disposition": f'attachment; filename="{item.payment_number}-receipt.pdf"',
+        },
+    )

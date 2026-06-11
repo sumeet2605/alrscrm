@@ -255,6 +255,8 @@ export interface components {
     "HTTPValidationError": {
       "detail"?: components["schemas"]["ValidationError"][];
     };
+    "IntegrationProvider": "WHATSAPP_CLOUD_API" | "INSTAGRAM_BUSINESS" | "FACEBOOK_PAGE" | "SMTP_EMAIL" | "GOOGLE_CLOUD_STORAGE" | "AWS_S3";
+    "IntegrationStatus": "CONNECTED" | "DISCONNECTED" | "EXPIRED" | "ERROR";
     "InvoiceCreate": {
       "booking_id": string;
       "branch_id": string;
@@ -354,6 +356,17 @@ export interface components {
       "code": string;
       "is_active"?: boolean;
       "name": string;
+    };
+    "OrganizationIntegrationCreate": {
+      "branch_id"?: string | null;
+      "credentials": Record<string, unknown>;
+      "organization_id": string;
+      "provider": components["schemas"]["IntegrationProvider"];
+    };
+    "OrganizationIntegrationUpdate": {
+      "branch_id"?: string | null;
+      "credentials"?: Record<string, unknown> | null;
+      "status"?: components["schemas"]["IntegrationStatus"] | null;
     };
     "OrganizationOnboardingBranch": {
       "name"?: string;
@@ -1721,6 +1734,69 @@ export interface paths {
       };
     };
   };
+  "/api/v1/integrations": {
+    get: {
+      parameters: {
+      query: {
+        "page"?: number;
+        "page_size"?: number;
+        "branch_id"?: string | null;
+        "provider"?: components["schemas"]["IntegrationProvider"] | null;
+        "status"?: components["schemas"]["IntegrationStatus"] | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["OrganizationIntegrationCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/integrations/health": {
+    get: {
+      parameters: Record<string, never>;
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      };
+    };
+  };
+  "/api/v1/integrations/{integration_id}": {
+    patch: {
+      parameters: {
+      path: {
+        "integration_id": string;
+      };
+    };
+      requestBody: components["schemas"]["OrganizationIntegrationUpdate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/integrations/{integration_id}/verify": {
+    post: {
+      parameters: {
+      path: {
+        "integration_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
   "/api/v1/invoices": {
     get: {
       parameters: {
@@ -1784,6 +1860,20 @@ export interface paths {
       requestBody: never;
       responses: {
       "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/invoices/{invoice_id}/pdf": {
+    get: {
+      parameters: {
+      path: {
+        "invoice_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": unknown;
       "422": components["schemas"]["HTTPValidationError"];
       };
     };
@@ -2146,6 +2236,20 @@ export interface paths {
       requestBody: never;
       responses: {
       "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/payments/{payment_id}/receipt": {
+    get: {
+      parameters: {
+      path: {
+        "payment_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": unknown;
       "422": components["schemas"]["HTTPValidationError"];
       };
     };

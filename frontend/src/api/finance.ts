@@ -42,6 +42,11 @@ export async function getInvoice(id: string): Promise<Invoice> {
   return response.data.data;
 }
 
+export async function downloadInvoicePdf(id: string): Promise<Blob> {
+  const response = await apiClient.get<Blob>(`/invoices/${id}/pdf`, { responseType: "blob" });
+  return response.data;
+}
+
 export async function updateInvoice(id: string, payload: InvoiceUpdatePayload): Promise<Invoice> {
   const response = await apiClient.put<ApiEnvelope<Invoice>>(`/invoices/${id}`, payload);
   return response.data.data;
@@ -72,4 +77,11 @@ export async function createPayment(payload: PaymentPayload): Promise<Payment> {
 export async function getPayment(id: string): Promise<Payment> {
   const response = await apiClient.get<ApiEnvelope<Payment>>(`/payments/${id}`);
   return response.data.data;
+}
+
+export async function downloadPaymentReceipt(id: string): Promise<Blob> {
+  const response = await apiClient.get<Blob>(`/payments/${id}/receipt`, {
+    responseType: "blob"
+  });
+  return response.data;
 }

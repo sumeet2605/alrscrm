@@ -37,6 +37,10 @@ import { OpportunityDetailsPage } from "../modules/sales/OpportunityDetailsPage"
 import { OpportunityFormPage } from "../modules/sales/OpportunityFormPage";
 import { OpportunityListPage } from "../modules/sales/OpportunityListPage";
 import { SalesDashboardPage } from "../modules/sales/SalesDashboardPage";
+import { EmailSettingsPage } from "../modules/settings/EmailSettingsPage";
+import { IntegrationsDashboardPage } from "../modules/settings/IntegrationsDashboardPage";
+import { StorageSettingsPage } from "../modules/settings/StorageSettingsPage";
+import { WhatsAppSettingsPage } from "../modules/settings/WhatsAppSettingsPage";
 import { UserManagementPage } from "../modules/users/UserManagementPage";
 import { LoginPage } from "../pages/LoginPage";
 import { ProtectedRoute } from "./ProtectedRoute";
@@ -82,6 +86,10 @@ export function AppRoutes() {
           <Route path="/finance/invoices/:invoiceId" element={<InvoiceDetailPage />} />
           <Route path="/finance/payments" element={<PaymentListPage />} />
           <Route path="/finance/payments/:paymentId" element={<PaymentDetailPage />} />
+          <Route path="/settings/integrations" element={<IntegrationsDashboardPage />} />
+          <Route path="/settings/integrations/whatsapp" element={<WhatsAppSettingsPage />} />
+          <Route path="/settings/integrations/email" element={<EmailSettingsPage />} />
+          <Route path="/settings/integrations/storage" element={<StorageSettingsPage />} />
           <Route path="/schedules" element={<ScheduleCalendarPage />} />
           <Route path="/schedules/assignments" element={<AssignmentBoardPage />} />
           <Route path="/branches" element={<BranchManagementPage />} />

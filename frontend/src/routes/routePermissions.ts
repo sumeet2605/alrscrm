@@ -9,6 +9,7 @@ const fullAccessRoutes = [
   "/production",
   "/delivery",
   "/finance",
+  "/settings",
   "/branches",
   "/users",
   "/roles"
@@ -30,6 +31,7 @@ export const roleRoutes: Record<string, string[]> = {
     "/production",
     "/delivery",
     "/finance",
+    "/settings",
     "/users"
   ],
   "Sales Executive": ["/dashboard", "/families", "/sales", "/bookings", "/schedules"],
@@ -71,6 +73,11 @@ export function canAccessPath(roleNames: string[], path: string): boolean {
     );
   }
   if (path.startsWith("/finance")) {
+    return roleNames.some((role) =>
+      ["Super Admin", "Organization Admin", "Owner", "Branch Manager"].includes(role)
+    );
+  }
+  if (path.startsWith("/settings/integrations")) {
     return roleNames.some((role) =>
       ["Super Admin", "Organization Admin", "Owner", "Branch Manager"].includes(role)
     );

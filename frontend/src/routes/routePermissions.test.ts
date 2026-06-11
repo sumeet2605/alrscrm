@@ -54,4 +54,13 @@ describe("routePermissions", () => {
     expect(canAccessPath(["Photographer"], "/finance/payments")).toBe(false);
     expect(canAccessPath(["Editor"], "/finance/invoices")).toBe(false);
   });
+
+  it("allows integration settings only to administrative tenant roles", () => {
+    expect(canAccessPath(["Super Admin"], "/settings/integrations")).toBe(true);
+    expect(canAccessPath(["Owner"], "/settings/integrations/email")).toBe(true);
+    expect(canAccessPath(["Organization Admin"], "/settings/integrations/storage")).toBe(true);
+    expect(canAccessPath(["Branch Manager"], "/settings/integrations/whatsapp")).toBe(true);
+    expect(canAccessPath(["Photographer"], "/settings/integrations")).toBe(false);
+    expect(canAccessPath(["Editor"], "/settings/integrations")).toBe(false);
+  });
 });
