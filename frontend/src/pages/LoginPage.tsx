@@ -7,7 +7,7 @@ import { useAuth } from "../contexts/AuthContext";
 import type { LoginRequest } from "../types/auth";
 
 export function LoginPage() {
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ export function LoginPage() {
   const from = (location.state as { from?: Location } | null)?.from?.pathname ?? "/dashboard";
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={user?.password_reset_required ? "/change-password" : "/dashboard"} replace />;
   }
 
   const handleSubmit = async (values: LoginRequest) => {

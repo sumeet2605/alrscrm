@@ -1,6 +1,12 @@
 import { apiClient } from "./http";
 import type { ApiEnvelope } from "../types/api";
-import type { LoginRequest, LoginResponse, TokenPair } from "../types/auth";
+import type {
+  ChangePasswordRequest,
+  ChangePasswordResponse,
+  LoginRequest,
+  LoginResponse,
+  TokenPair
+} from "../types/auth";
 import type { User } from "../types/identity";
 
 export async function login(payload: LoginRequest): Promise<LoginResponse> {
@@ -17,6 +23,16 @@ export async function refreshToken(refreshToken: string): Promise<TokenPair> {
   const response = await apiClient.post<ApiEnvelope<TokenPair>>("/auth/refresh", {
     refresh_token: refreshToken
   });
+  return response.data.data;
+}
+
+export async function changePassword(
+  payload: ChangePasswordRequest
+): Promise<ChangePasswordResponse> {
+  const response = await apiClient.post<ApiEnvelope<ChangePasswordResponse>>(
+    "/auth/change-password",
+    payload
+  );
   return response.data.data;
 }
 

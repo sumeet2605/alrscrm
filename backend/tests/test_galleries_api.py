@@ -7,8 +7,10 @@ from app.galleries.enums import GalleryStatus
 from app.galleries.repositories import GalleryRepository
 from app.galleries.schemas import GalleryCreate
 from app.galleries.services import gallery_service
+from app.galleries.storage import StorageProvider, StoredFile, get_storage_provider
 from app.identity.models import Branch, Organization, Role, User
 from app.identity.policies import AuthorizationContext
+from app.main import app
 from app.sales.models import Opportunity
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -25,6 +27,32 @@ def _gallery_access_token(client: TestClient, gallery_id: str, owner: User) -> s
     )
     assert response.status_code == 200
     return response.json()["data"]["access_token"]
+
+
+class FakeSpacesStorageProvider(StorageProvider):
+    def __init__(self) -> None:
+        self.uploads: list[tuple[str, bytes, str | None]] = []
+
+    def upload_file(
+        self, file_name: str, content: bytes, content_type: str | None = None
+    ) -> StoredFile:
+        self.uploads.append((file_name, content, content_type))
+        return StoredFile(
+            storage_path=f"alrscrm/{file_name}",
+            thumbnail_path=f"alrscrm/{file_name}",
+            file_size=len(content),
+        )
+
+    def delete_file(self, storage_path: str) -> None:
+        return None
+
+    def generate_signed_url(self, storage_path: str) -> str:
+        return f"https://signed.example.test/{storage_path}"
+
+    def generate_thumbnail_url(self, thumbnail_path: str | None) -> str | None:
+        if thumbnail_path is None:
+            return None
+        return self.generate_signed_url(thumbnail_path)
 
 
 def _create_user(db: Session, organization: Organization, branch: Branch, role_name: str) -> User:
@@ -223,3 +251,76 @@ def test_gallery_multipart_upload_returns_renderable_photo_url(
     assert public_response.status_code == 200
     public_photo = public_response.json()["data"]["photos"][0]
     assert public_photo["thumbnail_path"].startswith("data:image/jpeg;base64,")
+
+
+def test_gallery_multipart_upload_accepts_legacy_photo_field(
+    client: TestClient, db: Session
+) -> None:
+    _, _, owner, photographer, booking, item = _fixture(db)
+    create_response = client.post(
+        "/api/v1/galleries",
+        json={
+            "booking_id": str(booking.id),
+            "booking_item_id": str(item.id),
+            "gallery_name": "Legacy Upload Gallery",
+        },
+        headers=_headers(owner),
+    )
+    gallery = create_response.json()["data"]
+
+    upload_response = client.post(
+        f"/api/v1/galleries/{gallery['id']}/photos/upload",
+        files={"photo": ("legacy-photo.jpg", b"legacy-image-bytes", "image/jpeg")},
+        data={"image_width": "1600", "image_height": "900"},
+        headers=_headers(photographer),
+    )
+
+    assert upload_response.status_code == 201
+    photo = upload_response.json()["data"]
+    assert photo["file_name"] == "legacy-photo.jpg"
+    assert photo["image_width"] == 1600
+    assert photo["image_height"] == 900
+
+
+def test_gallery_upload_persists_spaces_object_and_returns_signed_urls(
+    client: TestClient, db: Session
+) -> None:
+    provider = FakeSpacesStorageProvider()
+    app.dependency_overrides[get_storage_provider] = lambda: provider
+    _, _, owner, photographer, booking, item = _fixture(db)
+    create_response = client.post(
+        "/api/v1/galleries",
+        json={
+            "booking_id": str(booking.id),
+            "booking_item_id": str(item.id),
+            "gallery_name": "Spaces Upload Gallery",
+        },
+        headers=_headers(owner),
+    )
+    gallery = create_response.json()["data"]
+
+    upload_response = client.post(
+        f"/api/v1/galleries/{gallery['id']}/photos/upload",
+        files={"file": ("spaces-photo.jpg", b"spaces-image-bytes", "image/jpeg")},
+        data={"image_width": "1200", "image_height": "800"},
+        headers=_headers(photographer),
+    )
+
+    assert upload_response.status_code == 201
+    assert provider.uploads == [
+        (
+            f"{owner.organization_id}/{owner.branch_id}/{gallery['id']}/spaces-photo.jpg",
+            b"spaces-image-bytes",
+            "image/jpeg",
+        )
+    ]
+    photo = upload_response.json()["data"]
+    assert photo["storage_path"].startswith("https://signed.example.test/alrscrm/")
+    assert photo["thumbnail_path"].startswith("https://signed.example.test/alrscrm/")
+
+    gallery_response = client.get(f"/api/v1/galleries/{gallery['id']}", headers=_headers(owner))
+    assert gallery_response.status_code == 200
+    gallery_photos = gallery_response.json()["data"]["photos"]
+    assert len(gallery_photos) == 1
+    assert gallery_photos[0]["file_name"] == "spaces-photo.jpg"
+    assert gallery_photos[0]["storage_path"].startswith("https://signed.example.test/alrscrm/")

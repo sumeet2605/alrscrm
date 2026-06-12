@@ -5,6 +5,7 @@ import {
   ContactsOutlined,
   DashboardOutlined,
   DollarOutlined,
+  LockOutlined,
   LogoutOutlined,
   PictureOutlined,
   RiseOutlined,
@@ -133,6 +134,13 @@ export function DashboardLayout() {
       key: "profile",
       icon: <UserOutlined />,
       label: `${user?.first_name ?? "User"} ${user?.last_name ?? ""}`.trim()
+    },
+    { type: "divider" },
+    {
+      key: "change-password",
+      icon: <LockOutlined />,
+      label: "Change Password",
+      onClick: () => navigate("/change-password")
     },
     { type: "divider" },
     {

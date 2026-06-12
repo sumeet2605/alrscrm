@@ -47,6 +47,19 @@ body {
   box-shadow: 0 24px 70px rgba(31, 41, 55, 0.14);
 }
 
+.auth-task-page {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: #f7f8fc;
+}
+
+.auth-task-card {
+  width: min(520px, 100%);
+  border: 1px solid rgba(17, 24, 39, 0.08);
+}
+
 .form-alert {
   margin: 20px 0;
 }

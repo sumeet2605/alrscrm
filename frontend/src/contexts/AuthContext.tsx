@@ -1,8 +1,13 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 
-import { getCurrentUser, login as loginRequest, logout as logoutRequest } from "../api/auth";
+import {
+  changePassword as changePasswordRequest,
+  getCurrentUser,
+  login as loginRequest,
+  logout as logoutRequest
+} from "../api/auth";
 import { getApiErrorMessage } from "../api/http";
-import type { LoginRequest } from "../types/auth";
+import type { ChangePasswordRequest, LoginRequest } from "../types/auth";
 import type { User } from "../types/identity";
 import { clearTokens, getStoredTokens, storeTokens } from "../utils/storage";
 
@@ -11,6 +16,7 @@ interface AuthContextValue {
   isAuthenticated: boolean;
   isBootstrapping: boolean;
   login: (payload: LoginRequest) => Promise<void>;
+  changePassword: (payload: ChangePasswordRequest) => Promise<void>;
   logout: () => Promise<void>;
   hasAnyRole: (roles: string[]) => boolean;
 }
@@ -49,6 +55,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const changePassword = useCallback(async (payload: ChangePasswordRequest) => {
+    try {
+      const response = await changePasswordRequest(payload);
+      storeTokens({
+        accessToken: response.access_token,
+        refreshToken: response.refresh_token
+      });
+      setUser(response.user);
+    } catch (error) {
+      throw new Error(getApiErrorMessage(error));
+    }
+  }, []);
+
   const logout = useCallback(async () => {
     const tokens = getStoredTokens();
     if (tokens?.refreshToken) {
@@ -74,10 +93,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       isAuthenticated: Boolean(user),
       isBootstrapping,
       login,
+      changePassword,
       logout,
       hasAnyRole
     }),
-    [hasAnyRole, isBootstrapping, login, logout, user]
+    [changePassword, hasAnyRole, isBootstrapping, login, logout, user]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

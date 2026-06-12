@@ -16,6 +16,10 @@ export function ProtectedRoute() {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
+  if (user?.password_reset_required && location.pathname !== "/change-password") {
+    return <Navigate to="/change-password" replace state={{ from: location }} />;
+  }
+
   const roleNames = user?.roles.map((role) => role.name) ?? [];
   if (!canAccessPath(roleNames, location.pathname)) {
     return <Navigate to="/dashboard" replace />;

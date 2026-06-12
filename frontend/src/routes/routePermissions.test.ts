@@ -3,6 +3,10 @@ import { describe, expect, it } from "vitest";
 import { canAccessPath } from "./routePermissions";
 
 describe("routePermissions", () => {
+  it("allows password change for authenticated route handling", () => {
+    expect(canAccessPath([], "/change-password")).toBe(true);
+  });
+
   it("allows organization management only for Super Admin", () => {
     expect(canAccessPath(["Super Admin"], "/organizations")).toBe(true);
     expect(canAccessPath(["Super Admin"], "/organizations/new")).toBe(true);

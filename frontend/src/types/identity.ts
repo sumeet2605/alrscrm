@@ -92,6 +92,7 @@ export interface User {
   last_name: string;
   phone?: string | null;
   is_active: boolean;
+  password_reset_required?: boolean;
   roles: Role[];
   created_at: string;
   updated_at: string;

@@ -1,4 +1,4 @@
-from app.core.security import decode_token, hash_password
+from app.core.security import decode_token, hash_password, verify_password
 from app.identity.models import Organization, Role, User
 from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
@@ -73,6 +73,113 @@ def test_logout_revokes_refresh_token(client: TestClient, admin_user: User) -> N
 
     refresh_response = client.post("/api/v1/auth/refresh", json={"refresh_token": refresh_token})
     assert refresh_response.status_code == 401
+
+
+def test_change_password_rotates_tokens_and_updates_credentials(
+    client: TestClient, db: Session, admin_user: User
+) -> None:
+    login_response = client.post(
+        "/api/v1/auth/login",
+        json={
+            "organization_code": admin_user.organization.code,
+            "email": admin_user.email,
+            "password": "StrongPass123",
+        },
+    )
+    login_data = login_response.json()["data"]
+
+    change_response = client.post(
+        "/api/v1/auth/change-password",
+        json={"current_password": "StrongPass123", "new_password": "NewStrongPass123"},
+        headers={"Authorization": f"Bearer {login_data['access_token']}"},
+    )
+
+    assert change_response.status_code == 200
+    change_data = change_response.json()["data"]
+    assert change_data["access_token"]
+    assert change_data["refresh_token"]
+    assert change_data["refresh_token"] != login_data["refresh_token"]
+    assert change_data["user"]["password_reset_required"] is False
+
+    old_refresh_response = client.post(
+        "/api/v1/auth/refresh",
+        json={"refresh_token": login_data["refresh_token"]},
+    )
+    assert old_refresh_response.status_code == 401
+
+    db.refresh(admin_user)
+    assert verify_password("NewStrongPass123", admin_user.password_hash)
+    assert admin_user.password_reset_required is False
+
+    old_login_response = client.post(
+        "/api/v1/auth/login",
+        json={
+            "organization_code": admin_user.organization.code,
+            "email": admin_user.email,
+            "password": "StrongPass123",
+        },
+    )
+    assert old_login_response.status_code == 401
+
+    new_login_response = client.post(
+        "/api/v1/auth/login",
+        json={
+            "organization_code": admin_user.organization.code,
+            "email": admin_user.email,
+            "password": "NewStrongPass123",
+        },
+    )
+    assert new_login_response.status_code == 200
+
+
+def test_change_password_rejects_incorrect_current_password(
+    client: TestClient, admin_user: User
+) -> None:
+    login_response = client.post(
+        "/api/v1/auth/login",
+        json={
+            "organization_code": admin_user.organization.code,
+            "email": admin_user.email,
+            "password": "StrongPass123",
+        },
+    )
+    access_token = login_response.json()["data"]["access_token"]
+
+    response = client.post(
+        "/api/v1/auth/change-password",
+        json={"current_password": "WrongPass123", "new_password": "NewStrongPass123"},
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    assert response.status_code == 401
+
+
+def test_change_password_clears_forced_reset_flag(
+    client: TestClient, db: Session, admin_user: User
+) -> None:
+    admin_user.password_reset_required = True
+    db.commit()
+
+    login_response = client.post(
+        "/api/v1/auth/login",
+        json={
+            "organization_code": admin_user.organization.code,
+            "email": admin_user.email,
+            "password": "StrongPass123",
+        },
+    )
+    access_token = login_response.json()["data"]["access_token"]
+
+    response = client.post(
+        "/api/v1/auth/change-password",
+        json={"current_password": "StrongPass123", "new_password": "NewStrongPass123"},
+        headers={"Authorization": f"Bearer {access_token}"},
+    )
+
+    assert response.status_code == 200
+    assert response.json()["data"]["user"]["password_reset_required"] is False
+    db.refresh(admin_user)
+    assert admin_user.password_reset_required is False
 
 
 def test_login_requires_organization_code(client: TestClient, admin_user: User) -> None:

@@ -11,6 +11,7 @@ from app.core.security import (
     create_access_token,
     create_refresh_token_with_identifier,
     decode_token,
+    hash_password,
     hash_token_identifier,
     verify_password,
 )
@@ -171,6 +172,40 @@ def revoke_refresh_token(db: Session, refresh_token: str) -> None:
     refresh_session.revoked_at = datetime.now(UTC)
     record_audit_event(db, "auth.logout", refresh_session.user_id, "User", refresh_session.user_id)
     db.commit()
+
+
+def change_password(
+    db: Session,
+    user: User,
+    current_password: str,
+    new_password: str,
+    ip_address: str | None = None,
+    user_agent: str | None = None,
+) -> dict[str, str]:
+    if not verify_password(current_password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Current password is incorrect",
+        )
+    if verify_password(new_password, user.password_hash):
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="New password must be different from current password",
+        )
+    user.password_hash = hash_password(new_password)
+    user.password_reset_required = False
+    _revoke_all_user_sessions(db, user.id)
+    record_audit_event(
+        db,
+        "auth.password_changed",
+        user.id,
+        "User",
+        user.id,
+        organization_id=user.organization_id,
+        branch_id=user.branch_id,
+    )
+    db.commit()
+    return issue_token_pair(db, user.id, ip_address, user_agent)
 
 
 def _revoke_all_user_sessions(db: Session, user_id: UUID) -> None:

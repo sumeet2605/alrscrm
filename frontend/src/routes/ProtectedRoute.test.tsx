@@ -6,7 +6,7 @@ import { ProtectedRoute } from "./ProtectedRoute";
 import { renderWithProviders } from "../test/render";
 
 let authState = {
-  user: null as null | { roles: { name: string }[] },
+  user: null as null | { roles: { name: string }[]; password_reset_required?: boolean },
   isAuthenticated: false,
   isBootstrapping: false
 };
@@ -51,5 +51,24 @@ describe("ProtectedRoute", () => {
     );
 
     expect(screen.getByText("Users")).toBeInTheDocument();
+  });
+
+  it("redirects forced reset users to change password", () => {
+    authState = {
+      user: { roles: [{ name: "Owner" }], password_reset_required: true },
+      isAuthenticated: true,
+      isBootstrapping: false
+    };
+    renderWithProviders(
+      <Routes>
+        <Route element={<ProtectedRoute />}>
+          <Route path="/users" element={<div>Users</div>} />
+          <Route path="/change-password" element={<div>Change Password</div>} />
+        </Route>
+      </Routes>,
+      ["/users"]
+    );
+
+    expect(screen.getByText("Change Password")).toBeInTheDocument();
   });
 });

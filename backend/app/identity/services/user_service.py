@@ -136,6 +136,7 @@ def update_user(
         user.roles = roles
     if "password" in data:
         user.password_hash = hash_password(data.pop("password"))
+        user.password_reset_required = False
         _revoke_user_sessions(db, user.id)
     if "email" in data and data["email"] is not None:
         data["email"] = _normalize_email(data["email"])

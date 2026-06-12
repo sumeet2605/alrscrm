@@ -62,6 +62,7 @@ export function canAccessPath(roleNames: string[], path: string): boolean {
   if (
     path === "/" ||
     path === "/login" ||
+    path === "/change-password" ||
     path.startsWith("/client/galleries") ||
     path.startsWith("/client/delivery")
   ) {

@@ -9,7 +9,8 @@ const loginMock = vi.fn();
 vi.mock("../contexts/AuthContext", () => ({
   useAuth: () => ({
     login: loginMock,
-    isAuthenticated: false
+    isAuthenticated: false,
+    user: null
   })
 }));
 

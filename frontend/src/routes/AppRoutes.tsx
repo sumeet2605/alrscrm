@@ -42,6 +42,7 @@ import { IntegrationsDashboardPage } from "../modules/settings/IntegrationsDashb
 import { StorageSettingsPage } from "../modules/settings/StorageSettingsPage";
 import { WhatsAppSettingsPage } from "../modules/settings/WhatsAppSettingsPage";
 import { UserManagementPage } from "../modules/users/UserManagementPage";
+import { ChangePasswordPage } from "../pages/ChangePasswordPage";
 import { LoginPage } from "../pages/LoginPage";
 import { ProtectedRoute } from "./ProtectedRoute";
 
@@ -52,6 +53,7 @@ export function AppRoutes() {
       <Route path="/client/gallery/:token" element={<ClientSelectionPage />} />
       <Route path="/client/delivery/:token" element={<ClientDeliveryPage />} />
       <Route element={<ProtectedRoute />}>
+        <Route path="/change-password" element={<ChangePasswordPage />} />
         <Route element={<DashboardLayout />}>
           <Route index element={<Navigate to="/dashboard" replace />} />
           <Route path="/dashboard" element={<DashboardPage />} />

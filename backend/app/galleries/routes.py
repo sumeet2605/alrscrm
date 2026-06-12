@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, Header, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_permissions
@@ -260,7 +260,8 @@ def add_gallery_photo(
 )
 async def upload_gallery_photo(
     gallery_id: UUID,
-    file: UploadFile = File(...),
+    file: UploadFile | None = File(default=None),
+    photo: UploadFile | None = File(default=None, include_in_schema=False),
     image_width: int = Form(default=1, gt=0),
     image_height: int = Form(default=1, gt=0),
     sort_order: int = Form(default=0),
@@ -268,13 +269,25 @@ async def upload_gallery_photo(
     context=Depends(require_permissions("galleries:photos:write")),
     storage_provider: StorageProvider = Depends(get_storage_provider),
 ):
-    content = await file.read()
+    upload = file or photo
+    if upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=[
+                {
+                    "type": "missing",
+                    "loc": ["body", "file"],
+                    "msg": "Field required",
+                }
+            ],
+        )
+    content = await upload.read()
     item = gallery_service.upload_photo_file(
         db,
         gallery_id,
-        file_name=file.filename or "gallery-photo",
+        file_name=upload.filename or "gallery-photo",
         content=content,
-        content_type=file.content_type,
+        content_type=upload.content_type,
         image_width=image_width,
         image_height=image_height,
         sort_order=sort_order,

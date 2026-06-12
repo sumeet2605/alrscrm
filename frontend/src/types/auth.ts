@@ -8,6 +8,11 @@ export interface LoginRequest {
 }
 export type RefreshRequest = components["schemas"]["RefreshRequest"];
 
+export interface ChangePasswordRequest {
+  current_password: string;
+  new_password: string;
+}
+
 export interface TokenPair {
   access_token: string;
   refresh_token: string;
@@ -15,6 +20,10 @@ export interface TokenPair {
 }
 
 export interface LoginResponse extends TokenPair {
+  user: User;
+}
+
+export interface ChangePasswordResponse extends TokenPair {
   user: User;
 }
 
