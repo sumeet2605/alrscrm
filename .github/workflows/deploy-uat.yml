@@ -93,7 +93,12 @@ jobs:
 
           git pull --ff-only
           docker compose down
-          docker compose up -d --build
+          if ! docker compose up -d --build; then
+            echo "Docker Compose startup failed. API logs:"
+            docker compose logs api --tail=500 || true
+            docker compose ps || true
+            exit 1
+          fi
           docker compose exec -T api alembic upgrade head
 
           echo "Waiting for UAT services to become healthy..."
@@ -120,6 +125,6 @@ jobs:
 
           echo "UAT health checks failed."
           docker compose ps
-          docker compose logs api --tail=120
+          docker compose logs api --tail=500
           exit 1
           REMOTE
