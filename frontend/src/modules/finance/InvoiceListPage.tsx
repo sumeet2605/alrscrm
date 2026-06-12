@@ -18,6 +18,8 @@ import dayjs from "dayjs";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
+import { listBookings } from "../../api/bookings";
+import { listFamilies } from "../../api/families";
 import { createInvoice, listInvoices } from "../../api/finance";
 import { getOrganization, listBranches } from "../../api/identity";
 import { useAuth } from "../../contexts/AuthContext";
@@ -41,6 +43,7 @@ type InvoiceFormValues = {
   due_date?: dayjs.Dayjs;
   description: string;
   unit_price: string;
+  service_type: string;
   cgst_amount?: string;
   sgst_amount?: string;
   igst_amount?: string;
@@ -69,6 +72,14 @@ export function InvoiceListPage() {
   const branchesQuery = useQuery({
     queryKey: ["branches", "invoice-form"],
     queryFn: () => listBranches({ page: 1, page_size: 100 })
+  });
+  const familiesQuery = useQuery({
+    queryKey: ["families", "invoice-form"],
+    queryFn: () => listFamilies({ page: 1, page_size: 100 })
+  });
+  const bookingsQuery = useQuery({
+    queryKey: ["bookings", "invoice-form"],
+    queryFn: () => listBookings({ page: 1, page_size: 100 })
   });
 
   const createMutation = useMutation({
@@ -155,6 +166,7 @@ export function InvoiceListPage() {
           unit_price: values.unit_price,
           discount_amount: "0.00",
           tax_rate: "0.00",
+          service_type: values.service_type,
           cgst_rate: "0.00",
           cgst_amount: cgstAmount,
           sgst_rate: "0.00",
@@ -172,9 +184,56 @@ export function InvoiceListPage() {
       organization_id: user?.organization_id,
       branch_id: user?.branch_id ?? branchesQuery.data?.items[0]?.id,
       description: "Photography service",
-      unit_price: "0.00"
+      unit_price: "0.00",
+      service_type: "NEWBORN"
     });
     setModalOpen(true);
+  };
+
+  const formatAddress = (familyId?: string) => {
+    const family = familiesQuery.data?.items.find((item) => item.id === familyId);
+    if (!family?.address) {
+      return family?.city ?? undefined;
+    }
+    return [
+      family.address.address_line_1,
+      family.address.address_line_2,
+      family.address.city,
+      family.address.state,
+      family.address.country,
+      family.address.postal_code
+    ]
+      .filter(Boolean)
+      .join(", ");
+  };
+
+  const applyFamilyDefaults = (familyId: string) => {
+    const family = familiesQuery.data?.items.find((item) => item.id === familyId);
+    if (!family) return;
+    form.setFieldsValue({
+      organization_id: family.organization_id,
+      branch_id: family.branch_id,
+      family_id: family.id,
+      buyer_billing_name: family.primary_contact_name,
+      buyer_billing_address: formatAddress(family.id)
+    });
+  };
+
+  const applyBookingDefaults = (bookingId: string) => {
+    const booking = bookingsQuery.data?.items.find((item) => item.id === bookingId);
+    if (!booking) return;
+    const firstItem = booking.items[0];
+    form.setFieldsValue({
+      organization_id: booking.organization_id,
+      branch_id: booking.branch_id,
+      family_id: booking.family_id,
+      booking_id: booking.id,
+      buyer_billing_name: booking.family?.primary_contact_name,
+      buyer_billing_address: formatAddress(booking.family_id),
+      description: firstItem?.package?.name ?? "Photography service",
+      unit_price: firstItem?.final_amount ?? booking.total_amount ?? "0.00",
+      service_type: firstItem?.service_type ?? booking.opportunity?.opportunity_type ?? "NEWBORN"
+    });
   };
 
   return (
@@ -232,7 +291,11 @@ export function InvoiceListPage() {
           form={form}
           layout="vertical"
           onFinish={submitInvoice}
-          initialValues={{ description: "Photography service", unit_price: "0.00" }}
+          initialValues={{
+            description: "Photography service",
+            unit_price: "0.00",
+            service_type: "NEWBORN"
+          }}
         >
           <Form.Item name="organization_id" hidden rules={[{ required: true }]}>
             <Input />
@@ -252,10 +315,45 @@ export function InvoiceListPage() {
               }))}
             />
           </Form.Item>
-          <Form.Item name="family_id" label="Family ID" rules={[{ required: true }]}>
-            <Input />
+          <Form.Item name="family_id" label="Family" rules={[{ required: true }]}>
+            <Select
+              showSearch
+              optionFilterProp="label"
+              loading={familiesQuery.isLoading}
+              onChange={applyFamilyDefaults}
+              options={(familiesQuery.data?.items ?? []).map((family) => ({
+                value: family.id,
+                label: `${family.family_code} · ${family.primary_contact_name} · ${family.primary_contact_phone}`
+              }))}
+            />
           </Form.Item>
-          <Form.Item name="booking_id" label="Booking ID" rules={[{ required: true }]}>
+          <Form.Item
+            noStyle
+            shouldUpdate={(previous, current) => previous.family_id !== current.family_id}
+          >
+            {({ getFieldValue }) => {
+              const familyId = getFieldValue("family_id");
+              return (
+                <Form.Item name="booking_id" label="Booking" rules={[{ required: true }]}>
+                  <Select
+                    showSearch
+                    optionFilterProp="label"
+                    loading={bookingsQuery.isLoading}
+                    onChange={applyBookingDefaults}
+                    options={(bookingsQuery.data?.items ?? [])
+                      .filter((booking) => !familyId || booking.family_id === familyId)
+                      .map((booking) => ({
+                        value: booking.id,
+                        label: `${booking.booking_number} · ${
+                          booking.family?.primary_contact_name ?? "Family"
+                        } · ${money(booking.total_amount)}`
+                      }))}
+                  />
+                </Form.Item>
+              );
+            }}
+          </Form.Item>
+          <Form.Item name="service_type" hidden>
             <Input />
           </Form.Item>
           <Form.Item name="buyer_billing_name" label="Buyer Billing Name" rules={[{ required: true }]}>

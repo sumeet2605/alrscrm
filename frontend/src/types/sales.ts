@@ -1,7 +1,11 @@
 import type { components, paths } from "./generated/openapi";
 
-export type OpportunityPayload = components["schemas"]["OpportunityCreate"];
-export type OpportunityUpdatePayload = components["schemas"]["OpportunityUpdate"];
+export type OpportunityPayload = components["schemas"]["OpportunityCreate"] & {
+  package_id?: string | null;
+};
+export type OpportunityUpdatePayload = components["schemas"]["OpportunityUpdate"] & {
+  package_id?: string | null;
+};
 export type FollowUpPayload = components["schemas"]["FollowUpCreate"];
 export type FollowUpUpdatePayload = components["schemas"]["FollowUpUpdate"];
 export type OpportunityListParams =
@@ -79,6 +83,7 @@ export interface Opportunity {
   branch_id: string;
   family_id: string;
   assigned_to_user_id: string;
+  package_id?: string | null;
   opportunity_type: OpportunityType;
   current_stage: OpportunityStage;
   estimated_value: string;

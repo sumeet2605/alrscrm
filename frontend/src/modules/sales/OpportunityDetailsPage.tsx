@@ -5,6 +5,7 @@ import dayjs from "dayjs";
 import { useEffect, useState } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 
+import { listPackages } from "../../api/bookings";
 import { listUsers } from "../../api/identity";
 import { createFollowUp, createOpportunityNote, getOpportunity, listLostReasons, updateFollowUp, updateOpportunity } from "../../api/sales";
 import { useAuth } from "../../contexts/AuthContext";
@@ -36,6 +37,7 @@ export function OpportunityDetailsPage() {
   });
   const usersQuery = useQuery({ queryKey: ["users", "followup-form"], queryFn: () => listUsers({ page: 1, page_size: 100 }) });
   const lostReasonsQuery = useQuery({ queryKey: ["lost-reasons"], queryFn: listLostReasons });
+  const packagesQuery = useQuery({ queryKey: ["packages", "opportunity-detail"], queryFn: listPackages });
   const opportunity = opportunityQuery.data;
   const editable = canWriteSales(roleNames) && opportunity?.current_stage !== "BOOKED";
 
@@ -45,6 +47,7 @@ export function OpportunityDetailsPage() {
         branch_id: opportunity.branch_id,
         family_id: opportunity.family_id,
         assigned_to_user_id: opportunity.assigned_to_user_id,
+        package_id: opportunity.package_id,
         opportunity_type: opportunity.opportunity_type,
         current_stage: opportunity.current_stage,
         estimated_value: opportunity.estimated_value,
@@ -122,6 +125,18 @@ export function OpportunityDetailsPage() {
               <Form.Item label="Type" name="opportunity_type" rules={[{ required: true, message: "Type is required" }]}>
                 <Select options={opportunityTypes.map((value) => ({ value, label: labelFromEnum(value) }))} />
               </Form.Item>
+              <Form.Item label="Package" name="package_id">
+                <Select
+                  allowClear
+                  placeholder="Select package if finalized"
+                  options={(packagesQuery.data ?? [])
+                    .filter((pkg) => pkg.is_active && pkg.branch_id === opportunity?.branch_id)
+                    .map((pkg) => ({
+                      value: pkg.id,
+                      label: `${pkg.name} · ₹${Number(pkg.price).toLocaleString("en-IN")}`
+                    }))}
+                />
+              </Form.Item>
               <Form.Item label="Stage" name="current_stage" rules={[{ required: true, message: "Stage is required" }]}>
                 <Select options={opportunityStages.map((value) => ({ value, label: labelFromEnum(value) }))} />
               </Form.Item>
@@ -166,6 +181,9 @@ export function OpportunityDetailsPage() {
           <Descriptions bordered size="small" column={{ xs: 1, md: 2, xl: 3 }}>
             <Descriptions.Item label="Stage"><Tag color={stageColor(opportunity.current_stage)}>{labelFromEnum(opportunity.current_stage)}</Tag></Descriptions.Item>
             <Descriptions.Item label="Type">{labelFromEnum(opportunity.opportunity_type)}</Descriptions.Item>
+            <Descriptions.Item label="Package">
+              {packagesQuery.data?.find((pkg) => pkg.id === opportunity.package_id)?.name ?? "-"}
+            </Descriptions.Item>
             <Descriptions.Item label="Estimated Value">₹{Number(opportunity.estimated_value).toLocaleString("en-IN")}</Descriptions.Item>
             <Descriptions.Item label="Probability">{opportunity.probability}%</Descriptions.Item>
             <Descriptions.Item label="Expected Booking">{opportunity.expected_booking_date ? dayjs(opportunity.expected_booking_date).format("DD MMM YYYY") : "-"}</Descriptions.Item>
