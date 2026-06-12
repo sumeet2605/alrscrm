@@ -7,10 +7,15 @@ const fullAccessRoutes = [
   "/galleries",
   "/schedules",
   "/production",
+  "/delivery",
+  "/finance",
+  "/settings",
   "/branches",
   "/users",
   "/roles"
 ];
+
+const platformRoutes = ["/organizations"];
 
 export const roleRoutes: Record<string, string[]> = {
   Owner: fullAccessRoutes,
@@ -24,11 +29,23 @@ export const roleRoutes: Record<string, string[]> = {
     "/galleries",
     "/schedules",
     "/production",
+    "/delivery",
+    "/finance",
+    "/settings",
     "/users"
   ],
   "Sales Executive": ["/dashboard", "/families", "/sales", "/bookings", "/schedules"],
   Photographer: ["/dashboard", "/families", "/sales", "/bookings", "/galleries", "/schedules"],
-  Editor: ["/dashboard", "/families", "/sales", "/bookings", "/galleries", "/schedules", "/production"],
+  Editor: [
+    "/dashboard",
+    "/families",
+    "/sales",
+    "/bookings",
+    "/galleries",
+    "/schedules",
+    "/production",
+    "/delivery"
+  ],
   "Customer Success": [
     "/dashboard",
     "/families",
@@ -38,12 +55,35 @@ export const roleRoutes: Record<string, string[]> = {
     "/schedules",
     "/production"
   ],
-  "Super Admin": fullAccessRoutes
+  "Super Admin": [...platformRoutes, ...fullAccessRoutes]
 };
 
 export function canAccessPath(roleNames: string[], path: string): boolean {
-  if (path === "/" || path === "/login" || path.startsWith("/client/galleries")) {
+  if (
+    path === "/" ||
+    path === "/login" ||
+    path.startsWith("/client/galleries") ||
+    path.startsWith("/client/delivery")
+  ) {
     return true;
+  }
+  if (path.startsWith("/delivery/dashboard")) {
+    return roleNames.some((role) =>
+      ["Super Admin", "Organization Admin", "Owner", "Branch Manager"].includes(role)
+    );
+  }
+  if (path.startsWith("/finance")) {
+    return roleNames.some((role) =>
+      ["Super Admin", "Organization Admin", "Owner", "Branch Manager"].includes(role)
+    );
+  }
+  if (path.startsWith("/settings/integrations")) {
+    return roleNames.some((role) =>
+      ["Super Admin", "Organization Admin", "Owner", "Branch Manager"].includes(role)
+    );
+  }
+  if (path.startsWith("/organizations")) {
+    return roleNames.includes("Super Admin");
   }
   return roleNames.some((role) => roleRoutes[role]?.some((route) => path.startsWith(route)));
 }

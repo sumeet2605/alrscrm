@@ -20,7 +20,13 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 @router.post("/login", response_model=APIResponse)
 def login(payload: LoginRequest, request: Request, db: Session = Depends(get_db)):
     ip_address = request.client.host if request.client else None
-    user = authenticate_user(db, payload.email, payload.password, ip_address)
+    user = authenticate_user(
+        db,
+        payload.organization_code,
+        payload.email,
+        payload.password,
+        ip_address,
+    )
     tokens = issue_token_pair(
         db,
         user.id,

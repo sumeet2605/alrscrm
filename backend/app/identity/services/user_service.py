@@ -62,6 +62,18 @@ def get_user_by_email(db: Session, email: str) -> User | None:
     )
 
 
+def get_user_by_organization_email(db: Session, organization_id: UUID, email: str) -> User | None:
+    return (
+        db.query(User)
+        .options(selectinload(User.roles).selectinload(Role.permissions))
+        .filter(
+            User.organization_id == organization_id,
+            User.email == _normalize_email(email),
+        )
+        .one_or_none()
+    )
+
+
 def _ensure_user_refs(db: Session, organization_id: UUID, branch_id: UUID | None) -> None:
     if db.get(Organization, organization_id) is None:
         raise NotFoundError("Organization not found")

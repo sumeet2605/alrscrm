@@ -18,6 +18,15 @@ ROLE_DEFINITIONS: tuple[tuple[str, str, bool, int], ...] = (
 PERMISSION_DEFINITIONS: tuple[tuple[str, str, str], ...] = (
     ("identity:organizations:read", "Read organizations", "View organizations."),
     ("identity:organizations:write", "Manage organizations", "Create and update organizations."),
+    ("organizations:view", "View organizations", "View SaaS customer organizations."),
+    ("organizations:create", "Create organizations", "Create SaaS customer organizations."),
+    ("organizations:update", "Update organizations", "Update SaaS customer organizations."),
+    (
+        "organizations:deactivate",
+        "Deactivate organizations",
+        "Deactivate SaaS customer organizations.",
+    ),
+    ("organizations:onboard", "Onboard organizations", "Run SaaS organization onboarding."),
     ("identity:branches:read", "Read branches", "View branches."),
     ("identity:branches:write", "Manage branches", "Create and update branches."),
     ("identity:users:read", "Read users", "View users."),
@@ -58,12 +67,37 @@ PERMISSION_DEFINITIONS: tuple[tuple[str, str, str], ...] = (
     ("editing:review", "Review editing jobs", "Submit editing work for review and review jobs."),
     ("editing:approve", "Approve editing jobs", "Approve editing jobs and mark them ready."),
     ("editing:dashboard", "View editing dashboards", "View production dashboards and metrics."),
+    ("delivery:view", "View delivery jobs", "View delivery management jobs."),
+    ("delivery:create", "Create delivery jobs", "Create delivery management jobs."),
+    ("delivery:update", "Update delivery jobs", "Update delivery lifecycle and settings."),
+    ("delivery:send", "Send deliveries", "Send delivery links to clients."),
+    ("delivery:reopen", "Reopen deliveries", "Approve client delivery reopen requests."),
+    ("delivery:download_audit", "View delivery downloads", "View delivery download audit logs."),
+    ("delivery:dashboard", "View delivery dashboards", "View delivery dashboards and metrics."),
+    ("finance:view", "View finance", "View invoices, payments, and finance reports."),
+    ("finance:create_invoice", "Create invoices", "Create customer invoices."),
+    ("finance:update_invoice", "Update invoices", "Update draft invoices and settings."),
+    ("finance:void_invoice", "Void invoices", "Void customer invoices."),
+    ("finance:create_payment", "Create payments", "Record invoice payments."),
+    ("finance:refund_payment", "Refund payments", "Record payment refunds."),
+    ("finance:dashboard", "View finance dashboard", "View finance dashboard metrics."),
+    ("integrations:view", "View integrations", "View tenant integrations and health."),
+    ("integrations:manage", "Manage integrations", "Create, update, and verify integrations."),
+    (
+        "platform:health:metrics",
+        "View platform health metrics",
+        "View production readiness and health metrics.",
+    ),
 )
 
 ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
     "Super Admin": tuple(code for code, _, _ in PERMISSION_DEFINITIONS),
-    "Organization Admin": tuple(code for code, _, _ in PERMISSION_DEFINITIONS),
-    "Owner": tuple(code for code, _, _ in PERMISSION_DEFINITIONS),
+    "Organization Admin": tuple(
+        code for code, _, _ in PERMISSION_DEFINITIONS if not code.startswith("organizations:")
+    ),
+    "Owner": tuple(
+        code for code, _, _ in PERMISSION_DEFINITIONS if not code.startswith("organizations:")
+    ),
     "Branch Manager": (
         "identity:branches:read",
         "identity:users:read",
@@ -103,6 +137,22 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "editing:review",
         "editing:approve",
         "editing:dashboard",
+        "delivery:view",
+        "delivery:create",
+        "delivery:update",
+        "delivery:send",
+        "delivery:reopen",
+        "delivery:download_audit",
+        "delivery:dashboard",
+        "finance:view",
+        "finance:create_invoice",
+        "finance:update_invoice",
+        "finance:void_invoice",
+        "finance:create_payment",
+        "finance:refund_payment",
+        "finance:dashboard",
+        "integrations:view",
+        "integrations:manage",
     ),
     "Sales Executive": (
         "identity:users:read",
@@ -151,6 +201,7 @@ ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {
         "editing:update",
         "editing:review",
         "editing:dashboard",
+        "delivery:view",
     ),
     "Customer Success": (
         "identity:users:read",

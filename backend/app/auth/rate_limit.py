@@ -9,8 +9,11 @@ from app.shared.exceptions.application import ForbiddenError
 _local_attempts: dict[str, list[float]] = {}
 
 
-def check_login_rate_limit(email: str, ip_address: str | None) -> None:
-    key = f"login:{email.lower()}:{ip_address or 'unknown'}"
+def check_login_rate_limit(
+    email: str, ip_address: str | None, organization_code: str | None = None
+) -> None:
+    tenant_key = (organization_code or "unknown").strip().upper()
+    key = f"login:{tenant_key}:{email.lower()}:{ip_address or 'unknown'}"
     settings = get_settings()
     try:
         redis = Redis.from_url(settings.redis_url, socket_connect_timeout=0.2, socket_timeout=0.2)

@@ -1,4 +1,6 @@
-from app.identity.models import Role, User
+from uuid import UUID
+
+from app.identity.models import Branch, Organization, Role, User
 from fastapi.testclient import TestClient
 
 
@@ -45,6 +47,7 @@ def test_roles_and_permissions_are_seeded(client: TestClient, auth_headers: dict
     assert "galleries:reopen" in permission_codes
     assert "editing:view" in permission_codes
     assert "editing:approve" in permission_codes
+    assert "organizations:onboard" in permission_codes
 
     role_permissions = {
         role["name"]: {permission["code"] for permission in role["permissions"]}
@@ -57,6 +60,176 @@ def test_roles_and_permissions_are_seeded(client: TestClient, auth_headers: dict
     assert "editing:approve" in role_permissions["Branch Manager"]
     assert "editing:update" in role_permissions["Editor"]
     assert "editing:approve" not in role_permissions["Editor"]
+    assert "organizations:onboard" in role_permissions["Super Admin"]
+    assert "organizations:onboard" not in role_permissions["Organization Admin"]
+    assert "organizations:create" not in role_permissions["Owner"]
+
+
+def test_organization_onboarding_creates_tenant_branch_owner_and_settings(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db,
+) -> None:
+    response = client.post(
+        "/api/v1/organizations/onboard",
+        json={
+            "organization": {
+                "name": "Little Smiles Photography",
+                "code": "LSP",
+                "timezone": "Asia/Kolkata",
+                "email": "hello@littlesmiles.com",
+                "phone": "+91 90000 10000",
+            },
+            "branch": {"name": "Main Studio"},
+            "owner": {
+                "name": "Little Owner",
+                "email": "owner@littlesmiles.com",
+                "phone": "+91 90000 10001",
+            },
+        },
+        headers=auth_headers,
+    )
+
+    assert response.status_code == 201
+    data = response.json()["data"]
+    organization_id = data["organization"]["id"]
+    branch_id = data["branch_id"]
+    owner_id = data["owner_id"]
+    temporary_password = data["owner_temporary_password"]
+
+    organization = db.get(Organization, UUID(organization_id))
+    branch = db.get(Branch, UUID(branch_id))
+    owner = db.get(User, UUID(owner_id))
+
+    assert organization is not None
+    assert organization.code == "LSP"
+    assert organization.settings is not None
+    assert organization.settings.studio_name == "Little Smiles Photography"
+    assert branch is not None
+    assert branch.organization_id == organization.id
+    assert branch.name == "Main Studio"
+    assert owner is not None
+    assert owner.organization_id == organization.id
+    assert owner.branch_id == branch.id
+    assert "Owner" in {role.name for role in owner.roles}
+    assert len(temporary_password) >= 8
+
+
+def test_organization_onboarding_rejects_duplicate_org_code(
+    client: TestClient,
+    auth_headers: dict[str, str],
+) -> None:
+    payload = {
+        "organization": {
+            "name": "Duplicate Studio",
+            "code": "DUP",
+            "timezone": "Asia/Kolkata",
+            "email": "hello@duplicate.com",
+            "phone": "+91 90000 20000",
+        },
+        "branch": {"name": "Main Studio"},
+        "owner": {
+            "name": "Duplicate Owner",
+            "email": "owner@duplicate.com",
+            "phone": "+91 90000 20001",
+        },
+    }
+
+    first = client.post("/api/v1/organizations/onboard", json=payload, headers=auth_headers)
+    second = client.post("/api/v1/organizations/onboard", json=payload, headers=auth_headers)
+
+    assert first.status_code == 201
+    assert second.status_code == 409
+
+
+def test_organization_onboarding_does_not_create_children_when_org_code_conflicts(
+    client: TestClient,
+    auth_headers: dict[str, str],
+    db,
+) -> None:
+    payload = {
+        "organization": {
+            "name": "Rollback Studio",
+            "code": "RBK",
+            "timezone": "Asia/Kolkata",
+            "email": "hello@rollback.com",
+            "phone": "+91 90000 30000",
+        },
+        "branch": {"name": "Main Studio"},
+        "owner": {
+            "name": "Rollback Owner",
+            "email": "owner@rollback.com",
+            "phone": "+91 90000 30001",
+        },
+    }
+    first = client.post(
+        "/api/v1/organizations/onboard",
+        json=payload,
+        headers=auth_headers,
+    )
+    branch_count = db.query(Branch).count()
+    user_count = db.query(User).count()
+    second = client.post(
+        "/api/v1/organizations/onboard",
+        json=payload,
+        headers=auth_headers,
+    )
+
+    assert first.status_code == 201
+    assert second.status_code == 409
+    assert db.query(Branch).count() == branch_count
+    assert db.query(User).count() == user_count
+
+
+def test_organization_settings_can_be_updated(
+    client: TestClient,
+    auth_headers: dict[str, str],
+) -> None:
+    create_response = client.post(
+        "/api/v1/organizations",
+        json={"name": "Settings Studio", "code": "SET", "is_active": True},
+        headers=auth_headers,
+    )
+    organization_id = create_response.json()["data"]["id"]
+
+    update_response = client.patch(
+        f"/api/v1/organizations/{organization_id}/settings",
+        json={
+            "studio_name": "Settings Studio Premium",
+            "contact_email": "hello@settings.com",
+            "currency": "usd",
+            "delivery_expiry_default": 45,
+            "gallery_selection_default_limit": 80,
+        },
+        headers=auth_headers,
+    )
+
+    assert update_response.status_code == 200
+    data = update_response.json()["data"]
+    assert data["studio_name"] == "Settings Studio Premium"
+    assert data["currency"] == "USD"
+    assert data["delivery_expiry_default"] == 45
+
+
+def test_non_platform_user_cannot_onboard_organization(
+    client: TestClient,
+    owner_headers: dict[str, str],
+) -> None:
+    response = client.post(
+        "/api/v1/organizations/onboard",
+        json={
+            "organization": {
+                "name": "Blocked Studio",
+                "code": "BLK",
+                "timezone": "Asia/Kolkata",
+            },
+            "branch": {"name": "Main Studio"},
+            "owner": {"name": "Blocked Owner", "email": "owner@blocked.com"},
+        },
+        headers=owner_headers,
+    )
+
+    assert response.status_code == 403
 
 
 def test_protected_endpoint_requires_token(client: TestClient) -> None:

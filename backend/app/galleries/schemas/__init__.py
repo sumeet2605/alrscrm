@@ -1,6 +1,7 @@
 from app.galleries.schemas.gallery import (
     FavoriteSelectionCreate,
     FavoriteSelectionRead,
+    GalleryAccessTokenRead,
     GalleryCreate,
     GalleryDetailRead,
     GalleryMetricsRead,
@@ -13,6 +14,7 @@ from app.galleries.schemas.gallery import (
 __all__ = [
     "FavoriteSelectionCreate",
     "FavoriteSelectionRead",
+    "GalleryAccessTokenRead",
     "GalleryCreate",
     "GalleryDetailRead",
     "GalleryMetricsRead",

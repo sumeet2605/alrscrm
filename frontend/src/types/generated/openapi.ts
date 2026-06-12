@@ -66,6 +66,37 @@ export interface components {
       "organization_id"?: string | null;
       "phone"?: string | null;
     };
+    "DeliveryAuthenticateRequest": {
+      "password"?: string | null;
+      "token": string;
+    };
+    "DeliveryJobCreate": {
+      "allow_re_download"?: boolean;
+      "delivery_notes"?: string | null;
+      "editing_job_id": string;
+      "max_downloads"?: number;
+      "original_download_enabled"?: boolean;
+      "password"?: string | null;
+      "re_download_fee"?: number | string;
+      "watermark_enabled"?: boolean;
+    };
+    "DeliveryJobUpdate": {
+      "allow_re_download"?: boolean | null;
+      "delivery_link"?: string | null;
+      "delivery_notes"?: string | null;
+      "expiry_date"?: string | null;
+      "max_downloads"?: number | null;
+      "original_download_enabled"?: boolean | null;
+      "password"?: string | null;
+      "re_download_fee"?: number | string | null;
+      "watermark_enabled"?: boolean | null;
+    };
+    "DeliveryReopenRequest": {
+      "reason": string;
+      "requested_by_email": string;
+      "requested_by_name": string;
+    };
+    "DeliveryStatus": "PENDING" | "ZIP_GENERATING" | "READY" | "SENT" | "DELIVERED" | "EXPIRED" | "REOPEN_REQUESTED" | "REOPENED" | "CLOSED";
     "EditingAssignEditor": {
       "assigned_editor_id": string;
       "due_date"?: string | null;
@@ -144,6 +175,21 @@ export interface components {
       "selected_by_email"?: string | null;
       "selected_by_name": string;
     };
+    "FinanceSettingsUpdate": {
+      "auto_create_booking_invoice"?: boolean | null;
+      "billing_address"?: string | null;
+      "billing_state"?: string | null;
+      "billing_state_code"?: string | null;
+      "branch_id"?: string | null;
+      "default_currency"?: string | null;
+      "default_due_days"?: number | null;
+      "gstin"?: string | null;
+      "invoice_prefix"?: string | null;
+      "legal_name"?: string | null;
+      "registration_type"?: components["schemas"]["GSTRegistrationType"] | null;
+      "require_payment_before_delivery"?: boolean | null;
+      "trade_name"?: string | null;
+    };
     "FollowUpCreate": {
       "assigned_to_user_id": string;
       "completed_at"?: string | null;
@@ -163,6 +209,7 @@ export interface components {
       "notes"?: string | null;
       "status"?: components["schemas"]["FollowUpStatus"] | null;
     };
+    "GSTRegistrationType": "REGULAR" | "COMPOSITION" | "EXEMPT" | "UNREGISTERED";
     "GalleryAuthenticateRequest": {
       "password": string;
     };
@@ -208,9 +255,70 @@ export interface components {
     "HTTPValidationError": {
       "detail"?: components["schemas"]["ValidationError"][];
     };
+    "IntegrationProvider": "WHATSAPP_CLOUD_API" | "INSTAGRAM_BUSINESS" | "FACEBOOK_PAGE" | "SMTP_EMAIL" | "GOOGLE_CLOUD_STORAGE" | "AWS_S3";
+    "IntegrationStatus": "CONNECTED" | "DISCONNECTED" | "EXPIRED" | "ERROR";
+    "InvoiceCreate": {
+      "booking_id": string;
+      "branch_id": string;
+      "buyer_billing_address"?: string | null;
+      "buyer_billing_name"?: string | null;
+      "buyer_gstin"?: string | null;
+      "buyer_state_code"?: string | null;
+      "currency"?: string;
+      "due_date": string;
+      "family_id": string;
+      "gst_registration_type"?: components["schemas"]["GSTRegistrationType"];
+      "line_items": components["schemas"]["InvoiceLineItemCreate"][];
+      "notes"?: string | null;
+      "organization_id": string;
+      "place_of_supply_state_code"?: string | null;
+      "reverse_charge_applicable"?: boolean;
+      "seller_address"?: string | null;
+      "seller_gstin"?: string | null;
+      "seller_legal_name"?: string | null;
+      "seller_state_code"?: string | null;
+      "seller_trade_name"?: string | null;
+      "supply_type"?: components["schemas"]["SupplyType"];
+    };
+    "InvoiceLineItemCreate": {
+      "cgst_amount"?: number | string;
+      "cgst_rate"?: number | string;
+      "description": string;
+      "discount_amount"?: number | string;
+      "igst_amount"?: number | string;
+      "igst_rate"?: number | string;
+      "quantity": number | string;
+      "sac_code"?: string | null;
+      "service_type": string;
+      "sgst_amount"?: number | string;
+      "sgst_rate"?: number | string;
+      "tax_rate"?: number | string;
+      "unit_price": number | string;
+    };
+    "InvoiceStatus": "DRAFT" | "ISSUED" | "PARTIALLY_PAID" | "PAID" | "VOID" | "OVERDUE";
+    "InvoiceUpdate": {
+      "buyer_billing_address"?: string | null;
+      "buyer_billing_name"?: string | null;
+      "buyer_gstin"?: string | null;
+      "buyer_state_code"?: string | null;
+      "currency"?: string | null;
+      "due_date"?: string | null;
+      "gst_registration_type"?: components["schemas"]["GSTRegistrationType"] | null;
+      "line_items"?: components["schemas"]["InvoiceLineItemCreate"][] | null;
+      "notes"?: string | null;
+      "place_of_supply_state_code"?: string | null;
+      "reverse_charge_applicable"?: boolean | null;
+      "seller_address"?: string | null;
+      "seller_gstin"?: string | null;
+      "seller_legal_name"?: string | null;
+      "seller_state_code"?: string | null;
+      "seller_trade_name"?: string | null;
+      "supply_type"?: components["schemas"]["SupplyType"] | null;
+    };
     "LeadSource": "INSTAGRAM" | "WHATSAPP" | "GOOGLE" | "REFERRAL" | "WEBSITE" | "WALKIN" | "OTHER";
     "LoginRequest": {
       "email": string;
+      "organization_code": string;
       "password": string;
     };
     "OpportunityCreate": {
@@ -249,6 +357,49 @@ export interface components {
       "is_active"?: boolean;
       "name": string;
     };
+    "OrganizationIntegrationCreate": {
+      "branch_id"?: string | null;
+      "credentials": Record<string, unknown>;
+      "organization_id": string;
+      "provider": components["schemas"]["IntegrationProvider"];
+    };
+    "OrganizationIntegrationUpdate": {
+      "branch_id"?: string | null;
+      "credentials"?: Record<string, unknown> | null;
+      "status"?: components["schemas"]["IntegrationStatus"] | null;
+    };
+    "OrganizationOnboardingBranch": {
+      "name"?: string;
+    };
+    "OrganizationOnboardingCreate": {
+      "branch": components["schemas"]["OrganizationOnboardingBranch"];
+      "organization": components["schemas"]["OrganizationOnboardingDetails"];
+      "owner": components["schemas"]["OrganizationOnboardingOwner"];
+    };
+    "OrganizationOnboardingDetails": {
+      "code": string;
+      "email"?: string | null;
+      "name": string;
+      "phone"?: string | null;
+      "timezone"?: string;
+    };
+    "OrganizationOnboardingOwner": {
+      "email": string;
+      "name": string;
+      "phone"?: string | null;
+    };
+    "OrganizationSettingsUpdate": {
+      "address"?: string | null;
+      "contact_email"?: string | null;
+      "contact_phone"?: string | null;
+      "currency"?: string | null;
+      "delivery_expiry_default"?: number | null;
+      "gallery_selection_default_limit"?: number | null;
+      "logo_url"?: string | null;
+      "studio_name"?: string | null;
+      "timezone"?: string | null;
+      "website"?: string | null;
+    };
     "OrganizationUpdate": {
       "code"?: string | null;
       "is_active"?: boolean | null;
@@ -286,6 +437,17 @@ export interface components {
       "price"?: number | string | null;
       "service_type"?: components["schemas"]["ServiceType"] | null;
     };
+    "PaymentCreate": {
+      "amount": number | string;
+      "invoice_id": string;
+      "notes"?: string | null;
+      "payment_method": components["schemas"]["PaymentMethod"];
+      "payment_status"?: components["schemas"]["PaymentStatus"];
+      "received_date"?: string;
+      "transaction_reference"?: string | null;
+    };
+    "PaymentMethod": "CASH" | "UPI" | "BANK_TRANSFER" | "CARD" | "CHEQUE" | "OTHER";
+    "PaymentStatus": "PENDING" | "COMPLETED" | "FAILED" | "REFUNDED";
     "PhotographerAssignmentCreate": {
       "role": components["schemas"]["AssignmentRole"];
       "shoot_schedule_id": string;
@@ -318,6 +480,7 @@ export interface components {
       "shoot_status"?: components["schemas"]["ShootStatus"] | null;
     };
     "ShootStatus": "NOT_SCHEDULED" | "SCHEDULED" | "IN_PROGRESS" | "COMPLETED" | "RESCHEDULED" | "CANCELLED";
+    "SupplyType": "INTRA_STATE" | "INTER_STATE" | "NON_GST";
     "UserCreate": {
       "branch_id"?: string | null;
       "email": string;
@@ -326,6 +489,7 @@ export interface components {
       "last_name": string;
       "organization_id": string;
       "password": string;
+      "password_reset_required"?: boolean;
       "phone"?: string | null;
       "role_ids"?: string[];
       "username"?: string | null;
@@ -338,6 +502,7 @@ export interface components {
       "last_name"?: string | null;
       "organization_id"?: string | null;
       "password"?: string | null;
+      "password_reset_required"?: boolean | null;
       "phone"?: string | null;
       "role_ids"?: string[] | null;
       "username"?: string | null;
@@ -604,6 +769,220 @@ export interface paths {
       };
     };
   };
+  "/api/v1/delivery/client/{token}": {
+    get: {
+      parameters: {
+      path: {
+        "token": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/client/{token}/download": {
+    post: {
+      parameters: {
+      path: {
+        "token": string;
+      };
+      header: {
+        "authorization"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/client/{token}/reopen-request": {
+    post: {
+      parameters: {
+      path: {
+        "token": string;
+      };
+    };
+      requestBody: components["schemas"]["DeliveryReopenRequest"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/jobs": {
+    get: {
+      parameters: {
+      query: {
+        "page"?: number;
+        "page_size"?: number;
+        "branch_id"?: string | null;
+        "status"?: components["schemas"]["DeliveryStatus"] | null;
+        "search"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["DeliveryJobCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/jobs/{job_id}": {
+    get: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    put: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: components["schemas"]["DeliveryJobUpdate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/jobs/{job_id}/access-token/revoke": {
+    post: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/jobs/{job_id}/access-token/rotate": {
+    post: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/jobs/{job_id}/approve-reopen": {
+    post: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/jobs/{job_id}/close": {
+    post: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/jobs/{job_id}/downloads": {
+    get: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/jobs/{job_id}/generate-zip": {
+    post: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/jobs/{job_id}/send": {
+    post: {
+      parameters: {
+      path: {
+        "job_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/delivery/metrics": {
+    get: {
+      parameters: Record<string, never>;
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      };
+    };
+  };
+  "/api/v1/delivery/public/authenticate": {
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["DeliveryAuthenticateRequest"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
   "/api/v1/editing/jobs": {
     get: {
       parameters: {
@@ -845,6 +1224,37 @@ export interface paths {
       };
     };
   };
+  "/api/v1/finance/metrics": {
+    get: {
+      parameters: Record<string, never>;
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      };
+    };
+  };
+  "/api/v1/finance/settings": {
+    get: {
+      parameters: {
+      query: {
+        "branch_id"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    patch: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["FinanceSettingsUpdate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
   "/api/v1/followups": {
     get: {
       parameters: {
@@ -909,6 +1319,83 @@ export interface paths {
       requestBody: components["schemas"]["GalleryCreate"];
       responses: {
       "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/client/{access_token}": {
+    get: {
+      parameters: {
+      path: {
+        "access_token": string;
+      };
+      header: {
+        "authorization"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/client/{access_token}/authenticate": {
+    post: {
+      parameters: {
+      path: {
+        "access_token": string;
+      };
+    };
+      requestBody: components["schemas"]["GalleryAuthenticateRequest"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/client/{access_token}/favorites": {
+    post: {
+      parameters: {
+      path: {
+        "access_token": string;
+      };
+    };
+      requestBody: components["schemas"]["FavoriteSelectionCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/client/{access_token}/favorites/{favorite_id}": {
+    delete: {
+      parameters: {
+      path: {
+        "access_token": string;
+        "favorite_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/client/{access_token}/submit-selection": {
+    post: {
+      parameters: {
+      path: {
+        "access_token": string;
+      };
+      header: {
+        "authorization"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
       "422": components["schemas"]["HTTPValidationError"];
       };
     };
@@ -998,6 +1485,34 @@ export interface paths {
       };
     };
       requestBody: components["schemas"]["GalleryUpdate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/{gallery_id}/access-token/revoke": {
+    post: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/galleries/{gallery_id}/access-token/rotate": {
+    post: {
+      parameters: {
+      path: {
+        "gallery_id": string;
+      };
+    };
+      requestBody: never;
       responses: {
       "200": components["schemas"]["APIResponse"];
       "422": components["schemas"]["HTTPValidationError"];
@@ -1219,6 +1734,164 @@ export interface paths {
       };
     };
   };
+  "/api/v1/integrations": {
+    get: {
+      parameters: {
+      query: {
+        "page"?: number;
+        "page_size"?: number;
+        "branch_id"?: string | null;
+        "provider"?: components["schemas"]["IntegrationProvider"] | null;
+        "status"?: components["schemas"]["IntegrationStatus"] | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["OrganizationIntegrationCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/integrations/health": {
+    get: {
+      parameters: Record<string, never>;
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      };
+    };
+  };
+  "/api/v1/integrations/{integration_id}": {
+    patch: {
+      parameters: {
+      path: {
+        "integration_id": string;
+      };
+    };
+      requestBody: components["schemas"]["OrganizationIntegrationUpdate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/integrations/{integration_id}/verify": {
+    post: {
+      parameters: {
+      path: {
+        "integration_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/invoices": {
+    get: {
+      parameters: {
+      query: {
+        "page"?: number;
+        "page_size"?: number;
+        "branch_id"?: string | null;
+        "invoice_status"?: components["schemas"]["InvoiceStatus"] | null;
+        "booking_id"?: string | null;
+        "family_id"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["InvoiceCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/invoices/{invoice_id}": {
+    get: {
+      parameters: {
+      path: {
+        "invoice_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    put: {
+      parameters: {
+      path: {
+        "invoice_id": string;
+      };
+    };
+      requestBody: components["schemas"]["InvoiceUpdate"];
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/invoices/{invoice_id}/issue": {
+    post: {
+      parameters: {
+      path: {
+        "invoice_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/invoices/{invoice_id}/pdf": {
+    get: {
+      parameters: {
+      path: {
+        "invoice_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": unknown;
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/invoices/{invoice_id}/void": {
+    post: {
+      parameters: {
+      path: {
+        "invoice_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
   "/api/v1/lost-reasons": {
     get: {
       parameters: Record<string, never>;
@@ -1376,6 +2049,16 @@ export interface paths {
       };
     };
   };
+  "/api/v1/organizations/onboard": {
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["OrganizationOnboardingCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
   "/api/v1/organizations/{organization_id}": {
     get: {
       parameters: {
@@ -1408,6 +2091,60 @@ export interface paths {
       };
     };
       requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/organizations/{organization_id}/activate": {
+    post: {
+      parameters: {
+      path: {
+        "organization_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/organizations/{organization_id}/deactivate": {
+    post: {
+      parameters: {
+      path: {
+        "organization_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/organizations/{organization_id}/settings": {
+    get: {
+      parameters: {
+      path: {
+        "organization_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    patch: {
+      parameters: {
+      path: {
+        "organization_id": string;
+      };
+    };
+      requestBody: components["schemas"]["OrganizationSettingsUpdate"];
       responses: {
       "200": components["schemas"]["APIResponse"];
       "422": components["schemas"]["HTTPValidationError"];
@@ -1462,7 +2199,71 @@ export interface paths {
       };
     };
   };
+  "/api/v1/payments": {
+    get: {
+      parameters: {
+      query: {
+        "page"?: number;
+        "page_size"?: number;
+        "branch_id"?: string | null;
+        "payment_status"?: components["schemas"]["PaymentStatus"] | null;
+        "payment_method"?: components["schemas"]["PaymentMethod"] | null;
+        "invoice_id"?: string | null;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+    post: {
+      parameters: Record<string, never>;
+      requestBody: components["schemas"]["PaymentCreate"];
+      responses: {
+      "201": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/payments/{payment_id}": {
+    get: {
+      parameters: {
+      path: {
+        "payment_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
+  "/api/v1/payments/{payment_id}/receipt": {
+    get: {
+      parameters: {
+      path: {
+        "payment_id": string;
+      };
+    };
+      requestBody: never;
+      responses: {
+      "200": unknown;
+      "422": components["schemas"]["HTTPValidationError"];
+      };
+    };
+  };
   "/api/v1/permissions": {
+    get: {
+      parameters: Record<string, never>;
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      };
+    };
+  };
+  "/api/v1/platform/health/metrics": {
     get: {
       parameters: Record<string, never>;
       requestBody: never;
@@ -1596,6 +2397,24 @@ export interface paths {
     };
   };
   "/health": {
+    get: {
+      parameters: Record<string, never>;
+      requestBody: never;
+      responses: {
+      "200": unknown;
+      };
+    };
+  };
+  "/health/live": {
+    get: {
+      parameters: Record<string, never>;
+      requestBody: never;
+      responses: {
+      "200": unknown;
+      };
+    };
+  };
+  "/health/ready": {
     get: {
       parameters: Record<string, never>;
       requestBody: never;

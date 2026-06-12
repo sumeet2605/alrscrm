@@ -15,7 +15,7 @@ export const apiClient = axios.create({
 
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const tokens = getStoredTokens();
-  if (tokens?.accessToken) {
+  if (tokens?.accessToken && !config.headers.Authorization) {
     config.headers.Authorization = `Bearer ${tokens.accessToken}`;
   }
   return config;

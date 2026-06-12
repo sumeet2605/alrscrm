@@ -11,23 +11,23 @@ import {
 } from "../../api/galleries";
 
 export function ClientSelectionPage() {
-  const { galleryId } = useParams();
+  const { token: accessToken } = useParams();
   const queryClient = useQueryClient();
   const { message } = App.useApp();
   const [selectedByName, setSelectedByName] = useState("");
   const [selectedByEmail, setSelectedByEmail] = useState("");
   const [token, setToken] = useState<string | null>(null);
   useEffect(() => {
-    if (galleryId) {
-      const stored = localStorage.getItem(`gallery_access_${galleryId}`);
+    if (accessToken) {
+      const stored = localStorage.getItem(`gallery_access_${accessToken}`);
       if (stored) setToken(stored);
     }
-  }, [galleryId]);
+  }, [accessToken]);
   const [password, setPassword] = useState("");
   const galleryQuery = useQuery({
-    queryKey: ["public-gallery", galleryId, token],
-    queryFn: () => getPublicGallery(galleryId!, token ?? undefined),
-    enabled: Boolean(galleryId)
+    queryKey: ["public-gallery", accessToken, token],
+    queryFn: () => getPublicGallery(accessToken!, token ?? undefined),
+    enabled: Boolean(accessToken)
   });
   const selectedPhotoIds = useMemo(
     () => new Set((galleryQuery.data?.favorites ?? []).map((favorite) => favorite.gallery_photo_id)),
@@ -36,7 +36,7 @@ export function ClientSelectionPage() {
   const favoriteMutation = useMutation({
     mutationFn: (gallery_photo_id: string) =>
       addPublicGalleryFavorite(
-        galleryId!,
+        accessToken!,
         {
           gallery_photo_id,
           selected_by_name: selectedByName,
@@ -46,7 +46,7 @@ export function ClientSelectionPage() {
       ),
     onSuccess: async () => {
       message.success("Favorite saved");
-      await queryClient.invalidateQueries({ queryKey: ["public-gallery", galleryId, token] });
+      await queryClient.invalidateQueries({ queryKey: ["public-gallery", accessToken, token] });
     }
   });
   const gallery = galleryQuery.data;
@@ -91,11 +91,11 @@ export function ClientSelectionPage() {
             <Button
               onClick={async () => {
                 try {
-                    const res = await authenticatePublicGallery(galleryId!, password);
-                    localStorage.setItem(`gallery_access_${galleryId}`, res.access_token);
+                    const res = await authenticatePublicGallery(accessToken!, password);
+                    localStorage.setItem(`gallery_access_${accessToken}`, res.access_token);
                     setToken(res.access_token);
                     setPassword("");
-                    await queryClient.invalidateQueries({ queryKey: ["public-gallery", galleryId, res.access_token] });
+                    await queryClient.invalidateQueries({ queryKey: ["public-gallery", accessToken, res.access_token] });
                   message.success("Authenticated");
                 } catch (err: any) {
                   message.error(err?.response?.data?.message ?? "Authentication failed");
@@ -149,9 +149,9 @@ export function ClientSelectionPage() {
             onClick={async () => {
               try {
                 const { submitPublicSelection } = await import("../../api/galleries");
-                await submitPublicSelection(galleryId!, token ?? undefined);
+                await submitPublicSelection(accessToken!, token ?? undefined);
                 message.success("Selection submitted");
-                await queryClient.invalidateQueries({ queryKey: ["public-gallery", galleryId, token] });
+                await queryClient.invalidateQueries({ queryKey: ["public-gallery", accessToken, token] });
               } catch (err: any) {
                 message.error(err?.response?.data?.message ?? "Failed to submit selection");
               }

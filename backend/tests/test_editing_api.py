@@ -140,9 +140,15 @@ def _submitted_gallery(
         headers=_headers(owner),
     )
     assert open_response.status_code == 200
+    token_response = client.post(
+        f"/api/v1/galleries/{gallery['id']}/access-token/rotate",
+        headers=_headers(owner),
+    )
+    assert token_response.status_code == 200
+    access_token = token_response.json()["data"]["access_token"]
     for photo_id in photo_ids:
         favorite_response = client.post(
-            f"/api/v1/galleries/{gallery['id']}/public/favorites",
+            f"/api/v1/galleries/client/{access_token}/favorites",
             json={
                 "gallery_photo_id": photo_id,
                 "selected_by_name": "Client Parent",

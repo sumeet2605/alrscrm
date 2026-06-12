@@ -169,6 +169,13 @@ class GalleryAuthenticateResponse(BaseModel):
     access_token: str
 
 
+class GalleryAccessTokenRead(BaseModel):
+    access_token: str | None = None
+    access_url: str | None = None
+    expires_at: datetime
+    revoked: bool = False
+
+
 class GalleryUpgradeRequestCreate(BaseModel):
     requested_limit: int
     price_per_photo: int

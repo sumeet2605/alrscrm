@@ -18,6 +18,15 @@ def _headers(user: User) -> dict[str, str]:
     return {"Authorization": f"Bearer {create_access_token(user.id)}"}
 
 
+def _gallery_access_token(client: TestClient, gallery_id: str, owner: User) -> str:
+    response = client.post(
+        f"/api/v1/galleries/{gallery_id}/access-token/rotate",
+        headers=_headers(owner),
+    )
+    assert response.status_code == 200
+    return response.json()["data"]["access_token"]
+
+
 def _create_user(db: Session, organization: Organization, branch: Branch, role_name: str) -> User:
     role = db.query(Role).filter(Role.name == role_name).one()
     user = User(
@@ -159,9 +168,10 @@ def test_gallery_api_selection_workflow(client: TestClient, db: Session) -> None
         headers=_headers(owner),
     )
     assert open_response.status_code == 200
+    access_token = _gallery_access_token(client, gallery["id"], owner)
 
     favorite_response = client.post(
-        f"/api/v1/galleries/{gallery['id']}/public/favorites",
+        f"/api/v1/galleries/client/{access_token}/favorites",
         json={
             "gallery_photo_id": photo["id"],
             "selected_by_name": "Client Parent",
@@ -169,6 +179,8 @@ def test_gallery_api_selection_workflow(client: TestClient, db: Session) -> None
         },
     )
     assert favorite_response.status_code == 201
+    uuid_public_response = client.get(f"/api/v1/galleries/{gallery['id']}/public")
+    assert uuid_public_response.status_code in {403, 404}
 
     metrics_response = client.get("/api/v1/galleries/metrics", headers=_headers(owner))
     assert metrics_response.status_code == 200
@@ -206,7 +218,8 @@ def test_gallery_multipart_upload_returns_renderable_photo_url(
     photo = upload_response.json()["data"]
     assert photo["thumbnail_path"].startswith("data:image/jpeg;base64,")
 
-    public_response = client.get(f"/api/v1/galleries/{gallery['id']}/public")
+    access_token = _gallery_access_token(client, gallery["id"], owner)
+    public_response = client.get(f"/api/v1/galleries/client/{access_token}")
     assert public_response.status_code == 200
     public_photo = public_response.json()["data"]["photos"][0]
     assert public_photo["thumbnail_path"].startswith("data:image/jpeg;base64,")

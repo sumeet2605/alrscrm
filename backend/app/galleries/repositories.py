@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session, joinedload, selectinload
 from app.bookings.models import Booking, BookingItem
 from app.families.models import Family
 from app.galleries.enums import GalleryStatus
-from app.galleries.models import FavoriteSelection, Gallery, GalleryPhoto
+from app.galleries.models import FavoriteSelection, Gallery, GalleryAccessToken, GalleryPhoto
 from app.galleries.schemas.gallery import GalleryUpdate
 from app.shared.pagination import PageResult, paginate_query
 
@@ -69,6 +69,28 @@ class GalleryRepository:
     def create_gallery(self, gallery: Gallery) -> Gallery:
         self.db.add(gallery)
         return gallery
+
+    def add_access_token(self, access_token: GalleryAccessToken) -> GalleryAccessToken:
+        self.db.add(access_token)
+        return access_token
+
+    def active_access_token_by_hash(self, token_hash: str) -> GalleryAccessToken | None:
+        return (
+            self.db.query(GalleryAccessToken)
+            .options(joinedload(GalleryAccessToken.gallery).options(*self.gallery_options()))
+            .filter(GalleryAccessToken.token_hash == token_hash)
+            .one_or_none()
+        )
+
+    def active_access_tokens_for_gallery(self, gallery_id: UUID) -> list[GalleryAccessToken]:
+        return (
+            self.db.query(GalleryAccessToken)
+            .filter(
+                GalleryAccessToken.gallery_id == gallery_id,
+                GalleryAccessToken.revoked_at.is_(None),
+            )
+            .all()
+        )
 
     def update_gallery(self, gallery: Gallery, payload: GalleryUpdate, password_hash: str | None):
         for field, value in payload.model_dump(exclude_unset=True, exclude={"password"}).items():

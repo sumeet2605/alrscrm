@@ -16,6 +16,13 @@ class EditingRepository:
     def __init__(self, db: Session) -> None:
         self.db = db
 
+    def _elapsed_days(self, start: datetime, end: datetime) -> float:
+        if start.tzinfo is None:
+            start = start.replace(tzinfo=UTC)
+        if end.tzinfo is None:
+            end = end.replace(tzinfo=UTC)
+        return (end.astimezone(UTC) - start.astimezone(UTC)).total_seconds() / 86400
+
     def job_options(self):
         return (
             joinedload(EditingJob.assigned_editor),
@@ -93,7 +100,7 @@ class EditingRepository:
             EditingJob.completed_at.is_not(None),
         ).all()
         editing_tat = [
-            (job.completed_at - job.started_at).total_seconds() / 86400
+            self._elapsed_days(job.started_at, job.completed_at)
             for job in completed_jobs
             if job.started_at is not None and job.completed_at is not None
         ]
@@ -108,7 +115,7 @@ class EditingRepository:
             .all()
         )
         review_tat = [
-            (reviewed_at - started_at).total_seconds() / 86400
+            self._elapsed_days(started_at, reviewed_at)
             for started_at, reviewed_at in review_rows
             if started_at is not None and reviewed_at is not None
         ]

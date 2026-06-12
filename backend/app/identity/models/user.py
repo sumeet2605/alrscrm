@@ -35,6 +35,7 @@ class User(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     last_name: Mapped[str] = mapped_column(String(120), nullable=False)
     phone: Mapped[str | None] = mapped_column(String(30), nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, nullable=False, default=True)
+    password_reset_required: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)
 
     organization: Mapped[Organization] = relationship(
         back_populates="users", overlaps="branch,users"

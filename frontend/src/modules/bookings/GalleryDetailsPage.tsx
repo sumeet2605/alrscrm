@@ -16,9 +16,16 @@ import {
   DatePicker,
 } from "antd";
 import { useNavigate, useParams } from "react-router-dom";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
-import { getGallery, updateGallery, reopenSelection, createUpgradeRequest } from "../../api/galleries";
+import {
+  createUpgradeRequest,
+  getGallery,
+  reopenSelection,
+  revokeGalleryAccessTokens,
+  rotateGalleryAccessToken,
+  updateGallery,
+} from "../../api/galleries";
 import dayjs from "dayjs";
 import { Modal, Form, Input } from "antd";
 import type { GalleryStatus } from "../../types/galleries";
@@ -61,15 +68,27 @@ export function GalleryDetailsPage() {
   const gallery = galleryQuery.data;
   const [upgradeModalVisible, setUpgradeModalVisible] = useState(false);
   const [shareModalVisible, setShareModalVisible] = useState(false);
+  const [publicGalleryUrl, setPublicGalleryUrl] = useState("");
   const [upgradeForm] = Form.useForm();
   const [shareForm] = Form.useForm<{
     password?: string;
     expires_at?: dayjs.Dayjs | null;
   }>();
-  const publicGalleryUrl = useMemo(() => {
-    if (!galleryId) return "";
-    return `${window.location.origin}/client/galleries/${galleryId}`;
-  }, [galleryId]);
+  const rotateTokenMutation = useMutation({
+    mutationFn: () => rotateGalleryAccessToken(galleryId!),
+    onSuccess: (data) => {
+      const nextUrl = data.access_url ? `${window.location.origin}${data.access_url}` : "";
+      setPublicGalleryUrl(nextUrl);
+      message.success("Gallery link rotated");
+    }
+  });
+  const revokeTokenMutation = useMutation({
+    mutationFn: () => revokeGalleryAccessTokens(galleryId!),
+    onSuccess: () => {
+      setPublicGalleryUrl("");
+      message.success("Gallery link revoked");
+    }
+  });
 
   useEffect(() => {
     if (gallery && shareModalVisible) {
@@ -81,6 +100,10 @@ export function GalleryDetailsPage() {
   }, [gallery, shareForm, shareModalVisible]);
 
   const copyPublicLink = async () => {
+    if (!publicGalleryUrl) {
+      message.error("Rotate the gallery link first");
+      return;
+    }
     try {
       await navigator.clipboard.writeText(publicGalleryUrl);
       message.success("Gallery link copied");
@@ -121,7 +144,15 @@ export function GalleryDetailsPage() {
           >
             Share
           </Button>
-          <Button icon={<LinkOutlined />} onClick={() => navigate(`/client/galleries/${galleryId}`)}>
+          <Button
+            icon={<LinkOutlined />}
+            disabled={!publicGalleryUrl}
+            onClick={() => {
+              if (publicGalleryUrl) {
+                window.open(publicGalleryUrl, "_blank", "noopener,noreferrer");
+              }
+            }}
+          >
             Public View
           </Button>
           <Button
@@ -307,6 +338,19 @@ export function GalleryDetailsPage() {
                   icon={<CopyOutlined />}
                 >
                   Copy Link
+                </Button>
+                <Button
+                  onClick={() => rotateTokenMutation.mutate()}
+                  loading={rotateTokenMutation.isPending}
+                >
+                  Rotate Link
+                </Button>
+                <Button
+                  danger
+                  onClick={() => revokeTokenMutation.mutate()}
+                  loading={revokeTokenMutation.isPending}
+                >
+                  Revoke Link
                 </Button>
                 <Button onClick={() => statusMutation.mutate("SELECTION_OPEN")}>
                   Open Selection

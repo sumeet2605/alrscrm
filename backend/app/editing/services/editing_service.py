@@ -420,6 +420,14 @@ def mark_ready_for_delivery(db: Session, job_id: UUID, context: AuthorizationCon
         job.id,
         metadata={"domain_event": "EditingReadyForDelivery"},
     )
+    from app.delivery.services.delivery_service import create_job_from_editing_job
+
+    create_job_from_editing_job(
+        db,
+        job,
+        actor_user_id=context.user_id,
+        commit=False,
+    )
     db.commit()
     return get_job(db, job.id, context)
 

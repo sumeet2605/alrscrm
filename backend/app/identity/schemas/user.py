@@ -15,6 +15,7 @@ class UserBase(BaseModel):
     last_name: str = Field(min_length=1, max_length=120)
     phone: str | None = Field(default=None, max_length=30)
     is_active: bool = True
+    password_reset_required: bool = False
 
 
 class UserCreate(UserBase):
@@ -37,6 +38,7 @@ class UserUpdate(BaseModel):
     last_name: str | None = Field(default=None, min_length=1, max_length=120)
     phone: str | None = Field(default=None, max_length=30)
     is_active: bool | None = None
+    password_reset_required: bool | None = None
     role_ids: list[UUID] | None = None
 
     @field_validator("password")
