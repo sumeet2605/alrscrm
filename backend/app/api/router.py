@@ -18,6 +18,7 @@ from app.identity.routes.organizations import router as organizations_router
 from app.identity.routes.rbac import router as rbac_router
 from app.identity.routes.users import router as users_router
 from app.integrations.routes import router as integrations_router
+from app.operations.routes import router as operations_router
 from app.sales.routes import followups_router, lost_reasons_router, opportunities_router
 
 api_router = APIRouter()
@@ -42,3 +43,4 @@ api_router.include_router(finance_router)
 api_router.include_router(invoices_router)
 api_router.include_router(payments_router)
 api_router.include_router(integrations_router)
+api_router.include_router(operations_router)

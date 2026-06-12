@@ -83,6 +83,11 @@ PERMISSION_DEFINITIONS: tuple[tuple[str, str, str], ...] = (
     ("finance:dashboard", "View finance dashboard", "View finance dashboard metrics."),
     ("integrations:view", "View integrations", "View tenant integrations and health."),
     ("integrations:manage", "Manage integrations", "Create, update, and verify integrations."),
+    (
+        "platform:health:metrics",
+        "View platform health metrics",
+        "View production readiness and health metrics.",
+    ),
 )
 
 ROLE_PERMISSIONS: dict[str, tuple[str, ...]] = {

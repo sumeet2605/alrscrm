@@ -2263,6 +2263,15 @@ export interface paths {
       };
     };
   };
+  "/api/v1/platform/health/metrics": {
+    get: {
+      parameters: Record<string, never>;
+      requestBody: never;
+      responses: {
+      "200": components["schemas"]["APIResponse"];
+      };
+    };
+  };
   "/api/v1/roles": {
     get: {
       parameters: Record<string, never>;
@@ -2388,6 +2397,24 @@ export interface paths {
     };
   };
   "/health": {
+    get: {
+      parameters: Record<string, never>;
+      requestBody: never;
+      responses: {
+      "200": unknown;
+      };
+    };
+  };
+  "/health/live": {
+    get: {
+      parameters: Record<string, never>;
+      requestBody: never;
+      responses: {
+      "200": unknown;
+      };
+    };
+  };
+  "/health/ready": {
     get: {
       parameters: Record<string, never>;
       requestBody: never;

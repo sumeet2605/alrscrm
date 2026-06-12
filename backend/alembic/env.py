@@ -12,6 +12,7 @@ from app.finance import models as finance_models  # noqa: F401
 from app.galleries import models as gallery_models  # noqa: F401
 from app.identity import models  # noqa: F401
 from app.integrations import models as integration_models  # noqa: F401
+from app.operations import models as operations_models  # noqa: F401
 from app.sales import models as sales_models  # noqa: F401
 from app.shared.models import audit_log  # noqa: F401
 from sqlalchemy import engine_from_config, pool

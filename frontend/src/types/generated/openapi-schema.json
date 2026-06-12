@@ -11583,6 +11583,32 @@
         ]
       }
     },
+    "/api/v1/platform/health/metrics": {
+      "get": {
+        "operationId": "get_platform_health_metrics_api_v1_platform_health_metrics_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/APIResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "security": [
+          {
+            "OAuth2PasswordBearer": []
+          }
+        ],
+        "summary": "Get Platform Health Metrics",
+        "tags": [
+          "Platform Health"
+        ]
+      }
+    },
     "/api/v1/roles": {
       "get": {
         "operationId": "roles_api_v1_roles_get",
@@ -12171,6 +12197,38 @@
           }
         },
         "summary": "Health"
+      }
+    },
+    "/health/live": {
+      "get": {
+        "operationId": "health_live_health_live_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health Live"
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "health_ready_health_ready_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health Ready"
       }
     }
   }

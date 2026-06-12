@@ -2,6 +2,7 @@ from uuid import UUID
 
 from sqlalchemy.orm import Session
 
+from app.core.request_context import get_request_id
 from app.identity.models import User
 from app.shared.models.audit_log import AuditLog
 
@@ -24,6 +25,10 @@ def record_audit_event(
     if metadata:
         organization_id = organization_id or _uuid_from_metadata(metadata, "organization_id")
         branch_id = branch_id or _uuid_from_metadata(metadata, "branch_id")
+    metadata_json = dict(metadata or {})
+    request_id = get_request_id()
+    if request_id is not None:
+        metadata_json.setdefault("request_id", request_id)
     db.add(
         AuditLog(
             organization_id=organization_id,
@@ -32,7 +37,7 @@ def record_audit_event(
             action=action,
             target_type=target_type,
             target_id=target_id,
-            metadata_json=metadata or {},
+            metadata_json=metadata_json,
         )
     )
 
