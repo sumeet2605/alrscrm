@@ -19,6 +19,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 import { createInvoice, listInvoices } from "../../api/finance";
+import { getOrganization, listBranches } from "../../api/identity";
 import { useAuth } from "../../contexts/AuthContext";
 import type { Invoice, InvoicePayload, InvoiceStatus } from "../../types/finance";
 import {
@@ -59,6 +60,15 @@ export function InvoiceListPage() {
   const invoicesQuery = useQuery({
     queryKey: ["invoices", page, status],
     queryFn: () => listInvoices({ page, page_size: 10, invoice_status: status })
+  });
+  const organizationQuery = useQuery({
+    queryKey: ["organization", user?.organization_id],
+    queryFn: () => getOrganization(user!.organization_id),
+    enabled: Boolean(user?.organization_id)
+  });
+  const branchesQuery = useQuery({
+    queryKey: ["branches", "invoice-form"],
+    queryFn: () => listBranches({ page: 1, page_size: 100 })
   });
 
   const createMutation = useMutation({
@@ -122,11 +132,12 @@ export function InvoiceListPage() {
   ];
 
   const submitInvoice = (values: InvoiceFormValues) => {
+    const selectedBranch = branchesQuery.data?.items.find((branch) => branch.id === values.branch_id);
     const cgstAmount = values.cgst_amount ?? "0.00";
     const sgstAmount = values.sgst_amount ?? "0.00";
     const igstAmount = values.igst_amount ?? "0.00";
     const payload: InvoicePayload = {
-      organization_id: values.organization_id,
+      organization_id: selectedBranch?.organization_id ?? values.organization_id,
       branch_id: values.branch_id,
       family_id: values.family_id,
       booking_id: values.booking_id,
@@ -156,6 +167,16 @@ export function InvoiceListPage() {
     createMutation.mutate(payload);
   };
 
+  const openCreateModal = () => {
+    form.setFieldsValue({
+      organization_id: user?.organization_id,
+      branch_id: user?.branch_id ?? branchesQuery.data?.items[0]?.id,
+      description: "Photography service",
+      unit_price: "0.00"
+    });
+    setModalOpen(true);
+  };
+
   return (
     <Space direction="vertical" size={16} className="page-stack">
       <div className="page-heading">
@@ -166,7 +187,7 @@ export function InvoiceListPage() {
           </Typography.Text>
         </div>
         {canManage ? (
-          <Button type="primary" icon={<PlusOutlined />} onClick={() => setModalOpen(true)}>
+          <Button type="primary" icon={<PlusOutlined />} onClick={openCreateModal}>
             New Invoice
           </Button>
         ) : null}
@@ -211,18 +232,25 @@ export function InvoiceListPage() {
           form={form}
           layout="vertical"
           onFinish={submitInvoice}
-          initialValues={{
-            organization_id: user?.organization_id,
-            branch_id: user?.branch_id ?? undefined,
-            description: "Photography service",
-            unit_price: "0.00"
-          }}
+          initialValues={{ description: "Photography service", unit_price: "0.00" }}
         >
-          <Form.Item name="organization_id" label="Organization ID" rules={[{ required: true }]}>
+          <Form.Item name="organization_id" hidden rules={[{ required: true }]}>
             <Input />
           </Form.Item>
-          <Form.Item name="branch_id" label="Branch ID" rules={[{ required: true }]}>
-            <Input />
+          <Form.Item label="Organization">
+            <Input
+              disabled
+              value={organizationQuery.data?.name ?? "Current organization"}
+            />
+          </Form.Item>
+          <Form.Item name="branch_id" label="Branch" rules={[{ required: true }]}>
+            <Select
+              loading={branchesQuery.isLoading}
+              options={(branchesQuery.data?.items ?? []).map((branch) => ({
+                value: branch.id,
+                label: branch.city ? `${branch.name} · ${branch.city}` : branch.name
+              }))}
+            />
           </Form.Item>
           <Form.Item name="family_id" label="Family ID" rules={[{ required: true }]}>
             <Input />
