@@ -1,3 +1,4 @@
+import logging
 from abc import ABC, abstractmethod
 from base64 import b64encode
 from dataclasses import dataclass
@@ -5,6 +6,8 @@ from urllib.parse import quote
 
 from app.core.config import get_settings
 from app.shared.exceptions.application import ValidationError
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -73,6 +76,7 @@ class DigitalOceanSpacesStorageProvider(StorageProvider):
     ) -> None:
         try:
             import boto3
+            from botocore.config import Config
         except ImportError as exc:
             raise ValidationError("boto3 is required for DigitalOcean Spaces storage") from exc
         self.bucket = bucket
@@ -86,6 +90,10 @@ class DigitalOceanSpacesStorageProvider(StorageProvider):
             endpoint_url=endpoint_url or f"https://{region}.digitaloceanspaces.com",
             aws_access_key_id=access_key,
             aws_secret_access_key=secret_key,
+            config=Config(
+                request_checksum_calculation="when_required",
+                response_checksum_validation="when_required",
+            ),
         )
 
     def _key(self, file_name: str) -> str:
@@ -105,10 +113,25 @@ class DigitalOceanSpacesStorageProvider(StorageProvider):
         self, file_name: str, content: bytes, content_type: str | None = None
     ) -> StoredFile:
         key = self._key(file_name)
-        extra_args = {"ACL": "private"}
+        put_object_args = {"Bucket": self.bucket, "Key": key, "Body": content}
         if content_type:
-            extra_args["ContentType"] = content_type
-        self.client.put_object(Bucket=self.bucket, Key=key, Body=content, **extra_args)
+            put_object_args["ContentType"] = content_type
+        logger.info(
+            "Uploading file to DigitalOcean Spaces",
+            extra={
+                "spaces_put_object": {
+                    "Bucket": self.bucket,
+                    "Key": key,
+                    "ContentType": content_type,
+                    "ACL": None,
+                    "Metadata": None,
+                    "CacheControl": None,
+                    "ExtraArgs": [],
+                    "BodyBytes": len(content),
+                }
+            },
+        )
+        self.client.put_object(**put_object_args)
         return StoredFile(storage_path=key, thumbnail_path=key, file_size=len(content))
 
     def delete_file(self, storage_path: str) -> None:
