@@ -35,12 +35,28 @@ Frontend upload implementation:
 - File: `frontend/src/api/galleries.ts`
 - Function: `uploadGalleryPhoto`
 - Canonical field after the fix: `formData.append("file", file)`
+- Shared HTTP client: `frontend/src/api/http.ts`
+- Confirmed broken UAT request: `Content-Type: application/json`
+
+Broken UAT payload:
+
+```json
+{
+  "file": {
+    "uid": "..."
+  },
+  "image_width": "...",
+  "image_height": "..."
+}
+```
 
 ## Root Cause
 
-The backend contract required a multipart file part named `file`. UAT traffic sent the upload under a different multipart field name, so FastAPI rejected the request before application code ran and returned the missing `body.file` validation error.
+The backend contract required a multipart file part named `file`. UAT traffic sent JSON instead of `multipart/form-data`; the `file` value was an Ant Design upload wrapper object, not the browser `File` binary.
 
-This was a contract mismatch at the multipart boundary, not a storage failure.
+FastAPI never received an `UploadFile`, so validation failed before application code ran and returned the missing `body.file` validation error.
+
+This was a request encoding contract mismatch, not a storage failure.
 
 ## Storage Impact
 

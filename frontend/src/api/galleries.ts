@@ -1,4 +1,5 @@
 import { apiClient } from "./http";
+import type { AxiosProgressEvent } from "axios";
 import type { ApiEnvelope } from "../types/api";
 import type {
   FavoritePayload,
@@ -14,6 +15,21 @@ import type {
   GalleryPhotoPayload,
   GalleryUpdatePayload
 } from "../types/galleries";
+
+type GalleryUploadFile = File | { originFileObj?: File };
+type GalleryUploadOptions = {
+  onUploadProgress?: (event: AxiosProgressEvent) => void;
+};
+
+function resolveGalleryUploadFile(file: GalleryUploadFile): File {
+  if (file instanceof File) {
+    return file;
+  }
+  if (file.originFileObj instanceof File) {
+    return file.originFileObj;
+  }
+  throw new Error("Gallery upload requires a browser File object");
+}
 
 export async function listGalleries(params: GalleryListParams): Promise<GalleryListResult> {
   const response = await apiClient.get<ApiEnvelope<Gallery[]>>("/galleries", { params });
@@ -56,16 +72,19 @@ export async function addGalleryPhoto(
 
 export async function uploadGalleryPhoto(
   id: string,
-  file: File,
-  dimensions: { image_width: number; image_height: number }
+  file: GalleryUploadFile,
+  dimensions: { image_width: number; image_height: number },
+  options: GalleryUploadOptions = {}
 ): Promise<GalleryPhoto> {
+  const browserFile = resolveGalleryUploadFile(file);
   const formData = new FormData();
-  formData.append("file", file);
+  formData.append("file", browserFile);
   formData.append("image_width", String(dimensions.image_width));
   formData.append("image_height", String(dimensions.image_height));
   const response = await apiClient.post<ApiEnvelope<GalleryPhoto>>(
     `/galleries/${id}/photos/upload`,
-    formData
+    formData,
+    { onUploadProgress: options.onUploadProgress }
   );
   return response.data.data;
 }
