@@ -1,10 +1,14 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
+from decimal import Decimal
 from uuid import UUID
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
+from app.bookings.enums import BookingItemStatus, BookingStatus
+from app.bookings.models import Booking, BookingItem, Package
 from app.families.models import Family
+from app.finance.services import finance_service
 from app.identity.models import Branch, User
 from app.identity.policies import AuthorizationContext
 from app.sales.enums import FollowUpStatus, OpportunityStage
@@ -73,6 +77,21 @@ def _ensure_family_scope(db: Session, context: AuthorizationContext, family_id: 
     return family
 
 
+def _ensure_package_scope(
+    db: Session, context: AuthorizationContext, package_id: UUID | None, branch_id: UUID
+) -> Package | None:
+    if package_id is None:
+        return None
+    package = db.get(Package, package_id)
+    if package is None or not package.is_active:
+        raise NotFoundError("Package not found")
+    if package.branch_id != branch_id:
+        raise ValidationError("Opportunity package must belong to the selected branch")
+    if not context.is_platform_admin and package.organization_id != context.organization_id:
+        raise ForbiddenError("Package is outside the caller scope")
+    return package
+
+
 def _ensure_lost_reason(db: Session, lost_reason_id: UUID | None) -> LostReason | None:
     if lost_reason_id is None:
         return None
@@ -94,6 +113,82 @@ def _ensure_opportunity_scope(context: AuthorizationContext, opportunity: Opport
 def _ensure_family_branch_consistency(family: Family, branch_id: UUID) -> None:
     if family.branch_id != branch_id:
         raise ValidationError("Opportunity branch must match the referenced family branch")
+
+
+def _generate_booking_number(db: Session, branch_code: str) -> str:
+    year = datetime.now(UTC).year
+    count = db.query(Booking).count() + 1
+    return f"BK-{branch_code}-{year}-{count:06d}"
+
+
+def _booking_for_opportunity(db: Session, opportunity: Opportunity) -> Booking | None:
+    return (
+        db.query(Booking)
+        .filter(Booking.opportunity_id == opportunity.id, Booking.deleted_at.is_(None))
+        .one_or_none()
+    )
+
+
+def _create_booking_for_booked_opportunity(
+    db: Session, opportunity: Opportunity, context: AuthorizationContext
+) -> Booking:
+    existing = _booking_for_opportunity(db, opportunity)
+    if existing is not None:
+        return existing
+    branch = db.get(Branch, opportunity.branch_id)
+    if branch is None:
+        raise NotFoundError("Branch not found")
+    package = _ensure_package_scope(db, context, opportunity.package_id, opportunity.branch_id)
+    booking = Booking(
+        organization_id=opportunity.organization_id,
+        branch_id=opportunity.branch_id,
+        family_id=opportunity.family_id,
+        opportunity_id=opportunity.id,
+        booking_number=_generate_booking_number(db, branch.code),
+        booking_status=BookingStatus.CONFIRMED.value,
+        total_amount=Decimal("0"),
+        advance_received=Decimal("0"),
+        balance_amount=Decimal("0"),
+        booking_date=date.today(),
+        notes="Auto-created when opportunity moved to booked.",
+    )
+    if package is not None:
+        booking.items = [
+            BookingItem(
+                package_id=package.id,
+                service_type=package.service_type,
+                price=package.price,
+                discount=Decimal("0"),
+                final_amount=package.price,
+                status=BookingItemStatus.PENDING.value,
+            )
+        ]
+        booking.total_amount = package.price
+        booking.balance_amount = package.price
+    db.add(booking)
+    db.flush()
+    record_audit_event(
+        db,
+        "booking.created",
+        context.user_id,
+        "Booking",
+        booking.id,
+        metadata={"domain_event": "BookingCreated", "source": "opportunity_booked"},
+        organization_id=booking.organization_id,
+        branch_id=booking.branch_id,
+    )
+    return booking
+
+
+def _create_booking_and_invoice_for_booked_opportunity(
+    db: Session, opportunity: Opportunity, context: AuthorizationContext
+) -> None:
+    if opportunity.current_stage != OpportunityStage.BOOKED.value:
+        return
+    booking = _create_booking_for_booked_opportunity(db, opportunity, context)
+    if opportunity.family is not None:
+        opportunity.family.status = "BOOKED"
+    finance_service.create_draft_invoice_for_booking(db, booking, context)
 
 
 def list_opportunities(
@@ -145,6 +240,7 @@ def create_opportunity(
         raise ValidationError("Opportunity organization must match the selected branch")
     if payload.organization_id != family.organization_id:
         raise ValidationError("Opportunity organization must match the referenced family")
+    _ensure_package_scope(db, context, payload.package_id, payload.branch_id)
     ensure_lost_reason_for_stage(payload.current_stage.value, payload.lost_reason_id)
 
     repository = SalesRepository(db)
@@ -166,6 +262,8 @@ def create_opportunity(
             opportunity.id,
             metadata={"event": "OpportunityCreated"},
         )
+        if opportunity.current_stage == OpportunityStage.BOOKED.value:
+            _create_booking_and_invoice_for_booked_opportunity(db, opportunity, context)
         db.commit()
     except IntegrityError as exc:
         db.rollback()
@@ -198,6 +296,10 @@ def update_opportunity(
         raise ValidationError("Opportunity organization must match the referenced family")
     if payload.assigned_to_user_id is not None:
         _ensure_user_scope(db, context, payload.assigned_to_user_id)
+    next_package_id = (
+        payload.package_id if "package_id" in payload.model_fields_set else opportunity.package_id
+    )
+    _ensure_package_scope(db, context, next_package_id, next_branch_id)
     _ensure_lost_reason(db, next_lost_reason_id)
     ensure_lost_reason_for_stage(next_stage, next_lost_reason_id)
 
@@ -225,6 +327,11 @@ def update_opportunity(
             "domain_event": _domain_event_name(previous_stage, opportunity.current_stage),
         },
     )
+    if (
+        previous_stage != OpportunityStage.BOOKED.value
+        and opportunity.current_stage == OpportunityStage.BOOKED.value
+    ):
+        _create_booking_and_invoice_for_booked_opportunity(db, opportunity, context)
     db.commit()
     return get_opportunity(db, opportunity.id, context)
 

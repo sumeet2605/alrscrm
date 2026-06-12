@@ -63,6 +63,14 @@ class FinanceRepository:
             .one_or_none()
         )
 
+    def get_invoice_by_booking(self, booking_id: UUID) -> Invoice | None:
+        return (
+            self.db.query(Invoice)
+            .options(*self.invoice_options())
+            .filter(Invoice.booking_id == booking_id)
+            .one_or_none()
+        )
+
     def get_invoice_for_update(self, invoice_id: UUID) -> Invoice | None:
         query = self.db.query(Invoice).filter(Invoice.id == invoice_id)
         if self.db.bind and self.db.bind.dialect.name != "sqlite":

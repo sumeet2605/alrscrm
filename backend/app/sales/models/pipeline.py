@@ -55,6 +55,7 @@ class Opportunity(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     assigned_to_user_id: Mapped[UUID] = mapped_column(
         ForeignKey("users.id"), nullable=False, index=True
     )
+    package_id: Mapped[UUID | None] = mapped_column(ForeignKey("packages.id"), nullable=True)
     opportunity_type: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
     current_stage: Mapped[str] = mapped_column(String(40), nullable=False, index=True)
     estimated_value: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False, default=0)
@@ -70,6 +71,7 @@ class Opportunity(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     branch: Mapped[Branch] = sa_relationship(overlaps="organization")
     family: Mapped[Family] = sa_relationship()
     assigned_to_user: Mapped[User] = sa_relationship(foreign_keys=[assigned_to_user_id])
+    package = sa_relationship("Package")
     lost_reason: Mapped[LostReason | None] = sa_relationship()
     followups: Mapped[list[FollowUp]] = sa_relationship(
         back_populates="opportunity", cascade="all, delete-orphan"

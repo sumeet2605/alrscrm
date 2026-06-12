@@ -1,7 +1,10 @@
 from datetime import UTC, date, datetime, timedelta
+from uuid import UUID
 
+from app.bookings.models import Booking, Package
 from app.core.security import create_access_token, hash_password
 from app.families.models import Family
+from app.finance.models import Invoice
 from app.identity.models import Branch, Organization, Role, User
 from app.sales.models import FollowUp, LostReason, Opportunity
 from fastapi.testclient import TestClient
@@ -209,7 +212,7 @@ def test_booked_opportunity_is_read_only(
         json=_opportunity_payload(owner_user, family),
         headers=owner_headers,
     )
-    opportunity_id = create_response.json()["data"]["id"]
+    opportunity_id = UUID(create_response.json()["data"]["id"])
 
     booked_response = client.put(
         f"/api/v1/opportunities/{opportunity_id}",
@@ -217,6 +220,13 @@ def test_booked_opportunity_is_read_only(
         headers=owner_headers,
     )
     assert booked_response.status_code == 200
+    booking = db.query(Booking).filter(Booking.opportunity_id == opportunity_id).one()
+    invoice = db.query(Invoice).filter(Invoice.booking_id == booking.id).one()
+    assert booking.items == []
+    assert booking.total_amount == 0
+    assert invoice.invoice_status == "DRAFT"
+    assert invoice.total_amount == 0
+    assert invoice.line_items[0].description == "Draft invoice - package pending"
 
     edit_response = client.put(
         f"/api/v1/opportunities/{opportunity_id}",
@@ -229,6 +239,52 @@ def test_booked_opportunity_is_read_only(
         f"/api/v1/opportunities/{opportunity_id}", headers=owner_headers
     )
     assert delete_response.status_code == 409
+
+
+def test_booked_opportunity_with_package_creates_booking_and_invoice(
+    client: TestClient,
+    db: Session,
+    owner_user: User,
+    owner_headers: dict[str, str],
+) -> None:
+    assert owner_user.branch is not None
+    family = _create_family(db, owner_user.organization, owner_user.branch, "900777")
+    package = Package(
+        organization_id=owner_user.organization_id,
+        branch_id=owner_user.branch_id,
+        name="Newborn Signature",
+        service_type="NEWBORN",
+        price="25000.00",
+        is_active=True,
+    )
+    db.add(package)
+    db.commit()
+    db.refresh(package)
+    payload = _opportunity_payload(owner_user, family)
+    payload["package_id"] = str(package.id)
+    create_response = client.post(
+        "/api/v1/opportunities",
+        json=payload,
+        headers=owner_headers,
+    )
+    opportunity_id = UUID(create_response.json()["data"]["id"])
+
+    booked_response = client.put(
+        f"/api/v1/opportunities/{opportunity_id}",
+        json={"current_stage": "BOOKED"},
+        headers=owner_headers,
+    )
+
+    assert booked_response.status_code == 200
+    booking = db.query(Booking).filter(Booking.opportunity_id == opportunity_id).one()
+    assert booking.booking_status == "CONFIRMED"
+    assert booking.total_amount == 25000
+    assert booking.items[0].package_id == package.id
+    invoice = db.query(Invoice).filter(Invoice.booking_id == booking.id).one()
+    assert invoice.invoice_status == "DRAFT"
+    assert invoice.buyer_billing_name == family.primary_contact_name
+    assert invoice.total_amount == 25000
+    assert invoice.line_items[0].description == "Newborn Signature"
 
 
 def test_sales_can_write_and_photographer_is_read_only(

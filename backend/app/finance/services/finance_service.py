@@ -1,4 +1,4 @@
-from datetime import UTC, date, datetime
+from datetime import UTC, date, datetime, timedelta
 from decimal import Decimal
 from uuid import UUID
 
@@ -137,6 +137,150 @@ def _apply_payment_status(invoice: Invoice) -> None:
         invoice.invoice_status = InvoiceStatus.PAID.value
     else:
         invoice.invoice_status = InvoiceStatus.PARTIALLY_PAID.value
+
+
+def _default_settings_for_booking(booking: Booking) -> FinanceSettings:
+    return FinanceSettings(
+        organization_id=booking.organization_id,
+        branch_id=booking.branch_id,
+        registration_type=GSTRegistrationType.UNREGISTERED.value,
+        legal_name="Studio",
+        default_currency="INR",
+        default_due_days=15,
+        invoice_prefix="INV",
+        auto_create_booking_invoice=False,
+        require_payment_before_delivery=False,
+    )
+
+
+def _billing_address_for_family(family: Family) -> str | None:
+    address = getattr(family, "address", None)
+    if address is None:
+        return family.city
+    parts = [
+        address.address_line_1,
+        address.address_line_2,
+        address.city,
+        address.state,
+        address.country,
+        address.postal_code,
+    ]
+    return ", ".join(part for part in parts if part)
+
+
+def _invoice_lines_from_booking(booking: Booking) -> list[InvoiceLineItem]:
+    lines: list[InvoiceLineItem] = []
+    for item in booking.items:
+        package = item.package
+        lines.append(
+            InvoiceLineItem(
+                description=package.name if package else "Photography package",
+                quantity=Decimal("1"),
+                unit_price=item.price,
+                discount_amount=item.discount,
+                taxable_amount=item.final_amount,
+                tax_rate=Decimal("0"),
+                cgst_rate=Decimal("0"),
+                cgst_amount=Decimal("0"),
+                sgst_rate=Decimal("0"),
+                sgst_amount=Decimal("0"),
+                igst_rate=Decimal("0"),
+                igst_amount=Decimal("0"),
+                line_total=item.final_amount,
+                service_type=item.service_type,
+            )
+        )
+        for addon in item.addons:
+            lines.append(
+                InvoiceLineItem(
+                    description=addon.addon.name if addon.addon else "Package add-on",
+                    quantity=Decimal("1"),
+                    unit_price=addon.price,
+                    discount_amount=Decimal("0"),
+                    taxable_amount=addon.price,
+                    tax_rate=Decimal("0"),
+                    cgst_rate=Decimal("0"),
+                    cgst_amount=Decimal("0"),
+                    sgst_rate=Decimal("0"),
+                    sgst_amount=Decimal("0"),
+                    igst_rate=Decimal("0"),
+                    igst_amount=Decimal("0"),
+                    line_total=addon.price,
+                    service_type=item.service_type,
+                )
+            )
+    if lines:
+        return lines
+    return [
+        InvoiceLineItem(
+            description="Draft invoice - package pending",
+            quantity=Decimal("1"),
+            unit_price=Decimal("0"),
+            discount_amount=Decimal("0"),
+            taxable_amount=Decimal("0"),
+            tax_rate=Decimal("0"),
+            cgst_rate=Decimal("0"),
+            cgst_amount=Decimal("0"),
+            sgst_rate=Decimal("0"),
+            sgst_amount=Decimal("0"),
+            igst_rate=Decimal("0"),
+            igst_amount=Decimal("0"),
+            line_total=Decimal("0"),
+            service_type=booking.opportunity.opportunity_type,
+        )
+    ]
+
+
+def create_draft_invoice_for_booking(
+    db: Session, booking: Booking, context: AuthorizationContext
+) -> Invoice:
+    repository = FinanceRepository(db)
+    existing = repository.get_invoice_by_booking(booking.id)
+    if existing is not None:
+        return existing
+    settings = repository.get_settings(
+        booking.organization_id, booking.branch_id
+    ) or _default_settings_for_booking(booking)
+    invoice = Invoice(
+        organization_id=booking.organization_id,
+        branch_id=booking.branch_id,
+        family_id=booking.family_id,
+        booking_id=booking.id,
+        invoice_number=repository.next_invoice_number(settings.invoice_prefix),
+        invoice_status=InvoiceStatus.DRAFT.value,
+        amount_paid=Decimal("0"),
+        currency=settings.default_currency.upper(),
+        due_date=date.today() + timedelta(days=settings.default_due_days),
+        notes="Auto-created when opportunity moved to booked.",
+        created_by_user_id=context.user_id,
+        seller_legal_name=settings.legal_name,
+        seller_trade_name=settings.trade_name,
+        seller_gstin=settings.gstin,
+        seller_address=settings.billing_address,
+        seller_state_code=settings.billing_state_code,
+        buyer_billing_name=booking.family.primary_contact_name,
+        buyer_billing_address=_billing_address_for_family(booking.family),
+        buyer_state_code=None,
+        place_of_supply_state_code=settings.billing_state_code,
+        supply_type="NON_GST",
+        gst_registration_type=settings.registration_type,
+        reverse_charge_applicable=False,
+    )
+    invoice.line_items = _invoice_lines_from_booking(booking)
+    _apply_invoice_totals(invoice)
+    repository.add_invoice(invoice)
+    db.flush()
+    record_audit_event(
+        db,
+        "invoice.created",
+        context.user_id,
+        "Invoice",
+        invoice.id,
+        metadata={"domain_event": "InvoiceCreated", "source": "opportunity_booked"},
+        organization_id=invoice.organization_id,
+        branch_id=invoice.branch_id,
+    )
+    return invoice
 
 
 def get_settings(
