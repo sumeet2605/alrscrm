@@ -53,6 +53,12 @@ export BOOTSTRAP_ADMIN_PASSWORD='<temporary-bootstrap-password>'
 export VITE_API_BASE_URL=/api/v1
 ```
 
+GitHub Actions UAT deployment auto-selects `backend/.env.uat` when present,
+otherwise `backend/.env`, otherwise root `.env`. The selected backend env file must set
+`STORAGE_PROVIDER=spaces`, `digitalocean`, or `do_spaces`; otherwise deployment
+stops before `docker compose up` so uploads cannot silently fall back to local
+storage.
+
 If the host already runs PostgreSQL, use an alternate loopback host port for
 local diagnostics:
 

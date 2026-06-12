@@ -92,6 +92,42 @@ jobs:
           cd "$DO_APP_PATH"
 
           git pull --ff-only
+          if [ -z "${BACKEND_ENV_FILE:-}" ]; then
+            if [ -f backend/.env.uat ]; then
+              export BACKEND_ENV_FILE=backend/.env.uat
+            elif [ -f backend/.env ]; then
+              export BACKEND_ENV_FILE=backend/.env
+            elif [ -f .env ]; then
+              export BACKEND_ENV_FILE=.env
+            else
+              export BACKEND_ENV_FILE=backend/.env.uat
+            fi
+          fi
+          if [ ! -f "$BACKEND_ENV_FILE" ]; then
+            echo "Missing UAT backend env file: $BACKEND_ENV_FILE"
+            echo "Create it from backend/.env.example and set STORAGE_PROVIDER=spaces with DO_SPACES_* values."
+            exit 1
+          fi
+          if ! grep -Eq '^STORAGE_PROVIDER="?((spaces)|(digitalocean)|(do_spaces))"?$' "$BACKEND_ENV_FILE"; then
+            echo "UAT backend env file must set STORAGE_PROVIDER=spaces, digitalocean, or do_spaces."
+            exit 1
+          fi
+          require_env_value() {
+            name="$1"
+            value="$(awk -F= -v key="$name" '$1 == key {print substr($0, index($0, "=") + 1)}' "$BACKEND_ENV_FILE" | tail -n 1)"
+            value="$(printf '%s' "$value" | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")"
+            if [ -z "$value" ]; then
+              echo "UAT backend env file is missing required value: $name"
+              exit 1
+            fi
+          }
+          require_env_value DO_SPACES_REGION
+          require_env_value DO_SPACES_BUCKET
+          require_env_value DO_SPACES_ACCESS_KEY
+          require_env_value DO_SPACES_SECRET_KEY
+          require_env_value SECRET_KEY
+          require_env_value JWT_SECRET_KEY
+          require_env_value INTEGRATION_ENCRYPTION_KEY
           docker compose down
           if ! docker compose up -d --build; then
             echo "Docker Compose startup failed. API logs:"
