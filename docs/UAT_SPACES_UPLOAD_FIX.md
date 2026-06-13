@@ -25,6 +25,25 @@ ExtraArgs=[]
 No object ACL is sent. Private bucket behavior is controlled by the Space and
 access credentials.
 
+The boto client also uses path-style S3 addressing:
+
+```text
+s3.addressing_style=path
+```
+
+If Spaces returns `InvalidArgument` for the first `PutObject`, the provider logs
+the botocore error payload and retries once with only:
+
+```text
+Bucket
+Key
+Body
+```
+
+If Spaces returns `InvalidArgument` for `DeleteObject`, the provider logs the
+error and continues deleting the gallery photo record so the UI does not return
+500 for object-cleanup failures.
+
 ## Logging
 
 The provider logs sanitized `PutObject` details before upload:
@@ -52,9 +71,13 @@ Coverage:
 
 - Spaces client uses `request_checksum_calculation=when_required`.
 - Spaces client uses `response_checksum_validation=when_required`.
+- Spaces client uses path-style addressing.
 - Upload calls `put_object` with only `Bucket`, `Key`, `Body`, and optional
   `ContentType`.
 - Upload does not send `ACL`, `Metadata`, or `CacheControl`.
+- Upload retries with only `Bucket`, `Key`, and `Body` when Spaces rejects the
+  optional `ContentType` request.
+- Delete logs and continues when Spaces rejects object deletion.
 - Sanitized request logging includes the expected argument summary.
 
 Existing gallery upload tests continue to verify:

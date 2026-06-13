@@ -9,6 +9,13 @@ botocore.exceptions.ClientError:
 An error occurred (InvalidArgument) when calling the PutObject operation
 ```
 
+The same Spaces compatibility issue also appeared when deleting a gallery photo:
+
+```text
+botocore.exceptions.ClientError:
+An error occurred (InvalidArgument) when calling the DeleteObject operation
+```
+
 Failure path:
 
 ```text
@@ -72,6 +79,25 @@ response_checksum_validation=when_required
 
 This prevents botocore from adding optional checksum behavior for Spaces uploads
 unless it is required.
+
+The provider also uses path-style S3 addressing for DigitalOcean Spaces:
+
+```text
+s3.addressing_style=path
+```
+
+If Spaces still rejects `PutObject` with optional `ContentType`, the provider
+logs the failure and retries once with the absolute minimum request:
+
+```text
+Bucket
+Key
+Body
+```
+
+`DeleteObject` failures are logged but no longer block gallery record deletion,
+because delete should not make the gallery UI unusable when an object is already
+missing or Spaces rejects the delete request.
 
 ## Environment Checks
 
