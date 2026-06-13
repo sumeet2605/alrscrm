@@ -1,0 +1,193 @@
+alrscrm/
+├── .github/
+│   └── [workflows directory]
+├── .gitignore
+├── README.md
+├── pyproject.toml
+├── docker-compose.yml
+├── docker-compose.prod.yml
+├── backend/
+│   ├── .env.example
+│   ├── Dockerfile
+│   ├── alembic.ini
+│   ├── requirements.txt
+│   ├── alembic/
+│   │   ├── env.py
+│   │   ├── script.py.mako
+│   │   └── versions/
+│   │       └── [migration files]
+│   ├── app/
+│   │   ├── __init__.py
+│   │   ├── main.py
+│   │   ├── api/
+│   │   │   └── [API route handlers]
+│   │   ├── auth/
+│   │   │   └── [Authentication & Authorization modules]
+│   │   ├── bookings/
+│   │   │   └── [Booking domain logic]
+│   │   ├── core/
+│   │   │   └── [Core utilities and configuration]
+│   │   ├── delivery/
+│   │   │   └── [Delivery/Shipping domain]
+│   │   ├── editing/
+│   │   │   └── [Photo editing domain]
+│   │   ├── families/
+│   │   │   └── [Family management domain]
+│   │   ├── finance/
+│   │   │   └── [Financial/Payment domain]
+│   │   ├── galleries/
+│   │   │   └── [Gallery management domain]
+│   │   ├── identity/
+│   │   │   └── [User identity & organization management]
+│   │   ├── integrations/
+│   │   │   └── [Third-party integrations]
+│   │   ├── operations/
+│   │   │   └── [Operations domain]
+│   │   ├── sales/
+│   │   │   └── [Sales domain logic]
+│   │   └── shared/
+│   │       └── [Shared utilities and common code]
+│   ├── scripts/
+│   │   └── [Database seed scripts, utilities]
+│   └── tests/
+│       └── [Test suites]
+├── frontend/
+│   ├── Dockerfile
+│   ├── index.html
+│   ├── package.json
+│   ├── package-lock.json
+│   ├── nginx.conf
+│   ├── tsconfig.json
+│   ├── tsconfig.app.json
+│   ├── tsconfig.node.json
+│   ├── vite.config.ts
+│   ├── src/
+│   │   ├── main.tsx
+│   │   ├── styles.css
+│   │   ├── vite-env.d.ts
+│   │   ├── api/
+│   │   │   └── [API client modules]
+│   │   ├── app/
+│   │   │   └── [App root component]
+│   │   ├── components/
+│   │   │   └── [Reusable React components]
+│   │   ├── contexts/
+│   │   │   └── [React Context for global state]
+│   │   ├── hooks/
+│   │   │   └── [Custom React hooks]
+│   │   ├── layouts/
+│   │   │   └── [Page layout components]
+│   │   ├── modules/
+│   │   │   └── [Feature modules]
+│   │   ├── pages/
+│   │   │   └── [Page components/views]
+│   │   ├── routes/
+│   │   │   └── [Route configuration]
+│   │   ├── test/
+│   │   │   └── [Test utilities and setup]
+│   │   ├── theme/
+│   │   │   └── [Theme configuration]
+│   │   ├── types/
+│   │   │   └── [TypeScript type definitions]
+│   │   └── utils/
+│   │       └── [Utility functions]
+│   └── scripts/
+│       └── [Build and utility scripts]
+├── docs/
+│   ├── 01_PRD.md
+│   ├── 02_DOMAIN_MODEL.md
+│   ├── 03_ERD.md
+│   ├── 04_PERMISSION_MATRIX.md
+│   ├── 07_SPRINT_PLAN.md
+│   ├── ARCHITECTURE_REVIEW.md
+│   ├── DOMAIN_MODEL_REVIEW.md
+│   ├── FRONTEND_ARCHITECTURE.md
+│   ├── Domain_Event_Map.md
+│   ├── FAMILY_AGGREGATE_AND_EVENTS.md
+│   ├── GALLERY_AGGREGATE_DIAGRAM.md
+│   ├── SPRINT1_COMPLETION_REPORT.md
+│   ├── SPRINT1_FRONTEND_COMPLETION_REPORT.md
+│   ├── SPRINT2_API_REFERENCE.md
+│   ├── SPRINT2_COMPLETION_REPORT.md
+│   ├── SPRINT2_DATABASE_DESIGN.md
+│   ├── SPRINT3_API_REFERENCE.md
+│   ├── SPRINT3_ARCHITECTURE_DECISIONS.md
+│   ├── SPRINT3_COMPLETION_REPORT.md
+│   ├── SPRINT4_API_REFERENCE.md
+│   ├── SPRINT4_BOOKING_DOMAIN.md
+│   ├── SPRINT4_COMPLETION_REPORT.md
+│   ├── SPRINT5_COMPLETION_REPORT.md
+│   ├── SPRINT5_GALLERY_DOMAIN.md
+│   ├── SPRINT6_API_REFERENCE.md
+│   ├── SPRINT6_ARCHITECTURE_REVIEW.md
+│   ├── SPRINT6_COMPLETION_REPORT.md
+│   ├── SPRINT6_EDITING_DOMAIN.md
+│   ├── SPRINT6_FINAL_SIGNOFF.md
+│   ├── SPRINT6_RELEASE_CLEANUP.md
+│   ├── SPRINT6_RELEASE_READINESS.md
+│   ├── SPRINT6_SECURITY_REVIEW.md
+│   ├── SPRINT6_TECH_DEBT.md
+│   ├── SPRINT6_TEST_STRATEGY.md
+│   ├── SPRINT6_VALIDATION_REPORT.md
+│   └── [Additional sprint and review documents]
+└── nginx/
+    └── nginx.conf
+
+═══════════════════════════════════════════════════════════════════════════════
+
+REPOSITORY OVERVIEW - UAT BRANCH
+═══════════════════════════════════════════════════════════════════════════════
+
+PROJECT: ALRSCRM - Premium Family Photography Studio Operating System
+BRANCH: uat
+PURPOSE: User Acceptance Testing environment
+
+KEY TECHNOLOGIES:
+- Backend: Python, FastAPI, SQLAlchemy, PostgreSQL
+- Frontend: TypeScript, React, Vite
+- Database Migrations: Alembic
+- Containerization: Docker, Docker Compose
+- Web Server: Nginx
+- Architecture: Domain-Driven Design (DDD), Event Sourcing
+
+CORE DOMAINS:
+1. Identity & Access - Users, Organizations, Branches, RBAC
+2. Families - Family management and relationships
+3. Galleries - Photo gallery management and display
+4. Bookings - Session booking and scheduling
+5. Editing - Photo editing and workflow
+6. Operations - Studio operations management
+7. Sales - Sales pipeline and opportunities
+8. Finance - Payments and financial transactions
+9. Delivery - Delivery and fulfillment
+
+MAIN FEATURES:
+- Multi-tenant SaaS architecture
+- Role-based access control (RBAC)
+- JWT authentication with refresh tokens
+- Event-driven architecture
+- Photo management and editing workflow
+- Booking and scheduling system
+- Financial management
+- API-first design with OpenAPI/Swagger
+
+DEPLOYMENT:
+- Local development: docker-compose up --build
+- Production: docker-compose.prod.yml
+- Frontend: Nginx reverse proxy
+- API: FastAPI on Uvicorn
+
+DATABASE:
+- PostgreSQL with Alembic migrations
+- Multiple domain aggregates
+- Event sourcing capabilities
+
+TESTING:
+- Unit tests in backend/tests/
+- Frontend testing setup
+
+API VERSION: v1 (under /api/v1)
+
+═══════════════════════════════════════════════════════════════════════════════
+Generated for UAT Branch - Last Updated: 2026-06-13
+═══════════════════════════════════════════════════════════════════════════════
