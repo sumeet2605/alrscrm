@@ -56,7 +56,28 @@ def test_spaces_provider_uses_checksum_compatible_client_config(monkeypatch):
     assert captured_kwargs["kwargs"]["endpoint_url"] == "https://sgp1.digitaloceanspaces.com"
     assert config.request_checksum_calculation == "when_required"
     assert config.response_checksum_validation == "when_required"
-    assert config.s3 == {"addressing_style": "path"}
+    assert config.s3 == {"addressing_style": "virtual"}
+
+
+def test_spaces_provider_normalizes_bucket_endpoint_url(monkeypatch):
+    captured_kwargs: dict = {}
+
+    def fake_boto3_client(*args, **kwargs):
+        captured_kwargs["kwargs"] = kwargs
+        return FakeS3Client()
+
+    monkeypatch.setattr(boto3, "client", fake_boto3_client)
+
+    provider = DigitalOceanSpacesStorageProvider(
+        region="sgp1",
+        bucket="alrscrm-uat",
+        access_key="access-key",
+        secret_key="secret-key",
+        endpoint_url="https://alrscrm-uat.sgp1.digitaloceanspaces.com",
+    )
+
+    assert provider.endpoint_url == "https://sgp1.digitaloceanspaces.com"
+    assert captured_kwargs["kwargs"]["endpoint_url"] == "https://sgp1.digitaloceanspaces.com"
 
 
 def test_spaces_upload_uses_minimal_put_object_arguments(monkeypatch, caplog):

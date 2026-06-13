@@ -83,8 +83,28 @@ unless it is required.
 The provider also uses path-style S3 addressing for DigitalOcean Spaces:
 
 ```text
-s3.addressing_style=path
+s3.addressing_style=virtual
 ```
+
+During local verification, the bucket-specific endpoint
+`https://alrscrm-uat.sgp1.digitaloceanspaces.com` combined with `Bucket=alrscrm-uat`
+created duplicate bucket addressing in boto3. The provider now normalizes bucket
+endpoints to the regional endpoint:
+
+```text
+https://sgp1.digitaloceanspaces.com
+```
+
+The final remaining local failure was credential-related:
+
+```text
+InvalidAccessKeyId
+SignatureDoesNotMatch
+```
+
+After updating the local env to the matching Spaces key ID and secret pair,
+`head_bucket`, `list_objects_v2`, minimal `put_object`, `head_object`,
+`delete_object`, and provider `upload_file` all passed locally.
 
 If Spaces still rejects `PutObject` with optional `ContentType`, the provider
 logs the failure and retries once with the absolute minimum request:

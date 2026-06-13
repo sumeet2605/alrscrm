@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 os.environ["DATABASE_URL"] = "sqlite+pysqlite:///:memory:"
+os.environ["STORAGE_PROVIDER"] = "local"
 
 from app.core.database import Base, get_db
 from app.core.database import SessionLocal as AppSessionLocal

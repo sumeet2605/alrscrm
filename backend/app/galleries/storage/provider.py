@@ -2,7 +2,7 @@ import logging
 from abc import ABC, abstractmethod
 from base64 import b64encode
 from dataclasses import dataclass
-from urllib.parse import quote
+from urllib.parse import quote, urlparse
 
 from app.core.config import get_settings
 from app.shared.exceptions.application import ValidationError
@@ -46,6 +46,17 @@ def _log_client_error(message: str, exc: Exception, bucket: str, key: str) -> No
             }
         },
     )
+
+
+def _spaces_endpoint_url(region: str, bucket: str, endpoint_url: str | None) -> str:
+    default_endpoint = f"https://{region}.digitaloceanspaces.com"
+    if not endpoint_url:
+        return default_endpoint
+    parsed = urlparse(endpoint_url)
+    bucket_endpoint = f"{bucket}.{region}.digitaloceanspaces.com"
+    if parsed.netloc == bucket_endpoint:
+        return default_endpoint
+    return endpoint_url
 
 
 @dataclass(frozen=True)
@@ -122,16 +133,17 @@ class DigitalOceanSpacesStorageProvider(StorageProvider):
         self.cdn_url = cdn_url.rstrip("/") if cdn_url else None
         self.path_prefix = path_prefix.strip("/")
         self.signed_url_expire_seconds = signed_url_expire_seconds
+        self.endpoint_url = _spaces_endpoint_url(region, bucket, endpoint_url)
         self.client = boto3.client(
             "s3",
             region_name=region,
-            endpoint_url=endpoint_url or f"https://{region}.digitaloceanspaces.com",
+            endpoint_url=self.endpoint_url,
             aws_access_key_id=access_key,
             aws_secret_access_key=secret_key,
             config=Config(
                 request_checksum_calculation="when_required",
                 response_checksum_validation="when_required",
-                s3={"addressing_style": "path"},
+                s3={"addressing_style": "virtual"},
             ),
         )
 
