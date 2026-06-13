@@ -1,0 +1,146 @@
+# UAT Spaces Upload Fix
+
+## Fix Summary
+
+The DigitalOcean Spaces provider now uses a minimal S3-compatible `PutObject`
+request and disables optional botocore checksum behavior unless required.
+
+Changed file:
+
+`backend/app/galleries/storage/provider.py`
+
+Upload behavior after the fix:
+
+```text
+Bucket=<configured bucket>
+Key=<prefix>/<organization_id>/<branch_id>/<gallery_id>/<file_name>
+Body=<uploaded bytes>
+ContentType=<uploaded file content type, when present>
+ACL=None
+Metadata=None
+CacheControl=None
+ExtraArgs=[]
+```
+
+No object ACL is sent. Private bucket behavior is controlled by the Space and
+access credentials.
+
+The boto client uses virtual-host S3 addressing:
+
+```text
+s3.addressing_style=virtual
+```
+
+Bucket-specific endpoint URLs are normalized to the regional Spaces endpoint.
+For example:
+
+```text
+https://alrscrm-uat.sgp1.digitaloceanspaces.com
+-> https://sgp1.digitaloceanspaces.com
+```
+
+If Spaces returns `InvalidArgument` for the first `PutObject`, the provider logs
+the botocore error payload and retries once with only:
+
+```text
+Bucket
+Key
+Body
+```
+
+If Spaces returns `InvalidArgument` for `DeleteObject`, the provider logs the
+error and continues deleting the gallery photo record so the UI does not return
+500 for object-cleanup failures.
+
+## Logging
+
+The provider logs sanitized `PutObject` details before upload:
+
+```text
+Bucket
+Key
+ContentType
+ACL
+Metadata
+CacheControl
+ExtraArgs
+BodyBytes
+```
+
+Secrets and file bytes are not logged.
+
+## Regression Tests
+
+Added:
+
+`backend/tests/test_spaces_storage_provider.py`
+
+Coverage:
+
+- Spaces client uses `request_checksum_calculation=when_required`.
+- Spaces client uses `response_checksum_validation=when_required`.
+- Spaces client uses virtual-host addressing.
+- Spaces client normalizes bucket-specific endpoints to the regional endpoint.
+- Upload calls `put_object` with only `Bucket`, `Key`, `Body`, and optional
+  `ContentType`.
+- Upload does not send `ACL`, `Metadata`, or `CacheControl`.
+- Upload retries with only `Bucket`, `Key`, and `Body` when Spaces rejects the
+  optional `ContentType` request.
+- Delete logs and continues when Spaces rejects object deletion.
+- Sanitized request logging includes the expected argument summary.
+
+Existing gallery upload tests continue to verify:
+
+- Multipart upload creates a gallery record.
+- Stored image URL is returned through the storage provider.
+- Gallery detail includes the uploaded photo.
+
+## UAT Verification
+
+On the droplet:
+
+```bash
+docker compose exec -T api python - <<'PY'
+from app.core.config import get_settings
+from app.galleries.storage import get_storage_provider
+
+s = get_settings()
+p = get_storage_provider()
+print(s.storage_provider, s.do_spaces_bucket, s.do_spaces_region, s.do_spaces_endpoint_url)
+print(type(p).__name__)
+PY
+```
+
+Expected:
+
+```text
+spaces alrscrm-uat sgp1 https://sgp1.digitaloceanspaces.com
+DigitalOceanSpacesStorageProvider
+```
+
+The Spaces access key ID and secret must be a matching pair with at least
+Read/Write/Delete object permissions for `alrscrm-uat`.
+
+Minimal Spaces write test:
+
+```bash
+docker compose exec -T api python - <<'PY'
+from app.galleries.storage import get_storage_provider
+
+p = get_storage_provider()
+p.client.put_object(
+    Bucket=p.bucket,
+    Key=f"{p.path_prefix}/diagnostics/minimal-put-object.txt",
+    Body=b"ok",
+)
+print("minimal put_object ok")
+PY
+```
+
+Application upload verification:
+
+1. Upload one image from the browser gallery upload page.
+2. Confirm API returns `201`.
+3. Confirm `gallery_photos` has a row for the image.
+4. Confirm the object key exists in Space `alrscrm-uat` under `alrscrm/...`.
+5. Open the returned gallery preview URL and confirm it renders.

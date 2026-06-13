@@ -9,7 +9,8 @@ const loginMock = vi.fn();
 vi.mock("../contexts/AuthContext", () => ({
   useAuth: () => ({
     login: loginMock,
-    isAuthenticated: false
+    isAuthenticated: false,
+    user: null
   })
 }));
 
@@ -22,6 +23,9 @@ describe("LoginPage", () => {
     loginMock.mockResolvedValue(undefined);
     renderWithProviders(<LoginPage />, ["/login"]);
 
+    fireEvent.change(screen.getByLabelText("Organization Code"), {
+      target: { value: "ALRSCRM" }
+    });
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "admin@admin.com" }
     });
@@ -32,6 +36,7 @@ describe("LoginPage", () => {
 
     await waitFor(() => {
       expect(loginMock).toHaveBeenCalledWith({
+        organization_code: "ALRSCRM",
         email: "admin@admin.com",
         password: "Admin@123"
       });
@@ -42,6 +47,9 @@ describe("LoginPage", () => {
     loginMock.mockRejectedValue(new Error("Invalid email or password"));
     renderWithProviders(<LoginPage />, ["/login"]);
 
+    fireEvent.change(screen.getByLabelText("Organization Code"), {
+      target: { value: "ALRSCRM" }
+    });
     fireEvent.change(screen.getByLabelText("Email"), {
       target: { value: "wrong@example.com" }
     });

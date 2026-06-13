@@ -1,7 +1,11 @@
 from app.identity.schemas.branch import BranchCreate, BranchRead, BranchUpdate
 from app.identity.schemas.organization import (
     OrganizationCreate,
+    OrganizationOnboardingCreate,
+    OrganizationOnboardingRead,
     OrganizationRead,
+    OrganizationSettingsRead,
+    OrganizationSettingsUpdate,
     OrganizationUpdate,
 )
 from app.identity.schemas.permission import PermissionRead
@@ -13,7 +17,11 @@ __all__ = [
     "BranchRead",
     "BranchUpdate",
     "OrganizationCreate",
+    "OrganizationOnboardingCreate",
+    "OrganizationOnboardingRead",
     "OrganizationRead",
+    "OrganizationSettingsRead",
+    "OrganizationSettingsUpdate",
     "OrganizationUpdate",
     "PermissionRead",
     "RoleRead",

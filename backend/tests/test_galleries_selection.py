@@ -22,6 +22,10 @@ from app.shared.exceptions.application import (
 from sqlalchemy.orm import Session
 
 
+def _access_token(db: Session, gallery_id, context) -> str:
+    return gallery_service.rotate_gallery_access_token(db, gallery_id, context)["access_token"]
+
+
 def _fixture_minimal(db: Session):
     organization = Organization(name="Gallery Studio", code="GLR", is_active=True)
     branch = Branch(
@@ -160,12 +164,13 @@ def test_selection_limit_enforced(db: Session):
     payload = type(
         "P", (), {"gallery_photo_id": p1.id, "selected_by_name": "Anon", "selected_by_email": None}
     )
-    gallery_service.add_favorite(db, g.id, payload, None)
+    access_token = _access_token(db, g.id, Ctx())
+    gallery_service.add_favorite(db, access_token, payload, None)
     payload.gallery_photo_id = p2.id
-    gallery_service.add_favorite(db, g.id, payload, None)
+    gallery_service.add_favorite(db, access_token, payload, None)
     payload.gallery_photo_id = p3.id
     with pytest.raises(BadRequestError):
-        gallery_service.add_favorite(db, g.id, payload, None)
+        gallery_service.add_favorite(db, access_token, payload, None)
 
 
 @pytest.mark.usefixtures("db")
@@ -213,8 +218,9 @@ def test_submission_locks_selection(db: Session):
     payload = type(
         "P", (), {"gallery_photo_id": p.id, "selected_by_name": "X", "selected_by_email": None}
     )
+    access_token = _access_token(db, g.id, Ctx())
     with pytest.raises(ForbiddenError):
-        gallery_service.add_favorite(db, g.id, payload, None)
+        gallery_service.add_favorite(db, access_token, payload, None)
 
 
 @pytest.mark.usefixtures("db")
@@ -246,9 +252,10 @@ def test_password_and_expiry_behaviour(db: Session):
         ),
         Ctx(),
     )
+    access_token = _access_token(db, g.id, Ctx())
     with pytest.raises(ForbiddenError):
-        gallery_service.authenticate_public_gallery(db, g.id, "wrong")
-    token = gallery_service.authenticate_public_gallery(db, g.id, "secret")
+        gallery_service.authenticate_public_gallery(db, access_token, "wrong")
+    token = gallery_service.authenticate_public_gallery(db, access_token, "secret")
     assert token is not None
 
     # mark gallery expired and ensure public access is gone
@@ -256,7 +263,9 @@ def test_password_and_expiry_behaviour(db: Session):
     db.add(g)
     db.commit()
     with pytest.raises(GoneError):
-        gallery_service.get_public_gallery(db, g.id)
+        gallery_service.get_public_gallery(db, access_token)
+    with pytest.raises(GoneError):
+        gallery_service.authenticate_public_gallery(db, access_token, "secret")
 
 
 @pytest.mark.usefixtures("db")
@@ -287,8 +296,8 @@ def test_public_submit_flow(db: Session):
         ),
         Ctx(),
     )
-    # public submit with no token
-    gallery_service.submit_public_selection(db, g.id, None)
+    access_token = _access_token(db, g.id, Ctx())
+    gallery_service.submit_public_selection(db, access_token, None)
     # reopen for next tests
     gallery_service.reopen_selection(db, g.id, Ctx())
 
@@ -323,12 +332,13 @@ def test_public_submit_flow(db: Session):
         ),
         Ctx(),
     )
+    protected_access_token = _access_token(db, gp.id, Ctx())
     with pytest.raises(ForbiddenError):
-        gallery_service.submit_public_selection(db, gp.id, None)
+        gallery_service.submit_public_selection(db, protected_access_token, None)
     # authenticate and submit using token
-    token = gallery_service.authenticate_public_gallery(db, gp.id, "secret")
+    token = gallery_service.authenticate_public_gallery(db, protected_access_token, "secret")
     assert token is not None
-    gallery_service.submit_public_selection(db, gp.id, token)
+    gallery_service.submit_public_selection(db, protected_access_token, token)
 
     # expiry: new gallery expired cannot be submitted
     # create another booking item for expiry test
@@ -360,5 +370,6 @@ def test_public_submit_flow(db: Session):
         ),
         Ctx(),
     )
+    expired_access_token = _access_token(db, ge.id, Ctx())
     with pytest.raises(GoneError):
-        gallery_service.submit_public_selection(db, ge.id, None)
+        gallery_service.submit_public_selection(db, expired_access_token, None)

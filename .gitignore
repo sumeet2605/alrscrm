@@ -10,3 +10,5 @@ venv/
 node_modules/
 dist/
 postgres_data/
+github_actions_alrscrm
+*.pub

@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
 
+from app.bookings import models as booking_models  # noqa: F401
 from app.sales.models import LostReason
 
 LOST_REASON_DEFINITIONS: tuple[tuple[str, str], ...] = (

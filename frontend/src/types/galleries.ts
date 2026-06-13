@@ -120,3 +120,10 @@ export interface GalleryListResult {
   items: Gallery[];
   meta: PaginationMeta;
 }
+
+export interface GalleryAccessToken {
+  access_token?: string | null;
+  access_url?: string | null;
+  expires_at: string;
+  revoked: boolean;
+}

@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 from sqlalchemy.orm import Session
 
 os.environ["DATABASE_URL"] = "sqlite+pysqlite:///:memory:"
+os.environ["STORAGE_PROVIDER"] = "local"
 
 from app.core.database import Base, get_db
 from app.core.database import SessionLocal as AppSessionLocal
@@ -98,11 +99,5 @@ def owner_headers(owner_user: User) -> dict[str, str]:
 
 
 @pytest.fixture()
-def auth_headers(client: TestClient, admin_user: User) -> dict[str, str]:
-    response = client.post(
-        "/api/v1/auth/login",
-        json={"email": admin_user.email, "password": "StrongPass123"},
-    )
-    assert response.status_code == 200
-    token = response.json()["data"]["access_token"]
-    return {"Authorization": f"Bearer {token}"}
+def auth_headers(admin_user: User) -> dict[str, str]:
+    return {"Authorization": f"Bearer {create_access_token(admin_user.id)}"}

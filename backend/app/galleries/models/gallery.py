@@ -70,6 +70,29 @@ class Gallery(UUIDPrimaryKeyMixin, TimestampMixin, Base):
     favorites: Mapped[list[FavoriteSelection]] = sa_relationship(
         back_populates="gallery", cascade="all, delete-orphan"
     )
+    access_tokens: Mapped[list[GalleryAccessToken]] = sa_relationship(
+        back_populates="gallery", cascade="all, delete-orphan"
+    )
+
+
+class GalleryAccessToken(UUIDPrimaryKeyMixin, Base):
+    __tablename__ = "gallery_access_tokens"
+    __table_args__ = (UniqueConstraint("token_hash", name="uq_gallery_access_token_hash"),)
+
+    gallery_id: Mapped[UUID] = mapped_column(ForeignKey("galleries.id"), nullable=False, index=True)
+    token_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    expires_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, index=True
+    )
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    last_accessed_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True), nullable=True)
+    created_by_user_id: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"), nullable=True)
+
+    gallery: Mapped[Gallery] = sa_relationship(back_populates="access_tokens")
+    created_by_user: Mapped[User | None] = sa_relationship()
 
 
 class GalleryPhoto(UUIDPrimaryKeyMixin, Base):

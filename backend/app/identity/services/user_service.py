@@ -62,6 +62,18 @@ def get_user_by_email(db: Session, email: str) -> User | None:
     )
 
 
+def get_user_by_organization_email(db: Session, organization_id: UUID, email: str) -> User | None:
+    return (
+        db.query(User)
+        .options(selectinload(User.roles).selectinload(Role.permissions))
+        .filter(
+            User.organization_id == organization_id,
+            User.email == _normalize_email(email),
+        )
+        .one_or_none()
+    )
+
+
 def _ensure_user_refs(db: Session, organization_id: UUID, branch_id: UUID | None) -> None:
     if db.get(Organization, organization_id) is None:
         raise NotFoundError("Organization not found")
@@ -124,6 +136,7 @@ def update_user(
         user.roles = roles
     if "password" in data:
         user.password_hash = hash_password(data.pop("password"))
+        user.password_reset_required = False
         _revoke_user_sessions(db, user.id)
     if "email" in data and data["email"] is not None:
         data["email"] = _normalize_email(data["email"])

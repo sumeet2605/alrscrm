@@ -4,6 +4,7 @@ import { App, Button, Card, DatePicker, Form, Input, InputNumber, Select, Space,
 import dayjs from "dayjs";
 import { Navigate, useNavigate } from "react-router-dom";
 
+import { listPackages } from "../../api/bookings";
 import { listFamilies } from "../../api/families";
 import { listUsers } from "../../api/identity";
 import { createOpportunity, listLostReasons } from "../../api/sales";
@@ -25,6 +26,7 @@ export function OpportunityFormPage() {
   const familiesQuery = useQuery({ queryKey: ["families", "opportunity-form"], queryFn: () => listFamilies({ page: 1, page_size: 100 }) });
   const usersQuery = useQuery({ queryKey: ["users", "opportunity-form"], queryFn: () => listUsers({ page: 1, page_size: 100 }) });
   const lostReasonsQuery = useQuery({ queryKey: ["lost-reasons"], queryFn: listLostReasons });
+  const packagesQuery = useQuery({ queryKey: ["packages", "opportunity-form"], queryFn: listPackages });
 
   const saveMutation = useMutation({
     mutationFn: (values: OpportunityFormValues) => {
@@ -84,7 +86,8 @@ export function OpportunityFormPage() {
                   if (selectedFamily) {
                     form.setFieldsValue({
                       organization_id: selectedFamily.organization_id,
-                      branch_id: selectedFamily.branch_id
+                      branch_id: selectedFamily.branch_id,
+                      package_id: undefined
                     });
                   }
                 }}
@@ -99,6 +102,25 @@ export function OpportunityFormPage() {
             </Form.Item>
             <Form.Item label="Type" name="opportunity_type" rules={[{ required: true }]}>
               <Select options={opportunityTypes.map((value) => ({ value, label: labelFromEnum(value) }))} />
+            </Form.Item>
+            <Form.Item noStyle shouldUpdate={(previous, current) => previous.branch_id !== current.branch_id}>
+              {({ getFieldValue }) => {
+                const branchId = getFieldValue("branch_id");
+                return (
+                  <Form.Item label="Package" name="package_id">
+                    <Select
+                      allowClear
+                      placeholder="Select package if finalized"
+                      options={(packagesQuery.data ?? [])
+                        .filter((pkg) => pkg.is_active && (!branchId || pkg.branch_id === branchId))
+                        .map((pkg) => ({
+                          value: pkg.id,
+                          label: `${pkg.name} · ₹${Number(pkg.price).toLocaleString("en-IN")}`
+                        }))}
+                    />
+                  </Form.Item>
+                );
+              }}
             </Form.Item>
             <Form.Item label="Stage" name="current_stage" rules={[{ required: true }]}>
               <Select options={opportunityStages.map((value) => ({ value, label: labelFromEnum(value) }))} />

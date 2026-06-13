@@ -1,0 +1,20 @@
+from enum import StrEnum
+
+
+class DeliveryStatus(StrEnum):
+    PENDING = "PENDING"
+    ZIP_GENERATING = "ZIP_GENERATING"
+    READY = "READY"
+    SENT = "SENT"
+    DELIVERED = "DELIVERED"
+    EXPIRED = "EXPIRED"
+    REOPEN_REQUESTED = "REOPEN_REQUESTED"
+    REOPENED = "REOPENED"
+    CLOSED = "CLOSED"
+
+
+class ZipGenerationStatus(StrEnum):
+    PENDING = "PENDING"
+    GENERATING = "GENERATING"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"

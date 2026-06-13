@@ -57,6 +57,7 @@ class OpportunityBase(BaseModel):
     branch_id: UUID
     family_id: UUID
     assigned_to_user_id: UUID
+    package_id: UUID | None = None
     opportunity_type: OpportunityType
     current_stage: OpportunityStage = OpportunityStage.NEW
     estimated_value: Decimal = Field(default=Decimal("0"), ge=0, max_digits=12, decimal_places=2)
@@ -79,6 +80,7 @@ class OpportunityUpdate(BaseModel):
     branch_id: UUID | None = None
     family_id: UUID | None = None
     assigned_to_user_id: UUID | None = None
+    package_id: UUID | None = None
     opportunity_type: OpportunityType | None = None
     current_stage: OpportunityStage | None = None
     estimated_value: Decimal | None = Field(default=None, ge=0, max_digits=12, decimal_places=2)
@@ -178,6 +180,7 @@ class OpportunityRead(BaseModel):
     branch_id: UUID
     family_id: UUID
     assigned_to_user_id: UUID
+    package_id: UUID | None = None
     opportunity_type: OpportunityType
     current_stage: OpportunityStage
     estimated_value: Decimal

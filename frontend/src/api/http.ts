@@ -7,15 +7,12 @@ const API_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "/api/v1";
 let refreshPromise: Promise<string | null> | null = null;
 
 export const apiClient = axios.create({
-  baseURL: API_BASE_URL,
-  headers: {
-    "Content-Type": "application/json"
-  }
+  baseURL: API_BASE_URL
 });
 
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const tokens = getStoredTokens();
-  if (tokens?.accessToken) {
+  if (tokens?.accessToken && !config.headers.Authorization) {
     config.headers.Authorization = `Bearer ${tokens.accessToken}`;
   }
   return config;

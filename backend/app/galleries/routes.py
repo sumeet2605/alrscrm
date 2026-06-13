@@ -1,6 +1,6 @@
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, File, Form, Header, Query, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, Header, HTTPException, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import require_permissions
@@ -11,6 +11,7 @@ from app.galleries.enums import GalleryStatus
 from app.galleries.schemas import (
     FavoriteSelectionCreate,
     FavoriteSelectionRead,
+    GalleryAccessTokenRead,
     GalleryCreate,
     GalleryDetailRead,
     GalleryMetricsRead,
@@ -104,6 +105,79 @@ def create_gallery(
     return api_response("Gallery created", _gallery_detail(item, storage_provider))
 
 
+@router.get("/client/{access_token}", response_model=APIResponse)
+def get_client_gallery(
+    access_token: str,
+    db: Session = Depends(get_db),
+    storage_provider: StorageProvider = Depends(get_storage_provider),
+    authorization: str | None = Header(default=None),
+):
+    token = None
+    if authorization:
+        parts = authorization.split()
+        if len(parts) == 2 and parts[0].lower() == "bearer":
+            token = parts[1]
+    item = gallery_service.get_public_gallery(db, access_token, token)
+    return api_response("Public gallery retrieved", _gallery_detail(item, storage_provider))
+
+
+@router.post("/client/{access_token}/authenticate", response_model=APIResponse)
+def authenticate_client_gallery(
+    access_token: str,
+    payload: GalleryAuthenticateRequest,
+    db: Session = Depends(get_db),
+):
+    token = gallery_service.authenticate_public_gallery(db, access_token, payload.password)
+    return api_response(
+        "Gallery authenticated", GalleryAuthenticateResponse(access_token=token).model_dump()
+    )
+
+
+@router.post(
+    "/client/{access_token}/favorites",
+    status_code=status.HTTP_201_CREATED,
+    response_model=APIResponse,
+)
+def add_client_gallery_favorite(
+    access_token: str,
+    payload: FavoriteSelectionCreate,
+    db: Session = Depends(get_db),
+    storage_provider: StorageProvider = Depends(get_storage_provider),
+):
+    item = gallery_service.add_favorite(db, access_token, payload, None)
+    return api_response("Gallery favorite selected", _favorite(item, storage_provider))
+
+
+@router.delete("/client/{access_token}/favorites/{favorite_id}", response_model=APIResponse)
+def delete_client_gallery_favorite(
+    access_token: str,
+    favorite_id: UUID,
+    db: Session = Depends(get_db),
+):
+    gallery_service.delete_favorite(db, access_token, favorite_id, None)
+    return api_response("Gallery favorite deleted", {})
+
+
+@router.post("/client/{access_token}/submit-selection", response_model=APIResponse)
+def submit_client_selection(
+    access_token: str,
+    db: Session = Depends(get_db),
+    authorization: str | None = Header(default=None),
+):
+    token = None
+    if authorization:
+        parts = authorization.split()
+        if len(parts) == 2 and parts[0].lower() == "bearer":
+            token = parts[1]
+    item = gallery_service.submit_public_selection(db, access_token, token)
+    return api_response(
+        "Selection submitted",
+        GalleryDetailRead.model_validate(gallery_service.gallery_to_detail(item)).model_dump(
+            mode="json"
+        ),
+    )
+
+
 @router.get("/{gallery_id}", response_model=APIResponse)
 def get_gallery(
     gallery_id: UUID,
@@ -125,6 +199,28 @@ def update_gallery(
 ):
     item = gallery_service.update_gallery(db, gallery_id, payload, context)
     return api_response("Gallery updated", _gallery_detail(item, storage_provider))
+
+
+@router.post("/{gallery_id}/access-token/rotate", response_model=APIResponse)
+def rotate_gallery_access_token(
+    gallery_id: UUID,
+    db: Session = Depends(get_db),
+    context=Depends(require_permissions("galleries:write")),
+):
+    token_data = gallery_service.rotate_gallery_access_token(db, gallery_id, context)
+    data = GalleryAccessTokenRead(**token_data)
+    return api_response("Gallery access token rotated", data.model_dump(mode="json"))
+
+
+@router.post("/{gallery_id}/access-token/revoke", response_model=APIResponse)
+def revoke_gallery_access_tokens(
+    gallery_id: UUID,
+    db: Session = Depends(get_db),
+    context=Depends(require_permissions("galleries:write")),
+):
+    token_data = gallery_service.revoke_gallery_access_tokens(db, gallery_id, context)
+    data = GalleryAccessTokenRead(**token_data)
+    return api_response("Gallery access token revoked", data.model_dump(mode="json"))
 
 
 @router.get("/{gallery_id}/photos", response_model=APIResponse)
@@ -164,7 +260,8 @@ def add_gallery_photo(
 )
 async def upload_gallery_photo(
     gallery_id: UUID,
-    file: UploadFile = File(...),
+    file: UploadFile | None = File(default=None),
+    photo: UploadFile | None = File(default=None, include_in_schema=False),
     image_width: int = Form(default=1, gt=0),
     image_height: int = Form(default=1, gt=0),
     sort_order: int = Form(default=0),
@@ -172,13 +269,25 @@ async def upload_gallery_photo(
     context=Depends(require_permissions("galleries:photos:write")),
     storage_provider: StorageProvider = Depends(get_storage_provider),
 ):
-    content = await file.read()
+    upload = file or photo
+    if upload is None:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail=[
+                {
+                    "type": "missing",
+                    "loc": ["body", "file"],
+                    "msg": "Field required",
+                }
+            ],
+        )
+    content = await upload.read()
     item = gallery_service.upload_photo_file(
         db,
         gallery_id,
-        file_name=file.filename or "gallery-photo",
+        file_name=upload.filename or "gallery-photo",
         content=content,
-        content_type=file.content_type,
+        content_type=upload.content_type,
         image_width=image_width,
         image_height=image_height,
         sort_order=sort_order,

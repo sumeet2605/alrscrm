@@ -1,4 +1,4 @@
-import { LockOutlined, MailOutlined } from "@ant-design/icons";
+import { BankOutlined, LockOutlined, MailOutlined } from "@ant-design/icons";
 import { Alert, Button, Card, Form, Input, Typography } from "antd";
 import { useState } from "react";
 import { Navigate, useLocation, useNavigate } from "react-router-dom";
@@ -7,7 +7,7 @@ import { useAuth } from "../contexts/AuthContext";
 import type { LoginRequest } from "../types/auth";
 
 export function LoginPage() {
-  const { login, isAuthenticated } = useAuth();
+  const { login, isAuthenticated, user } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
@@ -15,7 +15,7 @@ export function LoginPage() {
   const from = (location.state as { from?: Location } | null)?.from?.pathname ?? "/dashboard";
 
   if (isAuthenticated) {
-    return <Navigate to="/dashboard" replace />;
+    return <Navigate to={user?.password_reset_required ? "/change-password" : "/dashboard"} replace />;
   }
 
   const handleSubmit = async (values: LoginRequest) => {
@@ -45,6 +45,13 @@ export function LoginPage() {
           <Typography.Text type="secondary">Use your studio account to continue.</Typography.Text>
           {error ? <Alert className="form-alert" type="error" message={error} showIcon /> : null}
           <Form<LoginRequest> layout="vertical" onFinish={handleSubmit} requiredMark={false}>
+            <Form.Item
+              label="Organization Code"
+              name="organization_code"
+              rules={[{ required: true, message: "Organization code is required" }]}
+            >
+              <Input prefix={<BankOutlined />} size="large" autoComplete="organization" />
+            </Form.Item>
             <Form.Item
               label="Email"
               name="email"

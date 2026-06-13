@@ -1,13 +1,18 @@
 import {
   ApartmentOutlined,
   AppstoreAddOutlined,
-  PictureOutlined,
+  BankOutlined,
   ContactsOutlined,
   DashboardOutlined,
+  DollarOutlined,
+  LockOutlined,
   LogoutOutlined,
-  ScheduleOutlined,
+  PictureOutlined,
   RiseOutlined,
   SafetyCertificateOutlined,
+  ScheduleOutlined,
+  SendOutlined,
+  SettingOutlined,
   ShopOutlined,
   TeamOutlined,
   ToolOutlined,
@@ -31,6 +36,7 @@ type NavItem = {
 
 const navItems: NavItem[] = [
   { key: "/dashboard", icon: <DashboardOutlined />, label: "Dashboard" },
+  { key: "/organizations", icon: <BankOutlined />, label: "Organizations" },
   { key: "/families", icon: <ContactsOutlined />, label: "Families" },
   { key: "/sales", icon: <RiseOutlined />, label: "Sales" },
   {
@@ -55,6 +61,31 @@ const navItems: NavItem[] = [
       { key: "/production", label: "Production Dashboard" }
     ]
   },
+  {
+    key: "operations-menu",
+    icon: <SendOutlined />,
+    label: "Operations",
+    children: [
+      { key: "/delivery", label: "Delivery Queue" },
+      { key: "/delivery/dashboard", label: "Delivery Dashboard" }
+    ]
+  },
+  {
+    key: "finance-menu",
+    icon: <DollarOutlined />,
+    label: "Finance",
+    children: [
+      { key: "/finance", label: "Finance Dashboard" },
+      { key: "/finance/invoices", label: "Invoices" },
+      { key: "/finance/payments", label: "Payments" }
+    ]
+  },
+  {
+    key: "settings-menu",
+    icon: <SettingOutlined />,
+    label: "Settings",
+    children: [{ key: "/settings/integrations", label: "Integrations" }]
+  },
   { key: "/branches", icon: <ApartmentOutlined />, label: "Branches" },
   { key: "/users", icon: <TeamOutlined />, label: "Users" },
   { key: "/roles", icon: <SafetyCertificateOutlined />, label: "Roles" }
@@ -73,8 +104,15 @@ function filterNavItems(items: NavItem[], roleNames: string[]): MenuProps["items
 }
 
 function selectedMenuPath(pathname: string): string {
+  if (pathname.startsWith("/organizations")) return "/organizations";
   if (pathname.startsWith("/packages")) return "/packages";
   if (pathname.startsWith("/galleries")) return "/galleries";
+  if (pathname.startsWith("/delivery/dashboard")) return "/delivery/dashboard";
+  if (pathname.startsWith("/delivery")) return "/delivery";
+  if (pathname.startsWith("/finance/invoices")) return "/finance/invoices";
+  if (pathname.startsWith("/finance/payments")) return "/finance/payments";
+  if (pathname.startsWith("/finance")) return "/finance";
+  if (pathname.startsWith("/settings/integrations")) return "/settings/integrations";
   if (pathname.startsWith("/production/editing")) return "/production/editing";
   if (pathname.startsWith("/production/editor-dashboard")) return "/production/editor-dashboard";
   if (pathname.startsWith("/production")) return "/production";
@@ -96,6 +134,13 @@ export function DashboardLayout() {
       key: "profile",
       icon: <UserOutlined />,
       label: `${user?.first_name ?? "User"} ${user?.last_name ?? ""}`.trim()
+    },
+    { type: "divider" },
+    {
+      key: "change-password",
+      icon: <LockOutlined />,
+      label: "Change Password",
+      onClick: () => navigate("/change-password")
     },
     { type: "divider" },
     {
@@ -123,7 +168,13 @@ export function DashboardLayout() {
         <Menu
           theme="dark"
           mode="inline"
-          defaultOpenKeys={["bookings-menu", "production-menu"]}
+          defaultOpenKeys={[
+            "bookings-menu",
+            "production-menu",
+            "operations-menu",
+            "finance-menu",
+            "settings-menu"
+          ]}
           selectedKeys={[selectedPath]}
           items={accessibleItems}
           onClick={({ key }) => navigate(key)}

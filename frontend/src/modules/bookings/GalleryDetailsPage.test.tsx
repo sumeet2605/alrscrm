@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 import { Route, Routes } from "react-router-dom";
 
-import { updateGallery } from "../../api/galleries";
+import { rotateGalleryAccessToken, updateGallery } from "../../api/galleries";
 import { renderWithProviders } from "../../test/render";
 import { GalleryDetailsPage } from "./GalleryDetailsPage";
 
@@ -53,7 +53,19 @@ vi.mock("../../api/galleries", () => ({
   getGallery: vi.fn(async () => gallery),
   updateGallery: vi.fn(async (_id: string, payload: object) => ({ ...gallery, ...payload })),
   reopenSelection: vi.fn(async () => gallery),
-  createUpgradeRequest: vi.fn(async () => ({ id: "upgrade-1" }))
+  createUpgradeRequest: vi.fn(async () => ({ id: "upgrade-1" })),
+  rotateGalleryAccessToken: vi.fn(async () => ({
+    access_token: "public-token-1",
+    access_url: "/client/gallery/public-token-1",
+    expires_at: "2026-06-20T00:00:00Z",
+    revoked: false
+  })),
+  revokeGalleryAccessTokens: vi.fn(async () => ({
+    access_token: null,
+    access_url: null,
+    expires_at: "2026-06-20T00:00:00Z",
+    revoked: true
+  }))
 }));
 
 describe("GalleryDetailsPage", () => {
@@ -72,7 +84,14 @@ describe("GalleryDetailsPage", () => {
     await user.click(screen.getByRole("button", { name: "Share gallery" }));
     const dialog = await screen.findByRole("dialog", { name: "Share Gallery" });
 
-    expect(within(dialog).getByDisplayValue("http://localhost:3000/client/galleries/gallery-1")).toBeInTheDocument();
+    await user.click(within(dialog).getByRole("button", { name: "Rotate Link" }));
+
+    await waitFor(() => {
+      expect(rotateGalleryAccessToken).toHaveBeenCalledWith("gallery-1");
+    });
+    expect(
+      within(dialog).getByDisplayValue("http://localhost:3000/client/gallery/public-token-1")
+    ).toBeInTheDocument();
 
     await user.type(within(dialog).getByLabelText("Gallery Password"), "Client@123");
     await user.click(within(dialog).getByRole("button", { name: "Save Sharing Settings" }));
